@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: [self-hosted, windows]  # Chỉ định chạy trên self-hosted Windows
+    runs-on: [self-hosted, windows]
 
     steps:
       - name: Checkout repo
@@ -20,21 +20,26 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies for admin
-        run: npm install && npm run build
+        run: |
+          npm install
+          npm run build
         working-directory: .\admin
 
       - name: Install dependencies for user
-        run: npm install && npm run build
+        run: |
+          npm install
+          npm run build
         working-directory: .\user
 
       - name: Install dependencies for server
-        run: npm install
+        run: |
+          npm install
         working-directory: .\server
 
   deploy:
     name: Deploy
     needs: build
-    runs-on: [self-hosted, windows]  # Chỉ định chạy trên self-hosted Windows
+    runs-on: [self-hosted, windows]
 
     steps:
       - name: Deploy Admin
