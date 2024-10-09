@@ -1,0 +1,33 @@
+name: Deploy Multiple Applications
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Deploy admin (Vite)
+        run: |
+          cd admin
+          npm install
+          npm run build
+          pm2 restart admin || pm2 start npm --name admin -- run preview
+
+      - name: Deploy user (Vite)
+        run: |
+          cd ../user
+          npm install
+          npm run build
+          pm2 restart user || pm2 start npm --name user -- run preview
+
+      - name: Deploy server (Node.js)
+        run: |
+          cd ../server
+          npm install
+          pm2 restart server || pm2 start index.js --name server
