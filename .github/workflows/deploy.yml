@@ -17,14 +17,14 @@ jobs:
           cd admin
           npm install
           npm run build
-          pm2 restart admin || pm2 start npm --name admin -- run preview
+          pm2 restart admin; if ($?) { pm2 start npm --name admin -- run preview }
 
       - name: Deploy user (Vite)
         run: |
           cd ../user
           npm install
           npm run build
-          pm2 restart user || pm2 start npm --name user -- run preview
+          pm2 restart user; if ($?) { pm2 start npm --name user -- run preview }
 
       - name: Deploy server (Node.js)
         run: |
