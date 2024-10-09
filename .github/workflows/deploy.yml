@@ -1,4 +1,4 @@
-name: Deploy Multiple Applications
+name: Deploy
 
 on:
   push:
@@ -6,28 +6,53 @@ on:
       - main
 
 jobs:
-  deploy:
+  build:
+    name: Build
     runs-on: self-hosted
+
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Deploy admin (Vite)
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '20' 
+
+      - name: Install dependencies for admin
         run: |
           cd admin
           npm install
           npm run build
-          pm2 restart admin; if ($?) { pm2 start npm --name admin -- run preview }
 
-      - name: Deploy user (Vite)
+      - name: Install dependencies for user
         run: |
           cd ../user
           npm install
           npm run build
-          pm2 restart user; if ($?) { pm2 start npm --name user -- run preview }
 
-      - name: Deploy server (Node.js)
+      - name: Install dependencies for server
         run: |
           cd ../server
           npm install
-          pm2 restart server || pm2 start index.js --name server
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: self-hosted
+
+    steps:
+      - name: Deploy Admin
+        run: |
+          cd admin
+          npm run dev
+
+      - name: Deploy User
+        run: |
+          cd ../user
+          npm run dev
+
+      - name: Deploy Server
+        run: |
+          cd ../server
+          node index.js
