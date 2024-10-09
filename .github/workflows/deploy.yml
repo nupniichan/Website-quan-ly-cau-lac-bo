@@ -25,10 +25,6 @@ jobs:
           npm install
           npm run build
 
-      - name: Install dependencies for server
-        run: |
-          cd ../server
-          npm install
 
   deploy:
     name: Deploy
@@ -41,7 +37,3 @@ jobs:
           cd admin
           npm run dev
 
-      - name: Deploy Server
-        run: |
-          cd ../server
-          node index.js
