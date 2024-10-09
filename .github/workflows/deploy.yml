@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: self-hosted
+    runs-on: [self-hosted, windows]  # Chỉ định chạy trên self-hosted Windows
 
     steps:
       - name: Checkout repo
@@ -17,23 +17,34 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: '20' 
+          node-version: '20'
 
       - name: Install dependencies for admin
-        run: |
-          cd admin
-          npm install
-          npm run build
+        run: npm install && npm run build
+        working-directory: .\admin
 
+      - name: Install dependencies for user
+        run: npm install && npm run build
+        working-directory: .\user
+
+      - name: Install dependencies for server
+        run: npm install
+        working-directory: .\server
 
   deploy:
     name: Deploy
     needs: build
-    runs-on: self-hosted
+    runs-on: [self-hosted, windows]  # Chỉ định chạy trên self-hosted Windows
 
     steps:
       - name: Deploy Admin
-        run: |
-          cd admin
-          npm run dev
+        run: npm run dev
+        working-directory: .\admin
 
+      - name: Deploy User
+        run: npm run dev
+        working-directory: .\user
+
+      - name: Deploy Server
+        run: node index.js
+        working-directory: .\server
