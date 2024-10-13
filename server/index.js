@@ -3,7 +3,7 @@ const express = require('express')
 const { connect } = require('mongoose')
 
 const app = express()
-const connectDB = require('./db.js')
+const connectDB = require('./server.js')
 
 const PORT = 3000;
 
