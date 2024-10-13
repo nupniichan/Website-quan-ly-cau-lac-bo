@@ -17,6 +17,9 @@ const Report = require('../models/Report');
  *         - tongThu
  *         - ketQuaDatDuoc
  *       properties:
+ *         _id:
+ *           type: number
+ *           description: ID của báo cáo
  *         tenBaoCao:
  *           type: string
  *           description: Tên báo cáo
@@ -45,7 +48,7 @@ const Report = require('../models/Report');
 
 /**
  * @swagger
- * /api/reports:
+ * /api/add-report:
  *   post:
  *     summary: Thêm một báo cáo mới
  *     requestBody:
@@ -57,10 +60,14 @@ const Report = require('../models/Report');
  *     responses:
  *       201:
  *         description: Báo cáo mới đã được tạo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Report'
  *       500:
  *         description: Lỗi máy chủ
  */
-router.post('/', async (req, res) => {
+router.post('/add-report', async (req, res) => {
     try {
         const newReport = new Report(req.body);
         await newReport.save();
@@ -72,7 +79,57 @@ router.post('/', async (req, res) => {
 
 /**
  * @swagger
- * /api/reports/{id}:
+ * /api/get-reports:
+ *   get:
+ *     summary: Lấy danh sách tất cả các báo cáo
+ *     responses:
+ *       200:
+ *         description: Danh sách các báo cáo
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-reports', async (req, res) => {
+    try {
+        const reports = await Report.find();
+        res.status(200).json(reports);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/get-report/{id}:
+ *   get:
+ *     summary: Lấy thông tin chi tiết của một báo cáo
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: ID của báo cáo
+ *     responses:
+ *       200:
+ *         description: Chi tiết báo cáo
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-report/:id', async (req, res) => {
+    try {
+        const report = await Report.findById(req.params.id);
+        if (!report) {
+            return res.status(404).json({ message: 'Report not found' });
+        }
+        res.status(200).json(report);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/update-report/{id}:
  *   put:
  *     summary: Cập nhật thông tin báo cáo
  *     parameters:
@@ -80,7 +137,7 @@ router.post('/', async (req, res) => {
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: number
  *         description: ID của báo cáo
  *     requestBody:
  *       required: true
@@ -94,9 +151,12 @@ router.post('/', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.put('/:id', async (req, res) => {
+router.put('/update-report/:id', async (req, res) => {
     try {
         const updatedReport = await Report.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updatedReport) {
+            return res.status(404).json({ message: 'Report not found' });
+        }
         res.json(updatedReport);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -105,7 +165,7 @@ router.put('/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/reports/{id}:
+ * /api/delete-report/{id}:
  *   delete:
  *     summary: Xoá báo cáo
  *     parameters:
@@ -113,7 +173,7 @@ router.put('/:id', async (req, res) => {
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: number
  *         description: ID của báo cáo
  *     responses:
  *       200:
@@ -121,9 +181,12 @@ router.put('/:id', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/delete-report/:id', async (req, res) => {
     try {
-        await Report.findByIdAndDelete(req.params.id);
+        const deletedReport = await Report.findByIdAndDelete(req.params.id);
+        if (!deletedReport) {
+            return res.status(404).json({ message: 'Report not found' });
+        }
         res.json({ message: 'Report deleted' });
     } catch (error) {
         res.status(500).json({ message: error.message });

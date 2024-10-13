@@ -14,6 +14,9 @@ const Prize = require('../models/Prize');
  *         - loaiGiai
  *         - thanhVienDatGiai
  *       properties:
+ *         _id:
+ *           type: number
+ *           description: ID của giải thưởng
  *         tenGiaiThuong:
  *           type: string
  *           description: Tên giải thưởng
@@ -37,7 +40,7 @@ const Prize = require('../models/Prize');
 
 /**
  * @swagger
- * /api/prizes:
+ * /api/add-prize:
  *   post:
  *     summary: Thêm một giải thưởng mới
  *     requestBody:
@@ -49,10 +52,14 @@ const Prize = require('../models/Prize');
  *     responses:
  *       201:
  *         description: Giải thưởng mới đã được tạo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Prize'
  *       500:
  *         description: Lỗi máy chủ
  */
-router.post('/', async (req, res) => {
+router.post('/add-prize', async (req, res) => {
     try {
         const newPrize = new Prize(req.body);
         await newPrize.save();
@@ -64,7 +71,57 @@ router.post('/', async (req, res) => {
 
 /**
  * @swagger
- * /api/prizes/{id}:
+ * /api/get-prizes:
+ *   get:
+ *     summary: Lấy danh sách tất cả các giải thưởng
+ *     responses:
+ *       200:
+ *         description: Danh sách các giải thưởng
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-prizes', async (req, res) => {
+    try {
+        const prizes = await Prize.find();
+        res.status(200).json(prizes);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/get-prize/{id}:
+ *   get:
+ *     summary: Lấy thông tin chi tiết của một giải thưởng
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: ID của giải thưởng
+ *     responses:
+ *       200:
+ *         description: Chi tiết giải thưởng
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-prize/:id', async (req, res) => {
+    try {
+        const prize = await Prize.findById(req.params.id);
+        if (!prize) {
+            return res.status(404).json({ message: 'Prize not found' });
+        }
+        res.status(200).json(prize);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/update-prize/{id}:
  *   put:
  *     summary: Cập nhật thông tin giải thưởng
  *     parameters:
@@ -72,7 +129,7 @@ router.post('/', async (req, res) => {
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: number
  *         description: ID của giải thưởng
  *     requestBody:
  *       required: true
@@ -86,9 +143,12 @@ router.post('/', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.put('/:id', async (req, res) => {
+router.put('/update-prize/:id', async (req, res) => {
     try {
         const updatedPrize = await Prize.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updatedPrize) {
+            return res.status(404).json({ message: 'Prize not found' });
+        }
         res.json(updatedPrize);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -97,7 +157,7 @@ router.put('/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/prizes/{id}:
+ * /api/delete-prize/{id}:
  *   delete:
  *     summary: Xoá giải thưởng
  *     parameters:
@@ -105,7 +165,7 @@ router.put('/:id', async (req, res) => {
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: number
  *         description: ID của giải thưởng
  *     responses:
  *       200:
@@ -113,9 +173,12 @@ router.put('/:id', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/delete-prize/:id', async (req, res) => {
     try {
-        await Prize.findByIdAndDelete(req.params.id);
+        const deletedPrize = await Prize.findByIdAndDelete(req.params.id);
+        if (!deletedPrize) {
+            return res.status(404).json({ message: 'Prize not found' });
+        }
         res.json({ message: 'Prize deleted' });
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -30,6 +30,9 @@ const connectDB = async () => {
     }
 }
 
+// Kết nối tới mongoDB (sao ông ko kết nối mà vẫn gọi api tới mongo đc hay v)
+connectDB()
+
 // Cấu hình Swagger
 const swaggerOptions = {
     definition: {
@@ -41,7 +44,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'http://localhost:5300',
+                url: 'http://localhost:5500',
             }
         ]
     },
@@ -51,12 +54,12 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
 // Sử dụng các route
-app.use('/api/clubs', clubRoutes);
-app.use('/api/members', memberRoutes);
-app.use('/api/events', eventRoutes);
-app.use('/api/budgets', budgetRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/prizes', prizeRoutes);
+app.use('/api', clubRoutes);
+app.use('/api', memberRoutes);
+app.use('/api', eventRoutes);
+app.use('/api', budgetRoutes);
+app.use('/api', reportRoutes);
+app.use('/api', prizeRoutes);
 
 // Tích hợp Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));

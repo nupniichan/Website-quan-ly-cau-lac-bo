@@ -39,7 +39,7 @@ const Budget = require('../models/Budget');
 
 /**
  * @swagger
- * /api/budgets:
+ * /api/add-budget:
  *   post:
  *     summary: Thêm một ngân sách mới
  *     requestBody:
@@ -54,7 +54,7 @@ const Budget = require('../models/Budget');
  *       500:
  *         description: Lỗi máy chủ
  */
-router.post('/', async (req, res) => {
+router.post('/add-budget', async (req, res) => {
     try {
         const newBudget = new Budget(req.body);
         await newBudget.save();
@@ -66,7 +66,57 @@ router.post('/', async (req, res) => {
 
 /**
  * @swagger
- * /api/budgets/{id}:
+ * /api/get-budgets:
+ *   get:
+ *     summary: Lấy danh sách tất cả các ngân sách
+ *     responses:
+ *       200:
+ *         description: Danh sách các ngân sách
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-budgets', async (req, res) => {
+    try {
+        const budgets = await Budget.find();
+        res.status(200).json(budgets);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/get-budget/{id}:
+ *   get:
+ *     summary: Lấy thông tin chi tiết của một ngân sách
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của ngân sách
+ *     responses:
+ *       200:
+ *         description: Chi tiết ngân sách
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-budget/:id', async (req, res) => {
+    try {
+        const budget = await Budget.findById(req.params.id);
+        if (!budget) {
+            return res.status(404).json({ message: 'Budget not found' });
+        }
+        res.status(200).json(budget);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/update-budget/{id}:
  *   put:
  *     summary: Cập nhật thông tin ngân sách
  *     parameters:
@@ -88,9 +138,12 @@ router.post('/', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.put('/:id', async (req, res) => {
+router.put('/update-budget/:id', async (req, res) => {
     try {
         const updatedBudget = await Budget.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updatedBudget) {
+            return res.status(404).json({ message: 'Budget not found' });
+        }
         res.json(updatedBudget);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -99,7 +152,7 @@ router.put('/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/budgets/{id}:
+ * /api/delete-budget/{id}:
  *   delete:
  *     summary: Xoá ngân sách
  *     parameters:
@@ -115,9 +168,12 @@ router.put('/:id', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/delete-budget/:id', async (req, res) => {
     try {
-        await Budget.findByIdAndDelete(req.params.id);
+        const deletedBudget = await Budget.findByIdAndDelete(req.params.id);
+        if (!deletedBudget) {
+            return res.status(404).json({ message: 'Budget not found' });
+        }
         res.json({ message: 'Budget deleted' });
     } catch (error) {
         res.status(500).json({ message: error.message });

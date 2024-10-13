@@ -47,7 +47,7 @@ const Member = require('../models/Member');
 
 /**
  * @swagger
- * /api/members:
+ * /api/add-member:
  *   post:
  *     summary: Thêm một thành viên mới
  *     requestBody:
@@ -62,7 +62,7 @@ const Member = require('../models/Member');
  *       500:
  *         description: Lỗi máy chủ
  */
-router.post('/', async (req, res) => {
+router.post('/add-member', async (req, res) => {
     try {
         const newMember = new Member(req.body);
         await newMember.save();
@@ -74,7 +74,57 @@ router.post('/', async (req, res) => {
 
 /**
  * @swagger
- * /api/members/{id}:
+ * /api/get-members:
+ *   get:
+ *     summary: Lấy danh sách tất cả các thành viên
+ *     responses:
+ *       200:
+ *         description: Danh sách các thành viên
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-members', async (req, res) => {
+    try {
+        const members = await Member.find();
+        res.status(200).json(members);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/get-member/{id}:
+ *   get:
+ *     summary: Lấy thông tin chi tiết của một thành viên
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của thành viên
+ *     responses:
+ *       200:
+ *         description: Chi tiết thành viên
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-member/:id', async (req, res) => {
+    try {
+        const member = await Member.findById(req.params.id);
+        if (!member) {
+            return res.status(404).json({ message: 'Member not found' });
+        }
+        res.status(200).json(member);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/update-member/{id}:
  *   put:
  *     summary: Cập nhật thông tin thành viên
  *     parameters:
@@ -96,9 +146,12 @@ router.post('/', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.put('/:id', async (req, res) => {
+router.put('/update-member/:id', async (req, res) => {
     try {
         const updatedMember = await Member.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updatedMember) {
+            return res.status(404).json({ message: 'Member not found' });
+        }
         res.json(updatedMember);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -107,7 +160,7 @@ router.put('/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/members/{id}:
+ * /api/delete-member/{id}:
  *   delete:
  *     summary: Xoá thành viên
  *     parameters:
@@ -123,9 +176,12 @@ router.put('/:id', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/delete-member/:id', async (req, res) => {
     try {
-        await Member.findByIdAndDelete(req.params.id);
+        const deletedMember = await Member.findByIdAndDelete(req.params.id);
+        if (!deletedMember) {
+            return res.status(404).json({ message: 'Member not found' });
+        }
         res.json({ message: 'Member deleted' });
     } catch (error) {
         res.status(500).json({ message: error.message });

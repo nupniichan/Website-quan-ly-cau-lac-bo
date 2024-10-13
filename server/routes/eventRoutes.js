@@ -17,6 +17,9 @@ const Event = require('../models/Event');
  *         - nganSachChiTieu
  *         - nguoiPhuTrach
  *       properties:
+ *         _id:
+ *           type: number
+ *           description: ID của sự kiện
  *         ten:
  *           type: string
  *           description: Tên sự kiện
@@ -46,7 +49,7 @@ const Event = require('../models/Event');
 
 /**
  * @swagger
- * /api/events:
+ * /api/add-event:
  *   post:
  *     summary: Thêm một sự kiện mới
  *     requestBody:
@@ -58,10 +61,14 @@ const Event = require('../models/Event');
  *     responses:
  *       201:
  *         description: Sự kiện mới đã được tạo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Event'
  *       500:
  *         description: Lỗi máy chủ
  */
-router.post('/', async (req, res) => {
+router.post('/add-event', async (req, res) => {
     try {
         const newEvent = new Event(req.body);
         await newEvent.save();
@@ -73,7 +80,57 @@ router.post('/', async (req, res) => {
 
 /**
  * @swagger
- * /api/events/{id}:
+ * /api/get-events:
+ *   get:
+ *     summary: Lấy danh sách tất cả các sự kiện
+ *     responses:
+ *       200:
+ *         description: Danh sách các sự kiện
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-events', async (req, res) => {
+    try {
+        const events = await Event.find();
+        res.status(200).json(events);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/get-event/{id}:
+ *   get:
+ *     summary: Lấy thông tin chi tiết của một sự kiện
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: ID của sự kiện
+ *     responses:
+ *       200:
+ *         description: Chi tiết sự kiện
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-event/:id', async (req, res) => {
+    try {
+        const event = await Event.findById(req.params.id);
+        if (!event) {
+            return res.status(404).json({ message: 'Event not found' });
+        }
+        res.status(200).json(event);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/update-event/{id}:
  *   put:
  *     summary: Cập nhật thông tin sự kiện
  *     parameters:
@@ -81,7 +138,7 @@ router.post('/', async (req, res) => {
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: number
  *         description: ID của sự kiện
  *     requestBody:
  *       required: true
@@ -92,12 +149,19 @@ router.post('/', async (req, res) => {
  *     responses:
  *       200:
  *         description: Sự kiện đã được cập nhật
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Event'
  *       500:
  *         description: Lỗi máy chủ
  */
-router.put('/:id', async (req, res) => {
+router.put('/update-event/:id', async (req, res) => {
     try {
         const updatedEvent = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updatedEvent) {
+            return res.status(404).json({ message: 'Event not found' });
+        }
         res.json(updatedEvent);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -106,7 +170,7 @@ router.put('/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/events/{id}:
+ * /api/delete-event/{id}:
  *   delete:
  *     summary: Xoá sự kiện
  *     parameters:
@@ -114,7 +178,7 @@ router.put('/:id', async (req, res) => {
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: number
  *         description: ID của sự kiện
  *     responses:
  *       200:
@@ -122,9 +186,12 @@ router.put('/:id', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/delete-event/:id', async (req, res) => {
     try {
-        await Event.findByIdAndDelete(req.params.id);
+        const deletedEvent = await Event.findByIdAndDelete(req.params.id);
+        if (!deletedEvent) {
+            return res.status(404).json({ message: 'Event not found' });
+        }
         res.json({ message: 'Event deleted' });
     } catch (error) {
         res.status(500).json({ message: error.message });
