@@ -6,7 +6,7 @@ const eventRoutes = require('./routes/eventRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const prizeRoutes = require('./routes/prizeRoutes');
-
+const cors = require('cors'); // Import cors
 // Import Swagger UI
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -14,7 +14,9 @@ const app = express();
 
 // Middleware để parse JSON
 app.use(express.json());
-
+// Middleware to parse JSON and enable CORS
+app.use(cors()); // Enable CORS for all routes
+app.use(express.json());
 // Kết nối MongoDB
 const connectDB = async () => {
     try{
@@ -29,7 +31,7 @@ const connectDB = async () => {
         process.exit(1);
     }
 }
-
+connectDB();
 // Cấu hình Swagger
 const swaggerOptions = {
     definition: {
@@ -60,7 +62,6 @@ app.use('/api/prizes', prizeRoutes);
 
 // Tích hợp Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
 // Khởi động server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

@@ -31,7 +31,17 @@ const Club = require('../models/Club');
  *           type: string
  *           description: Tên giáo viên phụ trách câu lạc bộ
  */
-
+// Get all clubs
+router.get('/', async (req, res) => {
+    try {
+        const clubs = await Club.find();
+        console.log('Fetched clubs:', clubs); // Debug log
+        res.json(clubs);
+    } catch (error) {
+        console.error('Error fetching clubs:', error.message);
+        res.status(500).json({ message: error.message });
+    }
+});
 /**
  * @swagger
  * /api/clubs:
@@ -53,12 +63,16 @@ const Club = require('../models/Club');
  *       500:
  *         description: Lỗi máy chủ
  */
+// Create a new club
 router.post('/', async (req, res) => {
+    console.log('Request to create club with data:', req.body); // Debug log
     try {
         const newClub = new Club(req.body);
         await newClub.save();
+        console.log('Club created:', newClub); // Debug log
         res.status(201).json(newClub);
     } catch (error) {
+        console.error('Error creating club:', error.message); // Log the error
         res.status(500).json({ message: error.message });
     }
 });
@@ -92,10 +106,13 @@ router.post('/', async (req, res) => {
  *         description: Lỗi máy chủ
  */
 router.put('/:id', async (req, res) => {
+    console.log(`Request to update club with ID: ${req.params.id} and data:`, req.body); // Debug log
     try {
         const updatedClub = await Club.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        console.log('Club updated:', updatedClub); // Debug log
         res.json(updatedClub);
     } catch (error) {
+        console.error('Error updating club:', error.message);
         res.status(500).json({ message: error.message });
     }
 });
@@ -128,3 +145,21 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
+/**
+ * @swagger
+ * /api/clubs:
+ *   get:
+ *     summary: Lấy danh sách tất cả các câu lạc bộ
+ *     responses:
+ *       200:
+ *         description: Danh sách câu lạc bộ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Club'
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+
