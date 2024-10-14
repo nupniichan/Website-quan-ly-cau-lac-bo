@@ -54,7 +54,7 @@ jobs:
         with:
           context: ./admin
           push: true
-          tags: nupniichan/wbdt-admin:latest
+          tags: nupniichan/wqlclb-admin:latest
 
 ## Stage 3: Pull docker image
   pull_project_admin:
@@ -70,7 +70,7 @@ jobs:
 
       - name: Pull docker image from registry
         run: |
-          docker pull nupniichan/wbdt-admin:latest
+          docker pull nupniichan/wqlclb-admin:latest
 
 ## Stage 4: Deploy
   deploy_admin:
@@ -80,8 +80,8 @@ jobs:
     steps:
       - name: Remove current running Docker container and run docker
         run: |
-          docker rm -f wbdt-admin || true
-          docker run --name wbdt-admin -dp 5174:5174 nupniichan/wbdt-admin:latest
+          docker rm -f wqlclb-admin || true
+          docker run --name wqlclb-admin -dp 5100:5100 nupniichan/wqlclb-admin:latest
 
 ## =======================================================================================
 ## ======================================== User ========================================
@@ -132,7 +132,7 @@ jobs:
         with:
           context: ./user
           push: true
-          tags: nupniichan/wbdt-user:latest
+          tags: nupniichan/wqlclb-user:latest
   
 ## Stage 3: Pull docker image
   pull_project_user:
@@ -148,7 +148,7 @@ jobs:
 
       - name: Pull docker image from registry
         run: |
-          docker pull nupniichan/wbdt-user:latest
+          docker pull nupniichan/wqlclb-user:latest
 
 ## Stage 4: Deploy
   deploy_user:
@@ -158,8 +158,8 @@ jobs:
     steps:
       - name: Remove current running Docker container and run
         run: |
-          docker rm -f wbdt-user || true
-          docker run --name wbdt-user -dp 5173:5173 nupniichan/wbdt-user:latest
+          docker rm -f wqlclb-user || true
+          docker run --name wqlclb-user -dp 5200:5200 nupniichan/wqlclb-userlatest
 
 ## =======================================================================================
 ## ======================================== Server =======================================
@@ -210,7 +210,7 @@ jobs:
         with:
           context: ./server
           push: true
-          tags: nupniichan/wbdt-server:latest
+          tags: nupniichan/wqlclb-server:latest
 
 ## Stage 3: Pull docker image
   pull_project_server:
@@ -226,7 +226,7 @@ jobs:
 
       - name: Pull docker image from registry
         run: |
-          docker pull nupniichan/wbdt-server:latest
+          docker pull nupniichan/wqlclb-server:latest
   
 ## Stage 4: Deploy
   deploy_server:
@@ -236,5 +236,5 @@ jobs:
     steps:
       - name: Remove current running Docker container and run
         run: |
-          docker rm -f wbdt-server || true
-          docker run --name wbdt-server -dp 5000:5000 nupniichan/wbdt-server:latest
+          docker rm -f wqlclb-server || true
+          docker run --name wqlclb-server -dp 5500:5500 nupniichan/wqlclb-server:latest
