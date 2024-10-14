@@ -10,7 +10,8 @@ const reportSchema = new mongoose.Schema({
     danhSachSuKien: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
     tongNganSachChiTieu: { type: Number, required: true },
     tongThu: { type: Number, required: true },
-    ketQuaDatDuoc: { type: String, required: true }
+    ketQuaDatDuoc: { type: String, required: true },
+    club: { type: mongoose.Schema.Types.ObjectId, ref: 'Club', required: true }
 });
 
 reportSchema.pre('save', async function (next) {

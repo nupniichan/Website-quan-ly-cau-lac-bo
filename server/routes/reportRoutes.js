@@ -69,13 +69,27 @@ const Report = require('../models/Report');
  */
 router.post('/add-report', async (req, res) => {
     try {
-        const newReport = new Report(req.body);
+        const { clubId, ...reportData } = req.body;
+        const newReport = new Report({
+            ...reportData,
+            club: clubId
+        });
         await newReport.save();
         res.status(201).json(newReport);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+    
+    // Lấy tất cả báo cáo của một CLB cụ thể
+    router.get('/get-reports-by-club/:clubId', async (req, res) => {
+        try {
+            const reports = await Report.find({ club: req.params.clubId });
+            res.status(200).json(reports);
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    });
 
 /**
  * @swagger

@@ -54,15 +54,48 @@ const Budget = require('../models/Budget');
  *       500:
  *         description: Lỗi máy chủ
  */
+// Thêm ngân sách mới với clubId
 router.post('/add-budget', async (req, res) => {
     try {
-        const newBudget = new Budget(req.body);
+        const { clubId, ...budgetData } = req.body;
+        const newBudget = new Budget({
+            ...budgetData,
+            club: clubId
+        });
         await newBudget.save();
         res.status(201).json(newBudget);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
+/**
+ * @swagger
+ * /api/add-budget:
+ *   post:
+ *     summary: Lấy tất cả ngân sách của một CLB cụ thể
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Budget'
+ *     responses:
+ *       201:
+ *         description: Lấy thành công
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+// Lấy tất cả ngân sách của một CLB cụ thể
+router.get('/get-budgets-by-club/:clubId', async (req, res) => {
+    try {
+        const budgets = await Budget.find({ club: req.params.clubId });
+        res.status(200).json(budgets);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 
 /**
  * @swagger

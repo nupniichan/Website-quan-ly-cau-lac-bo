@@ -68,11 +68,43 @@ const Event = require('../models/Event');
  *       500:
  *         description: Lỗi máy chủ
  */
+// Thêm sự kiện mới với clubId
 router.post('/add-event', async (req, res) => {
     try {
-        const newEvent = new Event(req.body);
+        const { clubId, ...eventData } = req.body;
+        const newEvent = new Event({
+            ...eventData,
+            club: clubId
+        });
         await newEvent.save();
         res.status(201).json(newEvent);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * api/get-events-by-club/{id}:
+ *   post:
+ *     summary: Lấy tất cả sự kiện của một CLB cụ thể
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Budget'
+ *     responses:
+ *       201:
+ *         description: Lấy thành công
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+// Lấy tất cả sự kiện của một CLB cụ thể
+router.get('/get-events-by-club/:clubId', async (req, res) => {
+    try {
+        const events = await Event.find({ club: req.params.clubId });
+        res.status(200).json(events);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
