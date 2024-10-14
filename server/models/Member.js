@@ -10,7 +10,8 @@ const memberSchema = new mongoose.Schema({
     thongTinLienLac: { type: String, required: true },
     ngayThamGia: { type: Date, required: true },
     tinhTrang: { type: String, required: true },
-    suKienDaThamGia: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }]
+    suKienDaThamGia: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
+    club: { type: mongoose.Schema.Types.ObjectId, ref: 'Club', required: true }
 });
 
 const Member = mongoose.model('Member', memberSchema);

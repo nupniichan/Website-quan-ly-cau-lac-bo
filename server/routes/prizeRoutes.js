@@ -61,7 +61,11 @@ const Prize = require('../models/Prize');
  */
 router.post('/add-prize', async (req, res) => {
     try {
-        const newPrize = new Prize(req.body);
+        const { clubId, ...prizeData } = req.body;
+        const newPrize = new Prize({
+            ...prizeData,
+            club: clubId
+        });
         await newPrize.save();
         res.status(201).json(newPrize);
     } catch (error) {
@@ -69,6 +73,32 @@ router.post('/add-prize', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/get-prizes-by-club/{clubId}:
+ *   post:
+ *     summary: Lấy tất cả giải thưởng của một CLB cụ thể
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Budget'
+ *     responses:
+ *       201:
+ *         description: Lấy thành công
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+// Lấy tất cả giải thưởng của một CLB cụ thể
+router.get('/get-prizes-by-club/:clubId', async (req, res) => {
+    try {
+        const prizes = await Prize.find({ club: req.params.clubId });
+        res.status(200).json(prizes);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 /**
  * @swagger
  * /api/get-prizes:
