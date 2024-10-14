@@ -8,6 +8,7 @@ const prizeSchema = new mongoose.Schema({
     ngayDatGiai: { type: Date, required: true },
     loaiGiai: { type: String, required: true },
     thanhVienDatGiai: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
+    club: { type: mongoose.Schema.Types.ObjectId, ref: 'Club', required: true },
     ghiChu: { type: String },
     anhDatGiai: { type: String }
 });

@@ -64,9 +64,40 @@ const Member = require('../models/Member');
  */
 router.post('/add-member', async (req, res) => {
     try {
-        const newMember = new Member(req.body);
+        const { clubId, ...memberData } = req.body;
+        const newMember = new Member({
+            ...memberData,
+            club: clubId
+        });
         await newMember.save();
         res.status(201).json(newMember);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * api/get-members-by-club/{id}:
+ *   post:
+ *     summary: Lấy tất cả thành viên của một CLB cụ thể
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Budget'
+ *     responses:
+ *       201:
+ *         description: Lấy thành công
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+// Lấy tất cả thành viên của một CLB cụ thể
+router.get('/get-members-by-club/:clubId', async (req, res) => {
+    try {
+        const members = await Member.find({ club: req.params.clubId });
+        res.status(200).json(members);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
