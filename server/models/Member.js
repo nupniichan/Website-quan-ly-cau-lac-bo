@@ -11,7 +11,7 @@ const memberSchema = new mongoose.Schema({
     ngayThamGia: { type: Date, required: true },
     tinhTrang: { type: String, required: true },
     suKienDaThamGia: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
-    club: { type: mongoose.Schema.Types.ObjectId, ref: 'Club', required: true }
+    club: { type: Number, ref: 'Club', required: true }  // Thay đổi ObjectId thành Number
 });
 
 const Member = mongoose.model('Member', memberSchema);

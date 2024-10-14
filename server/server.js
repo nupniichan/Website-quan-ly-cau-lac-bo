@@ -18,17 +18,15 @@ app.use(express.json());
 // Kết nối MongoDB
 const connectDB = async () => {
     try{
-        const conn = await mongoose.connect('mongodb+srv://nupniichan01:H1nixHkL97y4F7Sx@clustercnpm.wzxo0.mongodb.net/QuanLyCLB?retryWrites=true&w=majority&appName=ClusterCNPM',{
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        })
+        const conn = await mongoose.connect('mongodb+srv://nupniichan01:H1nixHkL97y4F7Sx@clustercnpm.wzxo0.mongodb.net/QuanLyCLB?retryWrites=true&w=majority&appName=ClusterCNPM');
         console.log(`MongoDB connected: ${conn.connection.host}`);
     }
     catch (error){
-        console.error(error);
-        process.exit(1);
+        console.error('Error connecting to MongoDB:', error);
+        process.exit(1); // Thoát khỏi ứng dụng nếu kết nối thất bại
     }
 }
+
 
 // Kết nối tới mongoDB (sao ông ko kết nối mà vẫn gọi api tới mongo đc hay v)
 connectDB()
