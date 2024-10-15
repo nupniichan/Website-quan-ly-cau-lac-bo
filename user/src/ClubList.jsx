@@ -1,4 +1,4 @@
-
+import { Link } from 'react-router-dom';
 
 const clubs = [
   'Câu lạc bộ tin học', 'Câu lạc bộ tình nguyện', 'Câu lạc bộ âm nhạc',
@@ -39,22 +39,23 @@ const requirements = [
 const ClubList = () => {
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6 text-center">Danh sách câu lạc bộ tại trường</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center" style={{ color: '#004D86' }}>Danh sách câu lạc bộ tại trường</h1>
       
       <div className="grid grid-cols-3 gap-6 mb-8">
         {clubs.map((club, index) => (
-          <button 
-            key={index} 
+          <Link 
+            key={index}
+            to={`/clubs/${encodeURIComponent(club)}`}
             className={`
               bg-red-600 text-white py-4 px-4 hover:bg-red-700 transition duration-300
-              h-12 flex items-center justify-center w-full
+              h-12 flex items-center justify-center w-full no-underline
               ${index % 3 === 0 ? 'rounded-tl-none rounded-tr-[20px] rounded-bl-[20px] rounded-br-none' : 
                 index % 3 === 1 ? 'rounded-[20px]' : 
                 'rounded-tl-[20px] rounded-tr-none rounded-bl-none rounded-br-[20px]'}
             `}
           >
             {club}
-          </button>
+          </Link>
         ))}
       </div>
 

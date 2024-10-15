@@ -1,9 +1,15 @@
+import { useParams } from 'react-router-dom';
 import logoclb from '../public/imgs/logoclb.jpg';
 
 const ClubDetails = () => {
+  const { clubName } = useParams();
+
+  // Ở đây bạn có thể thêm logic để lấy thông tin chi tiết của câu lạc bộ dựa trên clubName
+  // Ví dụ: const clubInfo = getClubInfo(clubName);
+
   return (
     <div className="max-w-5xl mx-auto px-8 py-6 font-sans" style={{ paddingLeft: '50px', paddingRight: '50px' }}>
-      <h1 className="text-2xl font-bold mb-6 text-center" style={{ color: '#004D86' }}>Câu lạc bộ tin học</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center" style={{ color: '#004D86' }}>{clubName}</h1>
       
       <div className="flex mb-8 items-center">
         <div className="w-1/4 pr-6 flex-shrink-0 flex items-center justify-center">

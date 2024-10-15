@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import  { useRef } from 'react';
 import { FaGraduationCap, FaBookReader, FaBrain, FaGlobeAmericas, FaLaptop } from 'react-icons/fa';
 
 const Homepage = () => {
@@ -36,8 +36,12 @@ const Homepage = () => {
     <div>
       <div className="relative">
         <img src="../public/imgs/banner.jpg" alt="Trường trung học phổ thông" className="w-full object-cover" style={{height: '500px'}}/>
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-65 p-6 border-t-4 border-black w-4/6" 
-             style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 300 }}>
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 p-6 border-t-4 border-black w-4/6" 
+             style={{ 
+               fontFamily: 'Roboto, sans-serif', 
+               fontWeight: 300,
+               backgroundColor: 'rgba(0, 0, 0, 0.65)'
+             }}>
           <div className="text-left">
             <div className="w-24 h-px bg-white mb-3"></div>
             <h1 className="text-white text-2xl md:text-4xl font-bold mb-3">Trường trung học phổ thông</h1>
