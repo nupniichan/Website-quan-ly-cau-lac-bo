@@ -1,4 +1,5 @@
 import curriculum from '../public/imgs/curriculum.jpg';
+
 const Curriculum = () => {
   return (
     <div className="container mx-auto px-4 py-8">
