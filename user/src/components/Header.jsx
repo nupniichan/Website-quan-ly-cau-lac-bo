@@ -1,4 +1,5 @@
 import { ChevronDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   return (
@@ -9,9 +10,12 @@ const Header = () => {
         <div className="relative flex items-center justify-end px-4 h-full z-20">
           {/* Positioned on the right side */}
           <div className="flex">
-            <span className="font-bold text-white mr-[30px]">Học sinh</span>
-            <span className="font-bold text-white mr-[30px]">Cựu học sinh</span>
-            <span className="font-bold text-white mr-[30px]">Đội ngũ giáo viên</span>
+            <Link to="/" className="font-bold text-white mr-[30px] no-underline">Trang chủ</Link>
+            <Link to="/about" className="font-bold text-white mr-[30px] no-underline">Về trường</Link>
+            <Link to="/clubs" className="font-bold text-white mr-[30px] no-underline">Câu lạc bộ</Link>
+            <Link to="/curriculum" className="font-bold text-white mr-[30px] no-underline">Chương trình học</Link>
+            <Link to="/news" className="font-bold text-white mr-[30px] no-underline">Tin tức</Link>
+            <Link to="/admission" className="font-bold text-white mr-[30px] no-underline">Tuyển sinh</Link>
           </div>
         </div>
       </div>
