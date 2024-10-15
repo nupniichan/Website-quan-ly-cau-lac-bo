@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Prize = require('../models/Prize');
+const Club = require('../models/Club');  // Đảm bảo đã import model Club
+
 
 /**
  * @swagger
@@ -14,9 +16,6 @@ const Prize = require('../models/Prize');
  *         - loaiGiai
  *         - thanhVienDatGiai
  *       properties:
- *         _id:
- *           type: number
- *           description: ID của giải thưởng
  *         tenGiaiThuong:
  *           type: string
  *           description: Tên giải thưởng
@@ -56,49 +55,70 @@ const Prize = require('../models/Prize');
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Prize'
+ *       400:
+ *         description: Dữ liệu không hợp lệ
  *       500:
  *         description: Lỗi máy chủ
  */
 router.post('/add-prize', async (req, res) => {
     try {
         const { clubId, ...prizeData } = req.body;
+
+        // Kiểm tra xem CLB có tồn tại không
+        const club = await Club.findById(clubId);
+        if (!club) {
+            return res.status(404).json({ message: 'Không tìm thấy CLB' });
+        }
+
+        // Tạo giải thưởng mới
         const newPrize = new Prize({
             ...prizeData,
-            club: clubId
+            club: clubId  // Liên kết với clubId
         });
-        await newPrize.save();
+
+        await newPrize.save();  // Lưu giải thưởng
         res.status(201).json(newPrize);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(400).json({ message: error.message });
     }
 });
+
 
 /**
  * @swagger
  * /api/get-prizes-by-club/{clubId}:
- *   post:
+ *   get:
  *     summary: Lấy tất cả giải thưởng của một CLB cụ thể
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Budget'
+ *     parameters:
+ *       - in: path
+ *         name: clubId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của câu lạc bộ
  *     responses:
- *       201:
- *         description: Lấy thành công
+ *       200:
+ *         description: Danh sách giải thưởng của CLB
+ *       404:
+ *         description: Không tìm thấy giải thưởng cho CLB
  *       500:
  *         description: Lỗi máy chủ
  */
-// Lấy tất cả giải thưởng của một CLB cụ thể
 router.get('/get-prizes-by-club/:clubId', async (req, res) => {
     try {
         const prizes = await Prize.find({ club: req.params.clubId });
+
+        if (!prizes || prizes.length === 0) {
+            return res.status(404).json({ message: 'Không tìm thấy giải thưởng cho CLB' });
+        }
+
         res.status(200).json(prizes);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
+
 /**
  * @swagger
  * /api/get-prizes:
@@ -129,25 +149,30 @@ router.get('/get-prizes', async (req, res) => {
  *         name: id
  *         required: true
  *         schema:
- *           type: number
+ *           type: string
  *         description: ID của giải thưởng
  *     responses:
  *       200:
  *         description: Chi tiết giải thưởng
+ *       404:
+ *         description: Không tìm thấy giải thưởng
  *       500:
  *         description: Lỗi máy chủ
  */
 router.get('/get-prize/:id', async (req, res) => {
     try {
         const prize = await Prize.findById(req.params.id);
+
         if (!prize) {
-            return res.status(404).json({ message: 'Prize not found' });
+            return res.status(404).json({ message: 'Không tìm thấy giải thưởng' });
         }
+
         res.status(200).json(prize);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 /**
  * @swagger
@@ -159,7 +184,7 @@ router.get('/get-prize/:id', async (req, res) => {
  *         name: id
  *         required: true
  *         schema:
- *           type: number
+ *           type: string
  *         description: ID của giải thưởng
  *     requestBody:
  *       required: true
@@ -170,20 +195,28 @@ router.get('/get-prize/:id', async (req, res) => {
  *     responses:
  *       200:
  *         description: Giải thưởng đã được cập nhật
+ *       404:
+ *         description: Không tìm thấy giải thưởng
  *       500:
  *         description: Lỗi máy chủ
  */
 router.put('/update-prize/:id', async (req, res) => {
     try {
-        const updatedPrize = await Prize.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const { _id, ...updateData } = req.body;
+
+        // Tìm kiếm và cập nhật giải thưởng
+        const updatedPrize = await Prize.findByIdAndUpdate(req.params.id, updateData, { new: true });
+
         if (!updatedPrize) {
-            return res.status(404).json({ message: 'Prize not found' });
+            return res.status(404).json({ message: 'Không tìm thấy giải thưởng' });
         }
-        res.json(updatedPrize);
+
+        res.status(200).json(updatedPrize);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 /**
  * @swagger
@@ -195,24 +228,29 @@ router.put('/update-prize/:id', async (req, res) => {
  *         name: id
  *         required: true
  *         schema:
- *           type: number
+ *           type: string
  *         description: ID của giải thưởng
  *     responses:
  *       200:
  *         description: Giải thưởng đã bị xoá
+ *       404:
+ *         description: Không tìm thấy giải thưởng
  *       500:
  *         description: Lỗi máy chủ
  */
 router.delete('/delete-prize/:id', async (req, res) => {
     try {
         const deletedPrize = await Prize.findByIdAndDelete(req.params.id);
+
         if (!deletedPrize) {
-            return res.status(404).json({ message: 'Prize not found' });
+            return res.status(404).json({ message: 'Không tìm thấy giải thưởng' });
         }
-        res.json({ message: 'Prize deleted' });
+
+        res.status(200).json({ message: 'Giải thưởng đã bị xóa' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 module.exports = router;
