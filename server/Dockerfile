@@ -8,9 +8,7 @@ FROM oven/bun:latest
 
 COPY package.json ./
 COPY bun.lockb ./
-COPY src ./src
-COPY public ./public
-
+# Sau nay co muc public thi them vao sau
 RUN bun install
 
 ## Run stage
