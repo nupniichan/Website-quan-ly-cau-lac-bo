@@ -1,6 +1,5 @@
 import { ChevronDown } from 'lucide-react';
 import { Search } from 'lucide-react'; // Make sure to import the Search icon
-import { Link } from 'react-router-dom';
 
 const Header = () => {
   return (
@@ -15,14 +14,6 @@ const Header = () => {
             <span className="font-bold text-white mr-[60px]">Cựu học sinh</span>
             <span className="font-bold text-white mr-[90px]">Đội ngũ giáo viên</span>
             </div>
-          <div className="flex">
-            <Link to="/" className="font-bold text-white mr-[30px] no-underline">Trang chủ</Link>
-            <Link to="/about" className="font-bold text-white mr-[30px] no-underline">Về trường</Link>
-            <Link to="/clubs" className="font-bold text-white mr-[30px] no-underline">Câu lạc bộ</Link>
-            <Link to="/curriculum" className="font-bold text-white mr-[30px] no-underline">Chương trình học</Link>
-            <Link to="/news" className="font-bold text-white mr-[30px] no-underline">Tin tức</Link>
-            <Link to="/admission" className="font-bold text-white mr-[30px] no-underline">Tuyển sinh</Link>
-          </div>
         </div>
       </div>
 
