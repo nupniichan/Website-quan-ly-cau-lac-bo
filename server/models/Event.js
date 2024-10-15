@@ -3,6 +3,7 @@ const Counter = require('./Counter');
 
 // Schema cho thông tin sự kiện (Event)
 const eventSchema = new mongoose.Schema({
+    _id: { type: Number, required: true },  // Sử dụng số thay vì ObjectId cho _id
     ten: { type: String, required: true },
     ngayToChuc: { type: Date, required: true },
     thoiGianToChuc: { type: String, required: true },
@@ -11,8 +12,9 @@ const eventSchema = new mongoose.Schema({
     nganSachChiTieu: { type: Number, required: true },
     nguoiPhuTrach: { type: String, required: true },
     khachMoi: { type: String },
-    club: { type: mongoose.Schema.Types.ObjectId, ref: 'Club', required: true } // Liên kết với Club
+    club: { type: Number, ref: 'Club', required: true }  // Sử dụng clubId là số
 });
+
 
 eventSchema.pre('save', async function (next) {
     if (this.isNew) {

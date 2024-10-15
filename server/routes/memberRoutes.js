@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Member = require('../models/Member');
+const Club = require('../models/Club');  // Thêm dòng này để import mô hình Club
+
 
 /**
  * @swagger
@@ -59,16 +61,32 @@ const Member = require('../models/Member');
  *     responses:
  *       201:
  *         description: Thành viên mới đã được tạo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Member'
+ *       400:
+ *         description: Dữ liệu không hợp lệ
  *       500:
  *         description: Lỗi máy chủ
  */
 router.post('/add-member', async (req, res) => {
     try {
         const { clubId, ...memberData } = req.body;
+
+        // Tìm kiếm câu lạc bộ dựa trên _id là số
+        const club = await Club.findById(clubId);  // Sử dụng findById thay vì findOne
+
+        if (!club) {
+            return res.status(404).json({ message: 'Club not found' });
+        }
+
+        // Tạo thành viên mới và liên kết với club
         const newMember = new Member({
             ...memberData,
-            club: clubId
+            club: club._id  // Liên kết với ObjectId của Club
         });
+
         await newMember.save();
         res.status(201).json(newMember);
     } catch (error) {
@@ -76,27 +94,35 @@ router.post('/add-member', async (req, res) => {
     }
 });
 
+
+
+
 /**
  * @swagger
- * api/get-members-by-club/{id}:
- *   post:
+ * /api/get-members-by-club/{clubId}:
+ *   get:
  *     summary: Lấy tất cả thành viên của một CLB cụ thể
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Budget'
+ *     parameters:
+ *       - in: path
+ *         name: clubId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của câu lạc bộ
  *     responses:
- *       201:
- *         description: Lấy thành công
+ *       200:
+ *         description: Danh sách thành viên của CLB
+ *       404:
+ *         description: Không tìm thấy thành viên cho CLB
  *       500:
  *         description: Lỗi máy chủ
  */
-// Lấy tất cả thành viên của một CLB cụ thể
 router.get('/get-members-by-club/:clubId', async (req, res) => {
     try {
         const members = await Member.find({ club: req.params.clubId });
+        if (!members || members.length === 0) {
+            return res.status(404).json({ message: 'Không tìm thấy thành viên cho CLB' });
+        }
         res.status(200).json(members);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -138,20 +164,25 @@ router.get('/get-members', async (req, res) => {
  *     responses:
  *       200:
  *         description: Chi tiết thành viên
+ *       404:
+ *         description: Không tìm thấy thành viên
  *       500:
  *         description: Lỗi máy chủ
  */
-router.get('/get-member/:id', async (req, res) => {
+router.get('/get-member/:maSoHocSinh', async (req, res) => {
     try {
-        const member = await Member.findById(req.params.id);
+        // Tìm kiếm thành viên dựa trên maSoHocSinh
+        const member = await Member.findOne({ maSoHocSinh: req.params.maSoHocSinh });
+
         if (!member) {
-            return res.status(404).json({ message: 'Member not found' });
+            return res.status(404).json({ message: 'Không tìm thấy thành viên' });
         }
         res.status(200).json(member);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 /**
  * @swagger
@@ -174,20 +205,30 @@ router.get('/get-member/:id', async (req, res) => {
  *     responses:
  *       200:
  *         description: Thành viên đã được cập nhật
+ *       404:
+ *         description: Không tìm thấy thành viên
  *       500:
  *         description: Lỗi máy chủ
  */
-router.put('/update-member/:id', async (req, res) => {
+router.put('/update-member/:maSoHocSinh', async (req, res) => {
     try {
-        const updatedMember = await Member.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        // Tìm kiếm thành viên dựa trên maSoHocSinh
+        const updatedMember = await Member.findOneAndUpdate(
+            { maSoHocSinh: req.params.maSoHocSinh },  // Tìm kiếm bằng maSoHocSinh
+            req.body,  // Dữ liệu cập nhật
+            { new: true }  // Trả về bản ghi đã cập nhật
+        );
+
         if (!updatedMember) {
-            return res.status(404).json({ message: 'Member not found' });
+            return res.status(404).json({ message: 'Không tìm thấy thành viên' });
         }
-        res.json(updatedMember);
+
+        res.status(200).json(updatedMember);  // Trả về thành viên đã cập nhật
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 /**
  * @swagger
@@ -204,19 +245,25 @@ router.put('/update-member/:id', async (req, res) => {
  *     responses:
  *       200:
  *         description: Thành viên đã bị xoá
+ *       404:
+ *         description: Không tìm thấy thành viên
  *       500:
  *         description: Lỗi máy chủ
  */
-router.delete('/delete-member/:id', async (req, res) => {
+router.delete('/delete-member/:maSoHocSinh', async (req, res) => {
     try {
-        const deletedMember = await Member.findByIdAndDelete(req.params.id);
+        // Tìm kiếm và xóa thành viên dựa trên maSoHocSinh
+        const deletedMember = await Member.findOneAndDelete({ maSoHocSinh: req.params.maSoHocSinh });
+
         if (!deletedMember) {
-            return res.status(404).json({ message: 'Member not found' });
+            return res.status(404).json({ message: 'Không tìm thấy thành viên' });
         }
-        res.json({ message: 'Member deleted' });
+
+        res.status(200).json({ message: 'Thành viên đã bị xoá' });  // Xóa thành viên thành công
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 module.exports = router;
