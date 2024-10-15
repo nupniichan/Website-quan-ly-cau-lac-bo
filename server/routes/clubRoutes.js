@@ -63,6 +63,8 @@ const Club = require('../models/Club');
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Club'
+ *       400:
+ *         description: Dữ liệu không hợp lệ
  *       500:
  *         description: Lỗi máy chủ
  */
@@ -72,7 +74,7 @@ router.post('/add-club', async (req, res) => {
         await newClub.save();
         res.status(201).json(newClub);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(400).json({ message: error.message });
     }
 });
 
@@ -84,6 +86,12 @@ router.post('/add-club', async (req, res) => {
  *     responses:
  *       200:
  *         description: Danh sách các câu lạc bộ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Club'
  *       500:
  *         description: Lỗi máy chủ
  */
@@ -111,12 +119,19 @@ router.get('/get-clubs', async (req, res) => {
  *     responses:
  *       200:
  *         description: Chi tiết câu lạc bộ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Club'
+ *       404:
+ *         description: Không tìm thấy câu lạc bộ
  *       500:
  *         description: Lỗi máy chủ
  */
 router.get('/get-club/:id', async (req, res) => {
     try {
-        const club = await Club.findById(req.params.id);
+        const id = parseInt(req.params.id, 10);
+        const club = await Club.findById(id);
         if (!club) {
             return res.status(404).json({ message: 'Club not found' });
         }
@@ -151,16 +166,19 @@ router.get('/get-club/:id', async (req, res) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Club'
+ *       404:
+ *         description: Không tìm thấy câu lạc bộ
  *       500:
  *         description: Lỗi máy chủ
  */
 router.put('/update-club/:id', async (req, res) => {
     try {
-        const updatedClub = await Club.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const id = parseInt(req.params.id, 10);
+        const updatedClub = await Club.findByIdAndUpdate(id, req.body, { new: true });
         if (!updatedClub) {
             return res.status(404).json({ message: 'Club not found' });
         }
-        res.json(updatedClub);
+        res.status(200).json(updatedClub);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -181,16 +199,19 @@ router.put('/update-club/:id', async (req, res) => {
  *     responses:
  *       200:
  *         description: Câu lạc bộ đã bị xoá
+ *       404:
+ *         description: Không tìm thấy câu lạc bộ
  *       500:
  *         description: Lỗi máy chủ
  */
 router.delete('/delete-club/:id', async (req, res) => {
     try {
-        const deletedClub = await Club.findByIdAndDelete(req.params.id);
+        const id = parseInt(req.params.id, 10);
+        const deletedClub = await Club.findByIdAndDelete(id);
         if (!deletedClub) {
             return res.status(404).json({ message: 'Club not found' });
         }
-        res.json({ message: 'Club deleted' });
+        res.status(200).json({ message: 'Club deleted' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

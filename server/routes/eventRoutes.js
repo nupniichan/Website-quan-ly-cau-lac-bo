@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Event = require('../models/Event');
+const Club = require('../models/Club');  // Import model của Club nếu cần
 
 /**
  * @swagger
@@ -16,10 +17,8 @@ const Event = require('../models/Event');
  *         - noiDung
  *         - nganSachChiTieu
  *         - nguoiPhuTrach
+ *         - clubId  // Thêm trường clubId
  *       properties:
- *         _id:
- *           type: number
- *           description: ID của sự kiện
  *         ten:
  *           type: string
  *           description: Tên sự kiện
@@ -42,9 +41,9 @@ const Event = require('../models/Event');
  *         nguoiPhuTrach:
  *           type: string
  *           description: Người phụ trách sự kiện
- *         khachMoi:
- *           type: string
- *           description: Khách mời (nếu có)
+ *         clubId:
+ *           type: number
+ *           description: ID của câu lạc bộ
  */
 
 /**
@@ -65,51 +64,70 @@ const Event = require('../models/Event');
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Event'
+ *       400:
+ *         description: Dữ liệu không hợp lệ
  *       500:
  *         description: Lỗi máy chủ
  */
-// Thêm sự kiện mới với clubId
 router.post('/add-event', async (req, res) => {
     try {
-        const { clubId, ...eventData } = req.body;
+        const { clubId, _id, ...eventData } = req.body;
+
+        // Tìm kiếm câu lạc bộ dựa trên clubId là số
+        const club = await Club.findOne({ _id: clubId });
+
+        if (!club) {
+            return res.status(404).json({ message: 'Không tìm thấy CLB' });
+        }
+
         const newEvent = new Event({
+            _id,  // Nhận _id là số từ request
             ...eventData,
-            club: clubId
+            club: clubId  // Liên kết sự kiện với clubId là số
         });
+
         await newEvent.save();
         res.status(201).json(newEvent);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(400).json({ message: error.message });
     }
 });
 
+
 /**
  * @swagger
- * api/get-events-by-club/{id}:
- *   post:
+ * /api/get-events-by-club/{clubId}:
+ *   get:
  *     summary: Lấy tất cả sự kiện của một CLB cụ thể
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Budget'
+ *     parameters:
+ *       - in: path
+ *         name: clubId
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: ID của câu lạc bộ
  *     responses:
- *       201:
- *         description: Lấy thành công
+ *       200:
+ *         description: Danh sách sự kiện của CLB
+ *       404:
+ *         description: Không tìm thấy sự kiện cho CLB
  *       500:
  *         description: Lỗi máy chủ
  */
-// Lấy tất cả sự kiện của một CLB cụ thể
-router.get('/get-events-by-club/:clubId', async (req, res) => {
+router.get('/get-event/:id', async (req, res) => {
     try {
-        const events = await Event.find({ club: req.params.clubId });
-        res.status(200).json(events);
+        const event = await Event.findById(req.params.id);  // Tìm kiếm bằng id là số
+        if (!event) {
+            return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
+        }
+        res.status(200).json(event);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
+
+// Các route khác không thay đổi, vì chúng không liên quan trực tiếp đến `clubId`
 /**
  * @swagger
  * /api/get-events:
@@ -121,40 +139,47 @@ router.get('/get-events-by-club/:clubId', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.get('/get-events', async (req, res) => {
+
+/**
+ * @swagger
+ * /api/get-events-by-club/{clubId}:
+ *   get:
+ *     summary: Lấy tất cả sự kiện của một CLB cụ thể
+ *     parameters:
+ *       - in: path
+ *         name: clubId
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: ID của câu lạc bộ
+ *     responses:
+ *       200:
+ *         description: Danh sách sự kiện của CLB
+ *       404:
+ *         description: Không tìm thấy sự kiện cho CLB
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-events-by-club/:clubId', async (req, res) => {
     try {
-        const events = await Event.find();
+        // Tìm kiếm các sự kiện dựa trên clubId là số
+        const events = await Event.find({ club: req.params.clubId });
+
+        if (!events || events.length === 0) {
+            return res.status(404).json({ message: 'Không tìm thấy sự kiện cho CLB' });
+        }
+
         res.status(200).json(events);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-/**
- * @swagger
- * /api/get-event/{id}:
- *   get:
- *     summary: Lấy thông tin chi tiết của một sự kiện
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: number
- *         description: ID của sự kiện
- *     responses:
- *       200:
- *         description: Chi tiết sự kiện
- *       500:
- *         description: Lỗi máy chủ
- */
-router.get('/get-event/:id', async (req, res) => {
+
+router.get('/get-events', async (req, res) => {
     try {
-        const event = await Event.findById(req.params.id);
-        if (!event) {
-            return res.status(404).json({ message: 'Event not found' });
-        }
-        res.status(200).json(event);
+        const events = await Event.find();
+        res.status(200).json(events);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -170,7 +195,7 @@ router.get('/get-event/:id', async (req, res) => {
  *         name: id
  *         required: true
  *         schema:
- *           type: number
+ *           type: string
  *         description: ID của sự kiện
  *     requestBody:
  *       required: true
@@ -181,10 +206,8 @@ router.get('/get-event/:id', async (req, res) => {
  *     responses:
  *       200:
  *         description: Sự kiện đã được cập nhật
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Event'
+ *       404:
+ *         description: Không tìm thấy sự kiện
  *       500:
  *         description: Lỗi máy chủ
  */
@@ -192,13 +215,14 @@ router.put('/update-event/:id', async (req, res) => {
     try {
         const updatedEvent = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!updatedEvent) {
-            return res.status(404).json({ message: 'Event not found' });
+            return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
         }
-        res.json(updatedEvent);
+        res.status(200).json(updatedEvent);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 /**
  * @swagger
@@ -210,11 +234,13 @@ router.put('/update-event/:id', async (req, res) => {
  *         name: id
  *         required: true
  *         schema:
- *           type: number
+ *           type: string
  *         description: ID của sự kiện
  *     responses:
  *       200:
  *         description: Sự kiện đã bị xoá
+ *       404:
+ *         description: Không tìm thấy sự kiện
  *       500:
  *         description: Lỗi máy chủ
  */
@@ -222,12 +248,13 @@ router.delete('/delete-event/:id', async (req, res) => {
     try {
         const deletedEvent = await Event.findByIdAndDelete(req.params.id);
         if (!deletedEvent) {
-            return res.status(404).json({ message: 'Event not found' });
+            return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
         }
-        res.json({ message: 'Event deleted' });
+        res.status(200).json({ message: 'Sự kiện đã bị xoá' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 module.exports = router;
