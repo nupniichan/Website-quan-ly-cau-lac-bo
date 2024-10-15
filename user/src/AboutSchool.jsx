@@ -87,8 +87,8 @@ const AboutSchool = () => {
           <h3 className="text-2xl font-bold mb-4" style={{ color: '#004D86' }}>Giáo viên ưu tú</h3>
           <div className="space-y-4">
             <p>
-              <span className="font-bold">Thầy Nguyễn Văn A:</span> Giáo viên dạy Toán với hơn 15 năm kinh nghiệm, đã từng đạt giải "Giáo 
-              viên dạy giỏi cấp thành phố" và có nhiều học sinh giỏi quốc gia.
+              <span className="font-bold">Thầy Nguyễn Văn A:</span> Giáo viên dạy Toán với hơn 15 năm kinh nghiệm, đã từng đạt giải &quot;Giáo 
+              viên dạy giỏi cấp thành phố&quot; và có nhiều học sinh giỏi quốc gia.
             </p>
             <p>
               <span className="font-bold">Cô Trần Thị B:</span> Giáo viên dạy Ngữ văn, tác giả của nhiều sách giáo khoa, nổi tiếng với phương 
