@@ -1,5 +1,4 @@
-import React from 'react';
-import logoclb from '../public/imgs/logoclb.jpg'; // Đảm bảo đường dẫn chính xác
+import logoclb from '../public/imgs/logoclb.jpg';
 
 const ClubDetails = () => {
   return (
@@ -8,7 +7,7 @@ const ClubDetails = () => {
       
       <div className="flex mb-8 items-center">
         <div className="w-1/4 pr-6 flex-shrink-0 flex items-center justify-center">
-          <img src={logoclb} alt="Logo câu lạc bộ tin học" className="w-25 h-25 object-contain" />
+          <img src={logoclb} alt="Logo câu lạc bộ tin học" className="w-64 h-64 object-contain" />
         </div>
         <div className="w-3/4 flex items-center">
           <p className="text-gray-700 text-lg">

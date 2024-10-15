@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 const clubs = [
   'Câu lạc bộ tin học', 'Câu lạc bộ tình nguyện', 'Câu lạc bộ âm nhạc',

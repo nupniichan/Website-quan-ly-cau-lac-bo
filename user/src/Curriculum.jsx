@@ -1,4 +1,3 @@
-import React from 'react';
 import curriculum from '../public/imgs/curriculum.jpg';
 const Curriculum = () => {
   return (
@@ -18,9 +17,9 @@ const Curriculum = () => {
       
       <h2 className="text-2xl font-semibold mb-4 text-[#004D86]">Bảng tổng hợp kế hoạch giáo dục cấp trung học phổ thông</h2>
       
-      <figure className="mb-6">
-      <img src={curriculum} alt="Chương trình đào tạo" className="w-3/4 md:w-1/2 rounded-lg shadow-md" />
-      <figcaption className="text-sm text-gray-600 mt-2 text-center">( Chương trình đào tạo theo thông tư)</figcaption>
+      <figure className="mb-6 flex flex-col items-center">
+        <img src={curriculum} alt="Chương trình đào tạo" className="w-3/4 md:w-1/2 rounded-lg shadow-md" />
+        <figcaption className="text-sm text-gray-600 mt-2 text-center">( Chương trình đào tạo theo thông tư)</figcaption>
       </figure>
       
       <div className="mt-4">
@@ -37,4 +36,3 @@ const Curriculum = () => {
 };
 
 export default Curriculum;
-

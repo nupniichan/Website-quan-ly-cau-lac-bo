@@ -1,4 +1,3 @@
-import React from 'react';
 import achievement1 from '../public/imgs/achivement1.jpg';
 import achievement2 from '../public/imgs/achivement2.jpg';
 import achievement3 from '../public/imgs/achivement3.jpg';
@@ -86,29 +85,28 @@ const AboutSchool = () => {
 
         <div className="rounded-lg">
           <h3 className="text-2xl font-bold mb-4" style={{ color: '#004D86' }}>Giáo viên ưu tú</h3>
-          
-          <ul className="space-y-4">
-            <li>
-              <strong>Thầy Nguyễn Văn A:</strong> Giáo viên dạy Toán với hơn 15 năm kinh nghiệm, đã từng đạt giải "Giáo 
+          <div className="space-y-4">
+            <p>
+              <span className="font-bold">Thầy Nguyễn Văn A:</span> Giáo viên dạy Toán với hơn 15 năm kinh nghiệm, đã từng đạt giải "Giáo 
               viên dạy giỏi cấp thành phố" và có nhiều học sinh giỏi quốc gia.
-            </li>
-            <li>
-              <strong>Cô Trần Thị B:</strong> Giáo viên dạy Ngữ văn, tác giả của nhiều sách giáo khoa, nổi tiếng với phương 
+            </p>
+            <p>
+              <span className="font-bold">Cô Trần Thị B:</span> Giáo viên dạy Ngữ văn, tác giả của nhiều sách giáo khoa, nổi tiếng với phương 
               pháp giảng dạy sáng tạo và khả năng truyền cảm hứng cho học sinh.
-            </li>
-            <li>
-              <strong>Thầy Lê Minh C:</strong> Giáo viên dạy Tiếng Anh, có chứng chỉ giảng dạy quốc tế và đã từng tham 
+            </p>
+            <p>
+              <span className="font-bold">Thầy Lê Minh C:</span> Giáo viên dạy Tiếng Anh, có chứng chỉ giảng dạy quốc tế và đã từng tham 
               gia các khóa đào tạo ở nước ngoài, giúp học sinh cải thiện kỹ năng ngôn ngữ và giao tiếp.
-            </li>
-            <li>
-              <strong>Cô Phạm Thị D:</strong> Giáo viên dạy Sinh học, đã hướng dẫn nhiều dự án nghiên cứu khoa học của 
+            </p>
+            <p>
+              <span className="font-bold">Cô Phạm Thị D:</span> Giáo viên dạy Sinh học, đã hướng dẫn nhiều dự án nghiên cứu khoa học của 
               học sinh đạt giải thưởng lớn và được mời tham gia các hội thảo khoa học quốc tế.
-            </li>
-            <li>
-              <strong>Thầy Nguyễn Hoàng E:</strong> Giáo viên dạy Vật lý, nổi tiếng với phương pháp giảng dạy độc đáo và 
+            </p>
+            <p>
+              <span className="font-bold">Thầy Nguyễn Hoàng E:</span> Giáo viên dạy Vật lý, nổi tiếng với phương pháp giảng dạy độc đáo và 
               luôn tạo động lực cho học sinh trong việc khám phá kiến thức.
-            </li>
-          </ul>
+            </p>
+          </div>
         </div>
 
         <p className="text-center text-lg font-semibold mt-6" style={{ color: '#004D86' }}>

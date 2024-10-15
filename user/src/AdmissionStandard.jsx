@@ -1,4 +1,3 @@
-import React from 'react';
 import admissionstandard1 from '../public/imgs/admissionstandard1.jpg';
 import admissionstandard2 from '../public/imgs/admissionstandard2.jpg';
 import admissionstandard3 from '../public/imgs/admissionstandard3.jpg';

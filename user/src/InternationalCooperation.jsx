@@ -1,5 +1,4 @@
-import React from 'react';
-import collab from '../public/imgs/news4.jpg'
+import PropTypes from 'prop-types'; // Import PropTypes
 
 const CooperationItem = ({ title, date, content, imageUrl }) => (
   <div className="flex mb-8 pb-8 border-b border-gray-200">
@@ -14,6 +13,14 @@ const CooperationItem = ({ title, date, content, imageUrl }) => (
     </div>
   </div>
 );
+
+// Định nghĩa PropTypes để kiểm tra kiểu dữ liệu của các props
+CooperationItem.propTypes = {
+  title: PropTypes.string.isRequired,
+  date: PropTypes.string.isRequired,
+  content: PropTypes.string.isRequired,
+  imageUrl: PropTypes.string.isRequired,
+};
 
 const InternationalCooperation = () => {
   const cooperationItems = [
