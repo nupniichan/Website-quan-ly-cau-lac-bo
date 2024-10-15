@@ -159,7 +159,7 @@ jobs:
       - name: Remove current running Docker container and run
         run: |
           docker rm -f wqlclb-user || true
-          docker run --name wqlclb-user -dp 5200:5200 nupniichan/wqlclb-userlatest
+          docker run --name wqlclb-user -dp 5200:5200 nupniichan/wqlclb-user:latest
 
 ## =======================================================================================
 ## ======================================== Server =======================================

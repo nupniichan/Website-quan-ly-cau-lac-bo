@@ -1,0 +1,17 @@
+/* styles.css */
+.app {
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* 1/3 for sidebar, 2/3 for content */
+    height: 100vh; /* Full height for the application */
+  }
+  
+  .sidebar {
+    background-color: #f8f9fa; /* Light background color for the sidebar */
+    padding: 20px;
+  }
+  
+  .content {
+    background-color: #ffffff; /* White background for the content */
+    padding: 20px;
+  }
+  

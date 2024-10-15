@@ -1,33 +1,30 @@
 const mongoose = require('mongoose');
-const Counter = require('./Counter');
+const Counter = require('./Counter'); // Đảm bảo đã import đúng
 
 // Schema cho thông tin câu lạc bộ (Club)
 const clubSchema = new mongoose.Schema({
     _id: { type: Number }, 
+    clubId: { type: Number, unique: true }, // Thêm clubId và đảm bảo unique
     ten: { type: String, required: true },
     logo: { type: String },
     linhVucHoatDong: { type: String, required: true },
     thanhVien: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Member' }],
-    thanhVienQuanLy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Member' }],
     ngayThanhLap: { type: Date, required: true },
-    cacHoatDong: { type: String },
-    suKien: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
-    lichSuHoatDong: { type: String },
     giaoVienPhuTrach: { type: String, required: true },
-    mieuTa: { type: String, required: true  }, 
-    quyDinh: { type: String, required: true  }
+    mieuTa: { type: String, required: true }, 
+    quyDinh: { type: String, required: true }
 });
 
-// Middleware để tự động tăng ID trước khi lưu Club
+// Middleware để tự động tăng giá trị clubId
 clubSchema.pre('save', async function (next) {
-    if (this.isNew) {
+    if (this.isNew && !this.clubId) {
         try {
             const counter = await Counter.findByIdAndUpdate(
                 { _id: 'clubId' }, 
                 { $inc: { seq: 1 } }, 
                 { new: true, upsert: true } 
             );
-            this._id = counter.seq; 
+            this.clubId = counter.seq; // Gán giá trị seq cho clubId
         } catch (error) {
             return next(error);
         }
