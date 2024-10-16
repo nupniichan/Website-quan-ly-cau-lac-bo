@@ -1,5 +1,5 @@
 import { ChevronDown } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Search } from 'lucide-react'; // Make sure to import the Search icon
 
 const Header = () => {
   return (
@@ -9,19 +9,16 @@ const Header = () => {
         <div className="absolute inset-0 bg-yellow-500 z-10" />
         <div className="relative flex items-center justify-end px-4 h-full z-20">
           {/* Positioned on the right side */}
-          <div className="flex">
-            <Link to="/" className="font-bold text-white mr-[30px] no-underline">Trang chủ</Link>
-            <Link to="/about" className="font-bold text-white mr-[30px] no-underline">Về trường</Link>
-            <Link to="/clubs" className="font-bold text-white mr-[30px] no-underline">Câu lạc bộ</Link>
-            <Link to="/curriculum" className="font-bold text-white mr-[30px] no-underline">Chương trình học</Link>
-            <Link to="/news" className="font-bold text-white mr-[30px] no-underline">Tin tức</Link>
-            <Link to="/admission" className="font-bold text-white mr-[30px] no-underline">Tuyển sinh</Link>
-          </div>
+          <div className="flex mr-[10%]">
+            <span className="font-bold text-white mr-[60px]">Học sinh</span>
+            <span className="font-bold text-white mr-[60px]">Cựu học sinh</span>
+            <span className="font-bold text-white mr-[90px]">Đội ngũ giáo viên</span>
+            </div>
         </div>
       </div>
 
       {/* Red Section with a Protruding Triangle */}
-      <div className="relative w-[15  %] h-full -ml-[4%]">
+      <div className="relative w-[35%] h-full -ml-[4%]">
         <div
           className="absolute inset-0 bg-red-500 z-10"
           style={{
@@ -30,8 +27,8 @@ const Header = () => {
         />
         <div className="relative flex items-center justify-end px-4 h-full z-20">
           {/* Language Dropdown */}
-          <div className="relative flex items-center mr-4">
-            <span className="text-white">Language</span>
+          <div className="relative flex items-center mr-[20px]">
+            <span className="text-white">Tiếng việt</span>
             <ChevronDown size={16} className="text-white ml-1" />
             {/* Dropdown menu placeholder */}
             <div className="absolute right-0 mt-2 w-32 bg-white rounded shadow-lg hidden">
@@ -43,12 +40,13 @@ const Header = () => {
           </div>
 
           {/* Search Bar */}
-          <div>
+          <div className="relative">
             <input
               type="text"
               placeholder="Search..."
-              className="px-3 py-1 rounded-md text-sm"
+              className="px-10 py-2 rounded-[20px] text-sm w-[70%] bg-transparent border-2 border-white placeholder:text-white"
             />
+            <Search size={16} className="absolute right-[35%] top-1/2 transform -translate-y-1/2 text-white" />
           </div>
         </div>
       </div>
