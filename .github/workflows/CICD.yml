@@ -11,7 +11,7 @@ on:
 jobs:
   check-code-quality-admin:
     runs-on: ubuntu-latest
-    steps: 
+    steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -19,7 +19,7 @@ jobs:
         uses: oven-sh/setup-bun@v2.0.1
         with:
           bun-version: latest
-      
+
       - name: Install dependencies for admin
         working-directory: ./admin
         run: bun install
@@ -48,7 +48,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+
       - name: Build and push docker image to registry
         uses: docker/build-push-action@v5
         with:
@@ -92,12 +92,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-    
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2.0.1
         with:
           bun-version: latest
-      
+
       - name: Install dependencies for user
         working-directory: ./user
         run: bun install
@@ -111,7 +111,7 @@ jobs:
           bunx eslint . --debug
           echo "Running ESLint with auto-fix"
           bunx eslint . --fix
-  
+
 ## Stage 2: Build and push docker
   push_to_registry_user:
     needs: check-code-quality-user
@@ -126,14 +126,14 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+
       - name: Build and push docker image to registry
         uses: docker/build-push-action@v5
         with:
           context: ./user
           push: true
           tags: nupniichan/wqlclb-user:latest
-  
+
 ## Stage 3: Pull docker image
   pull_project_user:
     needs: push_to_registry_user
@@ -204,7 +204,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+
       - name: Build and push docker image to registry
         uses: docker/build-push-action@v5
         with:
@@ -227,7 +227,7 @@ jobs:
       - name: Pull docker image from registry
         run: |
           docker pull nupniichan/wqlclb-server:latest
-  
+
 ## Stage 4: Deploy
   deploy_server:
     needs: pull_project_server
