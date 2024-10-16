@@ -10,7 +10,7 @@ const Header = () => {
         <div className="relative flex items-center justify-end px-4 h-full z-20">
           {/* Positioned on the right side */}
           <div className="flex">
-            <Link to="/" className="font-bold text-white mr-[30px] no-underline">Trang chủ</Link>
+            <Link to="/" className="font-bold text-white mr-[30px] no-underline" >Trang chủ</Link>
             <Link to="/about" className="font-bold text-white mr-[30px] no-underline">Về trường</Link>
             <Link to="/clubs" className="font-bold text-white mr-[30px] no-underline">Câu lạc bộ</Link>
             <Link to="/curriculum" className="font-bold text-white mr-[30px] no-underline">Chương trình học</Link>
@@ -23,7 +23,7 @@ const Header = () => {
       {/* Red Section with a Protruding Triangle */}
       <div className="relative w-[15  %] h-full -ml-[4%]">
         <div
-          className="absolute inset-0 bg-red-500 z-10"
+          className="absolute inset-0 bg-[#D91E26] z-10"
           style={{
             clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%, 10% 100%)',
           }}
