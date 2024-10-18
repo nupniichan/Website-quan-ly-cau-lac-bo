@@ -20,7 +20,7 @@ const Header = () => {
       {/* Red Section with a Protruding Triangle */}
       <div className="relative w-[35%] h-full -ml-[4%]">
         <div
-          className="absolute inset-0 bg-[#D91E26] z-10"
+          className="absolute inset-0 bg-red-500 z-10"
           style={{
             clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%, 10% 100%)',
           }}
