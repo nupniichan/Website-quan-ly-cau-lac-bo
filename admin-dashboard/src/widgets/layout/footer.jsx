@@ -17,8 +17,7 @@ export function Footer({ brandName, brandLink, routes }) {
             className="transition-colors hover:text-blue-500 font-bold"
           >
             {brandName}
-          </a>{" "}
-          for a better web.
+          </a>
         </Typography>
         <ul className="flex items-center gap-4">
           {routes.map(({ name, path }) => (
@@ -41,10 +40,9 @@ export function Footer({ brandName, brandLink, routes }) {
 }
 
 Footer.defaultProps = {
-  brandName: "Creative Tim",
+  brandName: "Tequinzyy",
   brandLink: "#",
   routes: [
-    { name: "Creative Tim", path: "#" },
     { name: "About Us", path: "#" },
     { name: "Blog", path: "#" },
     { name: "License", path: "#" },
