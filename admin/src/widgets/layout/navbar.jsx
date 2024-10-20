@@ -83,7 +83,7 @@ export function Navbar({ brandName, routes, action }) {
 }
 
 Navbar.defaultProps = {
-  brandName: "THPT Club Dashboard",
+  brandName: "Quản lý câu lạc bộ trường THPT",
   action: (
     <a
       href="#"

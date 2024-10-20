@@ -1,11 +1,15 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
+const multer = require('multer');
+const path = require('path');
 const clubRoutes = require('./routes/clubRoutes');
 const memberRoutes = require('./routes/memberRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const prizeRoutes = require('./routes/prizeRoutes');
+const accountRoutes = require('./routes/accountRoutes');
 
 // Import Swagger UI
 const swaggerUi = require('swagger-ui-express');
@@ -14,6 +18,24 @@ const app = express();
 
 // Middleware để parse JSON
 app.use(express.json());
+
+// Cấu hình multer để lưu trữ hình ảnh
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+      cb(null, Date.now() + path.extname(file.originalname)); // Thêm timestamp vào tên file
+    },
+  });
+  
+  const upload = multer({ storage });
+  
+  app.use(cors({
+    origin: ['http://localhost:5100','http://localhost:5200', 'http://4.242.20.80:5100','http://4.242.20.80:5200']
+  }));
+  app.use(express.json());
+  app.use('/uploads', express.static('uploads')); // Để truy cập hình ảnh qua đường dẫn
 
 // Kết nối MongoDB
 const connectDB = async () => {
@@ -58,6 +80,7 @@ app.use('/api', eventRoutes);
 app.use('/api', budgetRoutes);
 app.use('/api', reportRoutes);
 app.use('/api', prizeRoutes);
+app.use('/api', accountRoutes);
 
 // Tích hợp Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));

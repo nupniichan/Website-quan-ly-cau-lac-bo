@@ -9,6 +9,7 @@ const memberSchema = new mongoose.Schema({
     toHopHocTap: { type: String, required: true },
     thongTinLienLac: { type: String, required: true },
     ngayThamGia: { type: Date, required: true },
+    vaiTro: { type: String, required: true },
     tinhTrang: { type: String, required: true },
     suKienDaThamGia: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
     club: { type: Number, ref: 'Club', required: true }  // Thay đổi ObjectId thành Number
