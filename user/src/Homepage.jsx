@@ -34,18 +34,19 @@ const Homepage = () => {
 
   return (
     <div>
+      {/* Banner Section */}
       <div className="relative">
-        <img src="../public/imgs/banner.jpg" alt="Trường trung học phổ thông" className="w-full object-cover" style={{height: '500px'}}/>
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 p-6 border-t-4 border-black w-4/6" 
+        <img src="../public/imgs/banner.jpg" alt="Trường trung học phổ thông" className="w-full object-cover h-[300px] sm:h-[400px] md:h-[500px]"/>
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 p-4 sm:p-6 border-t-4 border-black w-11/12 sm:w-5/6 md:w-4/6" 
              style={{ 
                fontFamily: 'Roboto, sans-serif', 
                fontWeight: 300,
                backgroundColor: 'rgba(0, 0, 0, 0.65)'
              }}>
           <div className="text-left">
-            <div className="w-24 h-px bg-white mb-3"></div>
-            <h1 className="text-white text-2xl md:text-4xl font-bold mb-3">Trường trung học phổ thông</h1>
-            <p className="text-white text-sm md:text-base">
+            <div className="w-16 sm:w-24 h-px bg-white mb-2 sm:mb-3"></div>
+            <h1 className="text-white text-xl sm:text-2xl md:text-4xl font-bold mb-2 sm:mb-3">Trường trung học phổ thông</h1>
+            <p className="text-white text-xs sm:text-sm md:text-base">
               Mang lại trải nghiệm học tập tốt nhất cho bạn, trau dồi kỹ năng học hỏi và kết bạn,
               đồng thời tạo ra môi trường thân thiện, giúp bạn phát triển bản thân một cách toàn diện.
             </p>
@@ -54,22 +55,22 @@ const Homepage = () => {
       </div>
       
       {/* Search Bar */}
-      <div className="max-w-3xl mx-auto mt-8">
-        <h2 className="text-2xl font-bold text-center mb-4 text-[#004D86]">Tìm kiếm</h2>
+      <div className="max-w-3xl mx-auto mt-8 px-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 text-[#004D86]">Tìm kiếm</h2>
         <div className="flex flex-col items-center">
           <div className="w-full bg-[#EFEFEF] p-2 rounded-lg">
-            <div className="flex items-center bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="w-full bg-white rounded-lg shadow-md overflow-hidden flex">
               <input
                 type="text"
                 placeholder="Bạn cần tìm gì?"
                 className="flex-grow px-4 py-2 focus:outline-none"
               />
-              <button className="bg-red-600 text-white px-6 py-2 hover:bg-red-700 transition duration-300">
+              <button className="bg-red-600 text-white px-6 hover:bg-red-700 transition duration-300">
                 Tìm kiếm
               </button>
             </div>
           </div>
-          <div className="flex mt-4 space-x-4">
+          <div className="flex flex-wrap justify-center mt-4 gap-2">
             <button className="px-4 py-2 border border-[#004D86] rounded-full text-[#004D86] hover:bg-[#004D86] hover:text-white transition duration-300">
               Câu lạc bộ
             </button>
@@ -84,9 +85,9 @@ const Homepage = () => {
       </div>
 
       {/* Curriculum Info Section */}
-      <div className="bg-[#F5F5F5] py-12 px-4 md:px-8 mt-12 h-auto">
-        <div className="max-w-6xl mx-auto h-[31rem]">
-          <h2 className="text-2xl font-bold text-[#004D86] mb-12 text-left">
+      <div className="bg-[#F5F5F5] py-8 sm:py-12 px-4 md:px-8 mt-12">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#004D86] mb-8 sm:mb-12 text-left">
             Tìm hiểu về chương trình học tập tại trường
           </h2>
 
@@ -112,7 +113,7 @@ const Homepage = () => {
           </div>
           
           {/* Mobile and Tablet version */}
-          <div className="lg:hidden space-y-6">
+          <div className="lg:hidden space-y-4 sm:space-y-6">
             <div className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow">
               <FaGraduationCap className="text-4xl text-[#004D86]" />
               <p className="text-sm">Chú trọng phát triển năng lực cá nhân, nhấn mạnh việc rèn luyện kĩ năng – bồi đắp phẩm chất</p>
@@ -204,13 +205,13 @@ const Homepage = () => {
       </div>
       
       {/* School Clubs Section */}
-      <div className="bg-white py-16 px-4 md:px-8">
+      <div className="bg-white py-8 sm:py-12 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-2xl font-bold text-center text-[#004D86] mb-12">
+          <h2 className="text-xl sm:text-2xl font-bold text-center text-[#004D86] mb-8 sm:mb-12">
             Các câu lạc bộ tại trường
           </h2>
           <div className="flex justify-center">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-10 gap-y-6 max-w-[1125px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-[1125px]">
               {[
                 "Câu lạc bộ tin học", "Câu lạc bộ tình nguyện", "Câu lạc bộ âm nhạc",
                 "Câu lạc bộ nhiếp ảnh", "Câu lạc bộ nhật ngữ", "Câu lạc bộ anime",
@@ -220,26 +221,32 @@ const Homepage = () => {
                 const column = index % 3;
                 let style = {};
                 
-                if (column === 0) { // Left column
-                  style = {
-                    borderTopRightRadius: '20px',
-                    borderBottomLeftRadius: '20px'
-                  };
-                } else if (column === 1) { // Middle column
+                if (window.innerWidth >= 1024) { // Large screens (lg and above)
+                  if (column === 0) { // Left column
+                    style = {
+                      borderTopRightRadius: '20px',
+                      borderBottomLeftRadius: '20px'
+                    };
+                  } else if (column === 1) { // Middle column
+                    style = {
+                      borderRadius: '20px'
+                    };
+                  } else { // Right column
+                    style = {
+                      borderTopLeftRadius: '20px',
+                      borderBottomRightRadius: '20px'
+                    };
+                  }
+                } else { // Small and medium screens
                   style = {
                     borderRadius: '20px'
-                  };
-                } else { // Right column
-                  style = {
-                    borderTopLeftRadius: '20px',
-                    borderBottomRightRadius: '20px'
                   };
                 }
 
                 return (
                   <div 
                     key={index} 
-                    className="bg-red-600 text-white h-[55px] w-[325px] flex items-center justify-center cursor-pointer hover:bg-red-700 transition duration-300"
+                    className="bg-red-600 text-white h-[55px] w-full sm:w-[325px] flex items-center justify-center cursor-pointer hover:bg-red-700 transition duration-300"
                     style={style}
                   >
                     <span className="text-center">{club}</span>
@@ -248,7 +255,7 @@ const Homepage = () => {
               })}
             </div>
           </div>
-          <div className="text-center mt-12">
+          <div className="text-center mt-8 sm:mt-12">
             <button className="bg-yellow-400 text-black px-6 py-3 rounded-full hover:bg-yellow-500 transition duration-300">
               Xem thêm
             </button>
@@ -257,100 +264,100 @@ const Homepage = () => {
       </div>
 
       {/* News Section */}
-      <div className="bg-white py-0 px-4 md:px-8">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl font-bold text-[#004D86] mb-8">
-          Tin tức & sự kiện
-        </h2>
-        <div className="overflow-x-auto pb-6 select-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflow: 'hidden' }} onMouseDown={(e) => handleMouseDown(e)}
-          onMouseLeave={handleMouseLeave}
-          onMouseUp={handleMouseUp}
-          onMouseMove={handleMouseMove}
-          ref={scrollContainerRef}
-        >
-          <div className="flex space-x-6 min-w-max">
-            {[
-              {
-                title:
-                  "Học sinh hào hứng trải nghiệm sự 'thay da đổi thịt' của trường",
-                image: "../public/imgs/news1.jpg",
-                date: "3/10/2024",
-                description:
-                  "Chiều ngày 3/10/2024 tại Đà Nẵng, Trung tâm ngoại ngữ Đại học RMIT tại Đà Nẵng đã tổ chức lễ ra mắt chương trình Luyện thi IELTS mới,...",
-              },
-              {
-                title: "Nhiều trường và phụ huynh ủng hộ đi học lại sau Tết",
-                image: "../public/imgs/news2.jpg",
-                date: "3/10/2024",
-                description:
-                  "Khi nhóm chat của phụ huynh xuất hiện câu hỏi \"Nếu trường mở cửa sau Tết, có cho con đi học không?\", chị Diệu Linh, 42 tuổi, nhanh chóng chọn \"Có\".",
-              },
-              {
-                title: "Tích hợp tiếng Anh giúp người học gặt hái thành công",
-                image: "../public/imgs/news3.jpg",
-                date: "3/10/2024",
-                description:
-                  "Chủ trương đưa tiếng Anh ngôn ngữ thứ hai gần đây là một bước tiến lớn nhằm tiếp tục giúp người học thành công trong cuộc sống và công việc.",
-              },
-              {
-                title: "Hồi sinh di sản văn hóa với công nghệ 3D tiên tiến",
-                image: "../public/imgs/news4.jpg",
-                date: "7/10/2024",
-                description:
-                  "Adobe tổ chức tập huấn cho các bảo tàng và trung tâm lưu trữ trong nước nhằm tìm hiểu về vai trò của công nghệ 3D bảo tồn văn hóa di sản bản địa..",
-              },
-              {
-                title: "Đưa bền vững vào giảng dạy truyền thông và thiết kế",
-                image: "../public/imgs/news5.jpg",
-                date: "5/10/2024",
-                description:
-                  "Phù hợp với các Mục tiêu phát triển bền vững và 95,7% trong số đó được tích hợp tính bền vững vào tài liệu giảng dạy và học tập.",
-              },
-              // Add more news items here if needed
-            ].map((news, index) => (
-              <div
-                key={index}
-                className="w-[300px] bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
-              >
-                <img
-                  src={news.image}
-                  alt={news.title}
-                  className="w-full h-40 object-cover"
-                />
-                <div className="p-4 flex flex-col flex-grow">
-                  <h3 className="font-bold text-lg mb-2 line-clamp-2 text-[#004D86]">
-                    {news.title}
-                  </h3>
-                  <div className="flex items-center text-gray-500 text-sm mb-2">
-                    <svg
-                      className="w-4 h-4 mr-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      ></path>
-                    </svg>
-                    {news.date}
+      <div className="bg-white pt-0 pb-8 sm:pb-12 px-4 md:px-8">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#004D86] mb-6 sm:mb-8">
+            Tin tức & sự kiện
+          </h2>
+          <div className="overflow-x-auto pb-6 select-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflow: 'hidden' }} 
+               onMouseDown={handleMouseDown}
+               onMouseLeave={handleMouseLeave}
+               onMouseUp={handleMouseUp}
+               onMouseMove={handleMouseMove}
+               ref={scrollContainerRef}>
+            <div className="flex space-x-4 sm:space-x-6 min-w-max">
+              {[
+                {
+                  title:
+                    "Học sinh hào hứng trải nghiệm sự 'thay da đổi thịt' của trường",
+                  image: "../public/imgs/news1.jpg",
+                  date: "3/10/2024",
+                  description:
+                    "Chiều ngày 3/10/2024 tại Đà Nẵng, Trung tâm ngoại ngữ Đại học RMIT tại Đà Nẵng đã tổ chức lễ ra mắt chương trình Luyện thi IELTS mới,...",
+                },
+                {
+                  title: "Nhiều trường và phụ huynh ủng hộ đi học lại sau Tết",
+                  image: "../public/imgs/news2.jpg",
+                  date: "3/10/2024",
+                  description:
+                    "Khi nhóm chat của phụ huynh xuất hiện câu hỏi \"Nếu trường mở cửa sau Tết, có cho con đi học không?\", chị Diệu Linh, 42 tuổi, nhanh chóng chn \"Có\".",
+                },
+                {
+                  title: "Tích hợp tiếng Anh giúp người học gặt hái thành công",
+                  image: "../public/imgs/news3.jpg",
+                  date: "3/10/2024",
+                  description:
+                    "Chủ trương đưa tiếng Anh ngôn ngữ thứ hai gần đây là một bước tiến lớn nhằm tiếp tục giúp người học thành công trong cuộc sống và công việc.",
+                },
+                {
+                  title: "Hồi sinh di sản văn hóa với công nghệ 3D tiên tiến",
+                  image: "../public/imgs/news4.jpg",
+                  date: "7/10/2024",
+                  description:
+                    "Adobe tổ chức tập huấn cho các bảo tàng và trung tâm lưu trữ trong nước nhằm tìm hiểu về vai trò của công nghệ 3D bảo tồn văn hóa di sản bản địa..",
+                },
+                {
+                  title: "Đưa bền vững vào giảng dạy truyền thông và thiết kế",
+                  image: "../public/imgs/news5.jpg",
+                  date: "5/10/2024",
+                  description:
+                    "Phù hợp với các Mục tiêu phát triển bền vững và 95,7% trong số đó được tích hợp tính bền vững vào tài liệu giảng dạy và học tập.",
+                },
+                // Add more news items here if needed
+              ].map((news, index) => (
+                <div
+                  key={index}
+                  className="w-[300px] bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
+                >
+                  <img
+                    src={news.image}
+                    alt={news.title}
+                    className="w-full h-40 object-cover"
+                  />
+                  <div className="p-4 flex flex-col flex-grow">
+                    <h3 className="font-bold text-lg mb-2 line-clamp-2 text-[#004D86]">
+                      {news.title}
+                    </h3>
+                    <div className="flex items-center text-gray-500 text-sm mb-2">
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        ></path>
+                      </svg>
+                      {news.date}
+                    </div>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                      {news.description}
+                    </p>
+                    <button className="mt-auto bg-[#004D86] text-white px-4 py-2 rounded-full hover:bg-blue-700 transition duration-300">
+                      Xem thêm
+                    </button>
                   </div>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                    {news.description}
-                  </p>
-                  <button className="mt-auto bg-[#004D86] text-white px-4 py-2 rounded-full hover:bg-blue-700 transition duration-300">
-                    Xem thêm
-                  </button>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </div>
   );
 }

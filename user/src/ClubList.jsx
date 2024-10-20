@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 const clubs = [
   'Câu lạc bộ tin học', 'Câu lạc bộ tình nguyện', 'Câu lạc bộ âm nhạc',
@@ -37,26 +38,58 @@ const requirements = [
 ];
 
 const ClubList = () => {
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6 text-center" style={{ color: '#004D86' }}>Danh sách câu lạc bộ tại trường</h1>
       
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        {clubs.map((club, index) => (
-          <Link 
-            key={index}
-            to={`/clubs/${encodeURIComponent(club)}`}
-            className={`
-              bg-red-600 text-white py-4 px-4 hover:bg-red-700 transition duration-300
-              h-12 flex items-center justify-center w-full no-underline
-              ${index % 3 === 0 ? 'rounded-tl-none rounded-tr-[20px] rounded-bl-[20px] rounded-br-none' : 
-                index % 3 === 1 ? 'rounded-[20px]' : 
-                'rounded-tl-[20px] rounded-tr-none rounded-bl-none rounded-br-[20px]'}
-            `}
-          >
-            {club}
-          </Link>
-        ))}
+      <div className="flex justify-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-[1125px]">
+          {clubs.map((club, index) => {
+            const column = index % 3;
+            let style = {};
+            
+            if (windowWidth >= 1024) { // Large screens (lg and above)
+              if (column === 0) { // Left column
+                style = {
+                  borderTopRightRadius: '20px',
+                  borderBottomLeftRadius: '20px'
+                };
+              } else if (column === 1) { // Middle column
+                style = {
+                  borderRadius: '20px'
+                };
+              } else { // Right column
+                style = {
+                  borderTopLeftRadius: '20px',
+                  borderBottomRightRadius: '20px'
+                };
+              }
+            } else { // Small and medium screens
+              style = {
+                borderRadius: '20px'
+              };
+            }
+
+            return (
+              <Link 
+                key={index}
+                to={`/clubs/${encodeURIComponent(club)}`}
+                className="bg-red-600 text-white h-[55px] w-full sm:w-[325px] flex items-center justify-center cursor-pointer hover:bg-red-700 transition duration-300 no-underline"
+                style={style}
+              >
+                <span className="text-center">{club}</span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       <div className="p-6 rounded-lg">
