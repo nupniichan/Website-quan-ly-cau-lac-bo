@@ -36,7 +36,7 @@ export default [
       'no-unused-vars': 'off',
       'react/jsx-key': 'off',  
       'react/prop-types': 'off', 
-      'react/no-unescaped-entities': 'off',
     },
   },
-]
+];
+
