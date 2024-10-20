@@ -60,6 +60,8 @@ export function Dashboard() {
     { icon: <CurrencyDollarIcon />, name: "Quản lý ngân sách", path: "/dashboard/manage-budget", element: <ManageBudget /> },
     { icon: <TrophyIcon />, name: "Quản lý giải thưởng", path: "/dashboard/manage-prizes", element: <ManagePrizes /> },
     { icon: <DocumentTextIcon />, name: "Báo cáo hoạt động", path: "/dashboard/activity-reports", element: <ActivityReports /> },
+    { icon: <CurrencyDollarIcon />, name: "Table", path: "/dashboard/table", element: <Table /> },
+    { icon: <CurrencyDollarIcon />, name: "Profile", path: "/dashboard/profile", element: <Profile /> },
   ];
 
   const currentRoutes = role === "manager" ? principalRoutes : studentRoutes;

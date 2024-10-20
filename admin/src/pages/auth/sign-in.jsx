@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   Input,
@@ -6,13 +6,25 @@ import {
   Button,
   Typography,
 } from "@material-tailwind/react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
 export function SignIn() {
   const [email, setEmail] = useState("");  // Đổi thành email
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Lấy redirect URL từ query parameter
+  const [redirectUrl, setRedirectUrl] = useState("/dashboard/home");
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const redirect = params.get("redirect");
+    if (redirect) {
+      setRedirectUrl(redirect);
+    }
+  }, [location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +35,8 @@ export function SignIn() {
       });
       if (response.status === 200) {
         localStorage.setItem("role", response.data.role);
-        navigate("/dashboard/home");
+        // Chuyển hướng đến redirectUrl sau khi đăng nhập thành công
+        navigate(redirectUrl);
       }
     } catch (error) {
       console.error("Login failed:", error);
