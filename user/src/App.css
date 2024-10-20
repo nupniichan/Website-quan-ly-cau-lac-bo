@@ -1,12 +1,6 @@
 /* General layout styles *
 
 
-/* Main content styles */
-.content {
-  padding: 2rem;
-  min-height: calc(100vh - 120px); /* Adjust based on header/footer height */
-}
-
 /* Logo styles */
 .logo {
   height: 6em;

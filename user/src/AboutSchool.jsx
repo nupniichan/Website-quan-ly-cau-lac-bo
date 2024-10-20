@@ -1,117 +1,215 @@
-import achievement1 from '../public/imgs/achivement1.jpg';
-import achievement2 from '../public/imgs/achivement2.jpg';
-import achievement3 from '../public/imgs/achivement3.jpg';
-import achievement4 from '../public/imgs/achivement4.jpg';
+import React from 'react';
+import achievement1 from '/public/imgs/achivement1.jpg';
+import achievement2 from '/public/imgs/achivement2.jpg';
+import achievement3 from '/public/imgs/achivement3.jpg';
+import achievement4 from '/public/imgs/achivement4.jpg';
 
 const AboutSchool = () => {
   return (
-    <div className="max-w-5xl mx-auto p-6 font-sans">
-      <h1 className="text-3xl font-bold text-center text-gray-800 mb-6" style={{ color: '#004D86' }}>VỀ TRƯỜNG HỌC</h1>
-      
-      <div className="space-y-6 text-gray-700">
-        <p>
-          Tại trường, chúng tôi tự hào là ngôi nhà thứ hai của những thế hệ học sinh yêu thích học tập 
-          và khám phá. Với môi trường học tập thân thiện và đội ngũ giáo viên nhiệt huyết, chúng tôi 
-          cam kết mang đến cho các em một nền giáo dục chất lượng và những trải nghiệm đáng nhớ.
-        </p>
-
-        <p>
-          Trường chúng tôi không chỉ chú trọng vào kiến thức mà còn phát triển toàn diện kỹ năng 
-          sống, khả năng tư duy sáng tạo và tinh thần tự lập cho học sinh. Các em sẽ được tham gia 
-          vào nhiều hoạt động ngoại khóa phong phú, từ thể thao đến nghệ thuật, giúp phát huy khả 
-          năng cá nhân và rèn luyện sự tự tin. Ngoài ra còn có rất nhiều câu lạc bộ khác nhau dành cho 
-          các em tham gia nhằm nâng cao tính sáng tạo và tinh thần tham gia ngoại khóa của các em.
-        </p>
-
-        <p>
-          Chúng tôi còn có cơ sở vật chất hiện đại, với phòng học thông minh, thư viện phong phú và 
-          các phòng thí nghiệm chuyên dụng, tạo điều kiện thuận lợi nhất để học sinh khám phá tri thức 
-          và phát triển năng lực bản thân.
-        </p>
-
-        <p>
-          Hãy đăng ký vào trường để cùng nhau xây dựng một tương lai tươi sáng! Chúng tôi rất mong 
-          được chào đón các em.
-        </p>
-      </div>
-
-      <div className="mt-10 p-0 rounded-lg">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6" style={{ color: '#004D86' }}>Một vài thành tích học sinh đạt được:</h2>        
-        <div className="space-y-12">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="w-full md:w-1/2 flex items-center">
-              <div>
-                <h3 className="font-semibold text-lg text-gray-800">Giải trong kỳ thi học sinh giỏi cấp thành phố:</h3>
-                <p className="text-gray-700">Nhiều học sinh của trường đã đạt các giải cao trong các kỳ thi học sinh giỏi các môn học, khẳng định chất lượng giáo dục của trường.</p>
-              </div>
-            </div>
-            <img src={achievement1} alt="Lễ khai mạc kỳ thi chọn học sinh giỏi quốc gia" className="w-full md:w-1/2 h-auto object-cover rounded" />
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-4 bg-[#F5F5F5]">
-            <img src={achievement2} alt="Lễ tuyên dương học sinh đoạt giải Olympic quốc tế" className="w-full md:w-1/2 h-auto object-cover rounded" />
-            <div className="w-full md:w-1/2 flex items-center">
-              <div>
-                <h3 className="font-semibold text-lg text-gray-800">Thành tích cao trong các cuộc thi Olympic:</h3>
-                <p className="text-gray-700">Học sinh của trường đã tham gia và giành nhiều giải thưởng trong các cuộc thi Olympic quốc gia về Toán, Vật lý, Hóa học và Tiếng Anh.</p>
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen font-sans mt-10">
+      <h1 className="text-4xl font-bold text-center text-[#004D86] mb-12">
+          GIỚI THIỆU CHUNG VỀ TRƯỜNG HỌC
+      </h1>
+      {/* School Introduction Section */}
+      <div className="flex flex-col md:block">
+        {/* Background image for all devices */}
+        <div 
+          className="relative bg-cover bg-center h-[200px] sm:h-[300px] md:h-[25rem] w-full" 
+          style={{backgroundImage: "url('/public/imgs/310241947-586932963121590-3034296582378048999-n-16802426955401349567464.jpg')"}}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-black to-transparent opacity-70"></div>
           
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="w-full md:w-1/2 flex items-center">
-              <div>
-                <h3 className="font-semibold text-lg text-gray-800">Đạt học bổng tại trường đại học danh tiếng:</h3>
-                <p className="text-gray-700">Nhiều cựu học sinh của trường đã nhận được học bổng từ các trường đại học trong nước và quốc tế.</p>
+          {/* Text overlay for medium and larger screens */}
+          <div className="hidden md:flex items-end h-full">
+            <div className="max-w-6xl mx-auto relative z-10 w-full pb-[7rem] px-4 md:px-2">
+              <div className="md:w-2/3 lg:w-1/2">
+                <h2 className="text-3xl font-bold text-white mb-4">
+                  Trường trung học phổ thông
+                </h2>
+                <p className="text-md text-white whitespace-pre-line">
+                  {`Được thành lập vào năm 2000, với mục tiêu cung cấp giáo dục chất lượng
+                  và môi trường học tập hiện đại. Trải qua nhiều năm phát triển, trường
+                  đã đạt được nhiều thành tích xuất sắc trong giảng dạy và hoạt động
+                  ngoại khóa, trở thành một trong những trường THPT uy tín trong khu vực.`}
+                </p>
               </div>
             </div>
-            <img src={achievement3} alt="Lễ khai mạc kỳ thi chọn học sinh giỏi quốc gia" className="w-full md:w-1/2 h-auto object-cover rounded" />
           </div>
+        </div>
+        
+        {/* Text content for mobile and tablet */}
+        <div className="md:hidden px-4 py-6 sm:py-8 bg-[#F5F5F5]">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#004D86] mb-4">
+              Trường trung học phổ thông
+            </h2>
+            <p className="text-sm sm:text-base text-gray-700">
+              Được thành lập vào năm 2000, với mục tiêu cung cấp giáo dục
+              chất lượng và môi trường học tập hiện đại. Trải qua nhiều năm
+              phát triển, trường đã đạt được nhiều thành tích xuất sắc trong
+              giảng dạy và hoạt động ngoại khóa, trở thành một trong những
+              trường THPT uy tín trong khu vực.
+            </p>
+          </div>
+        </div>
+      </div>
 
-          <div className="flex flex-col md:flex-row gap-4 bg-[#F5F5F5]">
-            <img src={achievement4} alt="Lễ tuyên dương học sinh đoạt giải Olympic quốc tế" className="w-full md:w-1/2 h-auto object-cover rounded" />
-            <div className="w-full md:w-1/2 flex items-center">
-              <div>
-                <h3 className="font-semibold text-lg text-gray-800">Thành tích xuất sắc các cuộc thi thể thao:</h3>
-                <p className="text-gray-700">Đội tuyển thể thao của trường đã giành nhiều huy chương vàng tại các giải đấu thể thao cấp thành phố và quốc gia.</p>
+      {/* Extracurricular Activities Section */}
+      <div className="px-12 sm:px-16 md:px-24 lg:px-32 xl:px-50 mb-12">
+        <div className="max-w-7xl mx-auto mt-12 relative">
+          <div className="flex flex-col lg:flex-row items-center">
+            <div className="lg:w-2/3 bg-[#F6F6F6] p-8 rounded-lg relative">
+              <div className="lg:w-3/4">
+                <h2 className="text-3xl font-semibold text-[#004D86] mb-6">
+                  Hoạt động ngoại khoá
+                </h2>
+                <p className="text-gray-700 leading-relaxed">
+                  Trường chú trọng không chỉ kiến thức mà còn phát triển kỹ năng sống,
+                  tư duy sáng tạo và tinh thần tự lập. Học sinh tham gia nhiều hoạt
+                  động ngoại khóa từ thể thao đến nghệ thuật, cùng các câu lạc bộ giúp
+                  rèn luyện sự tự tin và sáng tạo.
+                </p>
+                <div className="w-16 h-1 bg-blue-700 mt-6"></div>
               </div>
+            </div>
+            <div className="lg:w-1/2 mt-6 lg:mt-0 lg:-ml-24 z-10">
+              <img 
+                src="/public/imgs/ay8a6925.jpg" 
+                alt="Hoạt động ngoại khoá" 
+                className="w-full h-auto object-cover rounded-lg border-4 border-white shadow-lg"
+              />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-12">
-        <h2 className="text-2xl font-bold text-center mb-6" style={{ color: '#004D86' }}>Và nhiều thành tích khác...</h2>
-
-        <div className="rounded-lg">
-          <h3 className="text-2xl font-bold mb-4" style={{ color: '#004D86' }}>Giáo viên ưu tú</h3>
-          <div className="space-y-4">
-            <p>
-              <span className="font-bold">Thầy Nguyễn Văn A:</span> Giáo viên dạy Toán với hơn 15 năm kinh nghiệm, đã từng đạt giải &quot;Giáo 
-              viên dạy giỏi cấp thành phố&quot; và có nhiều học sinh giỏi quốc gia.
-            </p>
-            <p>
-              <span className="font-bold">Cô Trần Thị B:</span> Giáo viên dạy Ngữ văn, tác giả của nhiều sách giáo khoa, nổi tiếng với phương 
-              pháp giảng dạy sáng tạo và khả năng truyền cảm hứng cho học sinh.
-            </p>
-            <p>
-              <span className="font-bold">Thầy Lê Minh C:</span> Giáo viên dạy Tiếng Anh, có chứng chỉ giảng dạy quốc tế và đã từng tham 
-              gia các khóa đào tạo ở nước ngoài, giúp học sinh cải thiện kỹ năng ngôn ngữ và giao tiếp.
-            </p>
-            <p>
-              <span className="font-bold">Cô Phạm Thị D:</span> Giáo viên dạy Sinh học, đã hướng dẫn nhiều dự án nghiên cứu khoa học của 
-              học sinh đạt giải thưởng lớn và được mời tham gia các hội thảo khoa học quốc tế.
-            </p>
-            <p>
-              <span className="font-bold">Thầy Nguyễn Hoàng E:</span> Giáo viên dạy Vật lý, nổi tiếng với phương pháp giảng dạy độc đáo và 
-              luôn tạo động lực cho học sinh trong việc khám phá kiến thức.
-            </p>
+      {/* Facilities Section */}
+      <div className="px-12 sm:px-16 md:px-24 lg:px-32 xl:px-50 mb-12">
+        <div className="max-w-7xl mx-auto mt-12 relative">
+          <div className="flex flex-col lg:flex-row-reverse items-center">
+            <div className="lg:w-2/3 bg-[#F6F6F6] p-8 rounded-lg relative">
+              <div className="lg:w-3/4 ml-auto">
+                <h2 className="text-3xl font-semibold text-[#004D86] mb-6">
+                  Cơ sở vật chất
+                </h2>
+                <p className="text-gray-700 leading-relaxed">
+                  Cơ sở vật chất hiện đại, với phòng học thông minh, thư viện phong phú và các phòng thí nghiệm chuyên dụng, tạo điều kiện thuận lợi nhất để học sinh khám phá tri thức và phát triển năng lực bản thân của mỗi học sinh.
+                </p>
+                <div className="w-16 h-1 bg-blue-700 mt-6"></div>
+              </div>
+            </div>
+            <div className="lg:w-1/2 mt-6 lg:mt-0 lg:-mr-24 z-10 space-y-4">
+              <img 
+                src="/public/imgs/csvc1.jpg" 
+                alt="Cơ sở vật chất 1" 
+                className="w-full h-auto object-cover rounded-lg border-4 border-white shadow-lg"
+              />
+              <img 
+                src="/public/imgs/csvc2.jpg" 
+                alt="Cơ sở vật chất 2" 
+                className="w-full h-auto object-cover rounded-lg border-4 border-white shadow-lg"
+              />
+            </div>
           </div>
         </div>
+      </div>
+      {/* Achievements Section */}
+      <div className="px-12 sm:px-16 md:px-24 lg:px-32 xl:px-50 mb-12">
+        <div className="max-w-7xl mx-auto mt-12 relative">
+          <h2 className="text-3xl font-semibold text-[#004D86] mb-6 text-center">
+            Một vài thành tích học sinh đạt được:
+          </h2>
+          <div className="space-y-12">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="w-full md:w-1/2 flex items-center">
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800">Giải trong kỳ thi học sinh giỏi cấp thành phố:</h3>
+                  <p className="text-gray-700">Nhiều học sinh của trường đã đạt các giải cao trong các kỳ thi học sinh giỏi các môn học, khẳng định chất lượng giáo dục của trường.</p>
+                </div>
+              </div>
+              <img src={achievement1} alt="Lễ khai mạc kỳ thi chọn học sinh giỏi quốc gia" className="w-full md:w-1/2 h-auto object-cover rounded-lg" />
+            </div>
 
-        <p className="text-center text-lg font-semibold mt-6" style={{ color: '#004D86' }}>
-          Và nhiều thầy cô ưu tú khác đang chờ đón học sinh...
-        </p>
+            <div className="flex flex-col md:flex-row gap-4 bg-[#F5F5F5] p-4 rounded-lg">
+              <img src={achievement2} alt="Lễ tuyên dương học sinh đoạt giải Olympic quốc tế" className="w-full md:w-1/2 h-auto object-cover rounded" />
+              <div className="w-full md:w-1/2 flex items-center">
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800">Thành tích cao trong các cuộc thi Olympic:</h3>
+                  <p className="text-gray-700">Học sinh của trường đã tham gia và giành nhiều giải thưởng trong các cuộc thi Olympic quốc gia về Toán, Vật lý, Hóa học và Tiếng Anh.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="w-full md:w-1/2 flex items-center">
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800">Đạt học bổng tại trường đại học danh tiếng:</h3>
+                  <p className="text-gray-700">Nhiều cựu học sinh của trường đã nhận được học bổng từ các trường đại học trong nước và quốc tế.</p>
+                </div>
+              </div>
+              <img src={achievement3} alt="Lễ khai mạc kỳ thi chọn học sinh giỏi quốc gia" className="w-full md:w-1/2 h-auto object-cover rounded" />
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-4 bg-[#F5F5F5] p-4 rounded-lg">
+              <img src={achievement4} alt="Lễ tuyên dương học sinh đoạt giải Olympic quốc tế" className="w-full md:w-1/2 h-auto object-cover rounded" />
+              <div className="w-full md:w-1/2 flex items-center">
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800">Thành tích xuất sắc các cuộc thi thể thao:</h3>
+                  <p className="text-gray-700">Đội tuyển thể thao của trường đã giành nhiều huy chương vàng tại các giải đấu thể thao cấp thành phố và quốc gia.</p>
+                </div>
+              </div>
+            </div>
+            <h2 className="text-3xl font-semibold text-[#004D86] mb-6 text-center">
+            Và còn nhiều thành tích khác...
+          </h2>
+          </div>
+        </div>
+      </div>
+
+      {/* School Leadership Team Section */}
+      <div className="px-12 sm:px-16 md:px-24 lg:px-32 xl:px-50 mb-12">
+        <div className="max-w-7xl mx-auto mt-12 relative">
+          <h2 className="text-3xl font-semibold text-[#004D86] mb-6 text-center">
+            Ban cán bộ trường
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Leadership Member 1 */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <img src="/public/imgs/HieuTruong.jpg" alt="Thầy Nguyễn Văn A" className="w-full h-48 object-cover" />
+              <div className="p-4">
+                <h3 className="text-xl font-semibold text-gray-800">Thầy Nguyễn Văn A</h3>
+                <p className="text-gray-600">Thạc sĩ môn toán</p>
+                <p className="text-sm text-gray-500 mt-2">Thầy đã từng giúp nhiều học sinh vượt qua nỗi sợ môn toán bằng phương pháp giảng dạy của thầy</p>
+                <p className="text-[#FF7426] font-semibold mt-2">Hiệu trưởng</p>
+              </div>
+            </div>
+
+            {/* Leadership Member 2 */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <img src="/public/imgs/HieuPho2.jpg" alt="Cô Trần Thị V" className="w-full h-48 object-cover" />
+              <div className="p-4">
+                <h3 className="text-xl font-semibold text-gray-800">Cô Trần Thị V</h3>
+                <p className="text-gray-600">Thạc sĩ văn học</p>
+                <p className="text-sm text-gray-500 mt-2">Cách giảng dạy của cô đã biến một môn cố vể "khô khan" sang một môn học trần đầy thú vị</p>
+                <p className="text-[#FF7426] font-semibold mt-2">Phó hiệu trưởng</p>
+              </div>
+            </div>
+
+            {/* Leadership Member 3 */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <img src="/public/imgs/HieuPho1.jpg" alt="Cô Nguyễn Thị T" className="w-full h-48 object-cover" />
+              <div className="p-4">
+                <h3 className="text-xl font-semibold text-gray-800">Thầy Nguyễn Văn B</h3>
+                <p className="text-gray-600">Thạc sĩ giáo dục anh</p>
+                <p className="text-sm text-gray-500 mt-2">Là một giáo viên lớp 9.0 và đạt được nhiều thành tích cao và cách dạy rất thu hút học sinh</p>
+                <p className="text-[#FF7426] font-semibold mt-2">Phó hiệu trưởng</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-lg font-semibold text-[#004D86] mt-8">
+            Và nhiều thầy cô khác đang chờ đón học sinh...
+          </p>
+        </div>
       </div>
     </div>
   );
