@@ -69,21 +69,21 @@ const Club = require('../models/Club');  // Import model của Club nếu cần
  *       500:
  *         description: Lỗi máy chủ
  */
+// Thêm sự kiện mới
 router.post('/add-event', async (req, res) => {
     try {
-        const { clubId, _id, ...eventData } = req.body;
+        const { clubId, ...eventData } = req.body;
 
-        // Tìm kiếm câu lạc bộ dựa trên clubId là số
-        const club = await Club.findOne({ _id: clubId });
+        // Đảm bảo clubId là số và tìm câu lạc bộ
+        const club = await Club.findOne({ _id: Number(clubId) });
 
         if (!club) {
             return res.status(404).json({ message: 'Không tìm thấy CLB' });
         }
 
         const newEvent = new Event({
-            _id,  // Nhận _id là số từ request
             ...eventData,
-            club: clubId  // Liên kết sự kiện với clubId là số
+            club: Number(clubId), // Liên kết sự kiện với clubId là số
         });
 
         await newEvent.save();
@@ -211,9 +211,18 @@ router.get('/get-events', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
+// Cập nhật sự kiện
 router.put('/update-event/:id', async (req, res) => {
     try {
-        const updatedEvent = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const { club, ...otherData } = req.body;
+        const updatedEvent = await Event.findByIdAndUpdate(
+            req.params.id, 
+            { 
+                ...otherData,
+                club: Number(club), // Đảm bảo club là số
+            }, 
+            { new: true }
+        );
         if (!updatedEvent) {
             return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
         }
@@ -244,6 +253,7 @@ router.put('/update-event/:id', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
+// Xóa sự kiện
 router.delete('/delete-event/:id', async (req, res) => {
     try {
         const deletedEvent = await Event.findByIdAndDelete(req.params.id);
@@ -256,5 +266,40 @@ router.delete('/delete-event/:id', async (req, res) => {
     }
 });
 
+// Lấy danh sách sự kiện chờ duyệt
+router.get('/get-pending-events', async (req, res) => {
+    try {
+        const pendingEvents = await Event.find({ trangThai: 'choDuyet' });
+        res.status(200).json(pendingEvents);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Phê duyệt sự kiện
+router.put('/approve-event/:id', async (req, res) => {
+    try {
+        const updatedEvent = await Event.findByIdAndUpdate(req.params.id, { trangThai: 'daDuyet' }, { new: true });
+        if (!updatedEvent) {
+            return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
+        }
+        res.status(200).json(updatedEvent);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Từ chối sự kiện
+router.put('/reject-event/:id', async (req, res) => {
+    try {
+        const updatedEvent = await Event.findByIdAndUpdate(req.params.id, { trangThai: 'tuChoi' }, { new: true });
+        if (!updatedEvent) {
+            return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
+        }
+        res.status(200).json(updatedEvent);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
 module.exports = router;
