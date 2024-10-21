@@ -12,7 +12,11 @@ const memberSchema = new mongoose.Schema({
     vaiTro: { type: String, required: true },
     tinhTrang: { type: String, required: true },
     suKienDaThamGia: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
-    club: { type: Number, ref: 'Club', required: true }  // Thay đổi ObjectId thành Number
+    club: { 
+        type: Number, 
+        ref: 'Club',
+        set: v => Number(v) // Tự động chuyển đổi thành số khi lưu
+    }
 });
 
 const Member = mongoose.model('Member', memberSchema);

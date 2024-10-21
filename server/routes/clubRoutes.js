@@ -1,6 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const Club = require('../models/Club');
+const mongoose = require('mongoose');
+const multer = require('multer');
+const path = require('path');
+
+// Cấu hình multer để upload file, giới hạn kích thước tệp là 5MB
+const upload = multer({
+  dest: 'uploads/',
+  limits: { fileSize: 5 * 1024 * 1024 }, // Giới hạn kích thước tệp là 5MB
+});
+
+// Cấu hình để Express phục vụ các tệp tĩnh từ thư mục 'uploads'
+router.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 /**
  * @swagger
@@ -68,14 +80,34 @@ const Club = require('../models/Club');
  *       500:
  *         description: Lỗi máy chủ
  */
-router.post('/add-club', async (req, res) => {
-    try {
-        const newClub = new Club(req.body);
-        await newClub.save();
-        res.status(201).json(newClub);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+router.post('/add-club', upload.single('logo'), async (req, res) => {
+  try {
+    console.log('Dữ liệu nhận được:', req.body);
+    console.log('File logo:', req.file);
+
+    const { ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, mieuTa, quyDinh } = req.body;
+
+    // Kiểm tra các trường bắt buộc
+    if (!ten || !linhVucHoatDong || !ngayThanhLap || !giaoVienPhuTrach) {
+      return res.status(400).json({ message: 'Vui lòng điền đầy đủ thông tin bắt buộc' });
     }
+
+    const newClub = new Club({
+      ten,
+      linhVucHoatDong,
+      ngayThanhLap,
+      giaoVienPhuTrach,
+      mieuTa,
+      quyDinh,
+      logo: req.file ? `/uploads/${req.file.filename}` : undefined
+    });
+
+    const savedClub = await newClub.save();
+    res.status(201).json(savedClub);
+  } catch (error) {
+    console.error('Lỗi khi thêm câu lạc bộ:', error);
+    res.status(500).json({ message: 'Đã xảy ra lỗi khi thêm câu lạc bộ', error: error.message });
+  }
 });
 
 /**
@@ -96,12 +128,12 @@ router.post('/add-club', async (req, res) => {
  *         description: Lỗi máy chủ
  */
 router.get('/get-clubs', async (req, res) => {
-    try {
-        const clubs = await Club.find();
-        res.status(200).json(clubs);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+  try {
+    const clubs = await Club.find();
+    res.status(200).json(clubs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 /**
@@ -129,16 +161,22 @@ router.get('/get-clubs', async (req, res) => {
  *         description: Lỗi máy chủ
  */
 router.get('/get-club/:id', async (req, res) => {
-    try {
-        const id = parseInt(req.params.id, 10);
-        const club = await Club.findById(id);
-        if (!club) {
-            return res.status(404).json({ message: 'Club not found' });
-        }
-        res.status(200).json(club);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'ID câu lạc bộ không hợp lệ' });
     }
+
+    const club = await Club.findById(id);
+    if (!club) {
+      return res.status(404).json({ message: 'Không tìm thấy câu lạc bộ' });
+    }
+    res.status(200).json(club);
+  } catch (error) {
+    console.error('Lỗi khi lấy thông tin câu lạc bộ:', error);
+    res.status(500).json({ message: 'Đã xảy ra lỗi khi lấy thông tin câu lạc bộ', error: error.message });
+  }
 });
 
 /**
@@ -171,17 +209,38 @@ router.get('/get-club/:id', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.put('/update-club/:id', async (req, res) => {
-    try {
-        const id = parseInt(req.params.id, 10);
-        const updatedClub = await Club.findByIdAndUpdate(id, req.body, { new: true });
-        if (!updatedClub) {
-            return res.status(404).json({ message: 'Club not found' });
-        }
-        res.status(200).json(updatedClub);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+router.put('/update-club/:id', upload.single('logo'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('Dữ liệu nhận được:', req.body);
+    console.log('File logo:', req.file);
+    console.log('Logo path:', req.file ? `/uploads/${req.file.filename}` : undefined);
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'ID câu lạc bộ không hợp lệ' });
     }
+
+    const { ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, mieuTa, quyDinh } = req.body;
+
+    const updatedClub = await Club.findByIdAndUpdate(id, {
+      ten,
+      linhVucHoatDong,
+      ngayThanhLap,
+      giaoVienPhuTrach,
+      mieuTa,
+      quyDinh,
+      logo: req.file ? `/uploads/${req.file.filename}` : undefined
+    }, { new: true });
+
+    if (!updatedClub) {
+      return res.status(404).json({ message: 'Không tìm thấy câu lạc bộ' });
+    }
+
+    res.json(updatedClub);
+  } catch (error) {
+    console.error('Lỗi khi cập nhật câu lạc bộ:', error);
+    res.status(500).json({ message: 'Đã xảy ra lỗi khi cập nhật câu lạc bộ', error: error.message });
+  }
 });
 
 /**
@@ -205,16 +264,22 @@ router.put('/update-club/:id', async (req, res) => {
  *         description: Lỗi máy chủ
  */
 router.delete('/delete-club/:id', async (req, res) => {
-    try {
-        const id = parseInt(req.params.id, 10);
-        const deletedClub = await Club.findByIdAndDelete(id);
-        if (!deletedClub) {
-            return res.status(404).json({ message: 'Club not found' });
-        }
-        res.status(200).json({ message: 'Club deleted' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'ID câu lạc bộ không hợp lệ' });
     }
+
+    const club = await Club.findByIdAndDelete(id);
+    if (!club) {
+      return res.status(404).json({ message: 'Không tìm thấy câu lạc bộ' });
+    }
+    res.json({ message: 'Câu lạc bộ đã được xóa thành công' });
+  } catch (error) {
+    console.error('Lỗi khi xóa câu lạc bộ:', error);
+    res.status(500).json({ message: 'Đã xảy ra lỗi khi xóa câu lạc bộ', error: error.message });
+  }
 });
 
 module.exports = router;

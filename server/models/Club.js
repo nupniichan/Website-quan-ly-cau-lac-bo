@@ -3,7 +3,6 @@ const Counter = require('./Counter'); // Đảm bảo đã import đúng
 
 // Schema cho thông tin câu lạc bộ (Club)
 const clubSchema = new mongoose.Schema({
-    _id: { type: Number }, 
     clubId: { type: Number, unique: true }, // Thêm clubId và đảm bảo unique
     ten: { type: String, required: true },
     logo: { type: String },

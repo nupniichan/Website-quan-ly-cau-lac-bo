@@ -172,4 +172,36 @@ router.delete('/delete-report/:id', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/get-reports-by-club/{clubId}:
+ *   get:
+ *     summary: Lấy danh sách báo cáo của một câu lạc bộ cụ thể
+ *     parameters:
+ *       - in: path
+ *         name: clubId
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: ID của câu lạc bộ
+ *     responses:
+ *       200:
+ *         description: Danh sách báo cáo của câu lạc bộ
+ *       404:
+ *         description: Không tìm thấy báo cáo cho câu lạc bộ
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-reports-by-club/:clubId', async (req, res) => {
+    try {
+        const reports = await Report.find({ club: req.params.clubId });
+        if (!reports || reports.length === 0) {
+            return res.status(404).json({ message: 'Không tìm thấy báo cáo cho câu lạc bộ này' });
+        }
+        res.status(200).json(reports);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 module.exports = router;

@@ -12,7 +12,13 @@ const eventSchema = new mongoose.Schema({
     nganSachChiTieu: { type: Number, required: true },
     nguoiPhuTrach: { type: String, required: true },
     khachMoi: { type: String },
-    club: { type: Number, ref: 'Club', required: true }  // Sử dụng clubId là số
+    club: { 
+        type: Number, 
+        ref: 'Club', 
+        required: true,
+        set: v => parseInt(v, 10) // Tự động chuyển đổi thành số khi lưu
+    },
+    trangThai: { type: String, enum: ['choDuyet', 'daDuyet', 'tuChoi'], default: 'choDuyet' }
 });
 
 
