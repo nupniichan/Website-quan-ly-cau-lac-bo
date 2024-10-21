@@ -28,6 +28,7 @@ const ManageClubs = () => {
     linhVucHoatDong: "",
     ngayThanhLap: "",
     giaoVienPhuTrach: "",
+    truongBanCLB: "",
     mieuTa: "",
     quyDinh: "",
     logo: null,
@@ -43,7 +44,6 @@ const ManageClubs = () => {
     setIsLoading(true);
     try {
       const response = await axios.get(`${API_URL}/get-clubs`);
-      console.log('Dữ liệu câu lạc bộ:', response.data);
       setClubs(response.data);
     } catch (error) {
       console.error("Error fetching clubs:", error);
@@ -53,7 +53,7 @@ const ManageClubs = () => {
   };
 
   const handleAddClub = async () => {
-    const requiredFields = ['ten', 'linhVucHoatDong', 'ngayThanhLap', 'giaoVienPhuTrach'];
+    const requiredFields = ['ten', 'linhVucHoatDong', 'ngayThanhLap', 'giaoVienPhuTrach', 'truongBanCLB'];
     const missingFields = requiredFields.filter(field => !newClub[field]);
     
     if (missingFields.length > 0) {
@@ -73,12 +73,9 @@ const ManageClubs = () => {
         }
       });
 
-      console.log('Dữ liệu gửi đi:', Object.fromEntries(formData));
-
       const response = await axios.post(`${API_URL}/add-club`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      console.log('Phản hồi từ server:', response.data);
       setIsDialogOpen(false);
       fetchClubs();
     } catch (error) {
@@ -104,12 +101,9 @@ const ManageClubs = () => {
         }
       });
 
-      console.log('Dữ liệu gửi đi:', Object.fromEntries(formData));
-
       const response = await axios.put(`${API_URL}/update-club/${editingClubId}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      console.log('Phản hồi từ server:', response.data);
       setIsDialogOpen(false);
       setEditingClubId(null);
       fetchClubs();
@@ -123,17 +117,10 @@ const ManageClubs = () => {
     }
   };
 
-  const handleDeleteClub = async (id) => {
-    if (!id || typeof id !== 'string') {
-      console.error('Invalid club ID:', id);
-      alert('ID câu lạc bộ không hợp lệ');
-      return;
-    }
-
+  const handleDeleteClub = async (clubId) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa câu lạc bộ này?")) {
       try {
-        const response = await axios.delete(`${API_URL}/delete-club/${id}`);
-        console.log('Phản hồi từ server:', response.data);
+        const response = await axios.delete(`${API_URL}/delete-club/${clubId}`);
         fetchClubs();
       } catch (error) {
         console.error("Error deleting club:", error);
@@ -152,6 +139,7 @@ const ManageClubs = () => {
       linhVucHoatDong: "",
       ngayThanhLap: "",
       giaoVienPhuTrach: "",
+      truongBanCLB: "",
       mieuTa: "",
       quyDinh: "",
       logo: null,
@@ -160,16 +148,14 @@ const ManageClubs = () => {
     setIsDialogOpen(true);
   };
 
-  const openEditDialog = async (id) => {
+  const openEditDialog = async (clubId) => {
     try {
-      console.log('Đang lấy thông tin câu lạc bộ với ID:', id);
-      const response = await axios.get(`${API_URL}/get-club/${id}`);
-      console.log('Thông tin câu lạc bộ nhận được:', response.data);
+      const response = await axios.get(`${API_URL}/get-club/${clubId}`);
       setNewClub({
         ...response.data,
         ngayThanhLap: response.data.ngayThanhLap.split('T')[0],
       });
-      setEditingClubId(id);
+      setEditingClubId(clubId);
       setIsDialogOpen(true);
     } catch (error) {
       console.error("Error fetching club details:", error);
@@ -181,11 +167,9 @@ const ManageClubs = () => {
     }
   };
 
-  const openDetailDialog = async (id) => {
+  const openDetailDialog = async (clubId) => {
     try {
-      console.log('Đang lấy thông tin chi tiết câu lạc bộ với ID:', id);
-      const response = await axios.get(`${API_URL}/get-club/${id}`);
-      console.log('Thông tin chi tiết câu lạc bộ nhận được:', response.data);
+      const response = await axios.get(`${API_URL}/get-club/${clubId}`);
       setDetailClub(response.data);
       setIsDetailDialogOpen(true);
     } catch (error) {
@@ -229,7 +213,7 @@ const ManageClubs = () => {
             <table className="w-full min-w-[640px] table-auto">
               <thead>
                 <tr>
-                  {["Logo", "Tên CLB", "Lĩnh vực hoạt động", "Ngày thành lập", "Giáo viên phụ trách", "Thao tác"].map((el) => (
+                  {["Logo", "Tên CLB", "Lĩnh vực hoạt động", "Ngày thành lập", "Giáo viên phụ trách", "Trưởng ban CLB", "Thao tác"].map((el) => (
                     <th key={el} className="border-b border-blue-gray-50 py-3 px-5 text-left">
                       <Typography
                         variant="small"
@@ -242,13 +226,13 @@ const ManageClubs = () => {
                 </tr>
               </thead>
               <tbody>
-                {clubs.map(({ _id, ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, logo }, key) => {
+                {clubs.map(({ clubId, ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, truongBanCLB, logo }, key) => {
                   const className = `py-3 px-5 ${
                     key === clubs.length - 1 ? "" : "border-b border-blue-gray-50"
                   }`;
 
                   return (
-                    <tr key={_id}>
+                    <tr key={clubId}>
                       <td className={className}>
                         <img
                           src={logo ? `${API_URL}/${logo}` : "/img/default-club-logo.png"}
@@ -281,14 +265,19 @@ const ManageClubs = () => {
                         </Typography>
                       </td>
                       <td className={className}>
+                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                          {truongBanCLB}
+                        </Typography>
+                      </td>
+                      <td className={className}>
                         <div className="flex items-center gap-2">
-                          <Button size="sm" color="green" className="flex items-center gap-2" onClick={() => openDetailDialog(_id)}>
+                          <Button size="sm" color="green" className="flex items-center gap-2" onClick={() => openDetailDialog(clubId)}>
                             <EyeIcon strokeWidth={2} className="h-4 w-4" /> Chi tiết
                           </Button>
-                          <Button size="sm" color="blue" className="flex items-center gap-2" onClick={() => openEditDialog(_id)}>
+                          <Button size="sm" color="blue" className="flex items-center gap-2" onClick={() => openEditDialog(clubId)}>
                             <PencilIcon strokeWidth={2} className="h-4 w-4" /> Sửa
                           </Button>
-                          <Button size="sm" color="red" className="flex items-center gap-2" onClick={() => handleDeleteClub(_id)}>
+                          <Button size="sm" color="red" className="flex items-center gap-2" onClick={() => handleDeleteClub(clubId)}>
                             <TrashIcon strokeWidth={2} className="h-4 w-4" /> Xóa
                           </Button>
                         </div>
@@ -310,6 +299,7 @@ const ManageClubs = () => {
           <Input label="Lĩnh vực hoạt động" value={newClub.linhVucHoatDong} onChange={(e) => setNewClub({ ...newClub, linhVucHoatDong: e.target.value })} />
           <Input type="date" label="Ngày thành lập" value={newClub.ngayThanhLap} onChange={(e) => setNewClub({ ...newClub, ngayThanhLap: e.target.value })} />
           <Input label="Giáo viên phụ trách" value={newClub.giaoVienPhuTrach} onChange={(e) => setNewClub({ ...newClub, giaoVienPhuTrach: e.target.value })} />
+          <Input label="Trưởng ban CLB" value={newClub.truongBanCLB} onChange={(e) => setNewClub({ ...newClub, truongBanCLB: e.target.value })} />
           <Textarea label="Miêu tả" value={newClub.mieuTa} onChange={(e) => setNewClub({ ...newClub, mieuTa: e.target.value })} className="col-span-2" />
           <Textarea label="Quy định" value={newClub.quyDinh} onChange={(e) => setNewClub({ ...newClub, quyDinh: e.target.value })} className="col-span-2" />
           <Input type="file" label="Logo" onChange={handleLogoChange} accept="image/*" />
@@ -339,6 +329,7 @@ const ManageClubs = () => {
               <Typography>Lĩnh vực hoạt động: {detailClub.linhVucHoatDong}</Typography>
               <Typography>Ngày thành lập: {new Date(detailClub.ngayThanhLap).toLocaleDateString()}</Typography>
               <Typography>Giáo viên phụ trách: {detailClub.giaoVienPhuTrach}</Typography>
+              <Typography>Trưởng ban CLB: {detailClub.truongBanCLB}</Typography>
               <Typography>Miêu tả: {detailClub.mieuTa}</Typography>
               <Typography>Quy định: {detailClub.quyDinh}</Typography>
             </div>

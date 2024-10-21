@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Report = require('../models/Report');
-const Club = require('../models/Club');  // Import model Club để kiểm tra clubId
+const Club = require('../models/Club');
 
 /**
  * @swagger
@@ -22,21 +22,19 @@ const Club = require('../models/Club');  // Import model Club để kiểm tra c
  */
 router.post('/add-report', async (req, res) => {
     try {
-        const { clubId, ...reportData } = req.body;
-
-        // Kiểm tra xem Club có tồn tại không dựa trên clubId là số nguyên
-        const club = await Club.findOne({ _id: clubId });
-
-        if (!club) {
-            return res.status(404).json({ message: 'Không tìm thấy CLB' });
-        }
-
-        // Tạo báo cáo mới
-        const newReport = new Report({
-            ...reportData,
-            club: clubId  // Liên kết báo cáo với clubId
-        });
-
+        const reportData = {
+            ...req.body,
+            ngayBaoCao: new Date(req.body.ngayBaoCao),
+            danhSachSuKien: req.body.danhSachSuKien.map(event => ({
+                ...event,
+                ngayToChuc: new Date(event.ngayToChuc)
+            })),
+            danhSachGiai: req.body.danhSachGiai.map(award => ({
+                ...award,
+                ngayNhanGiai: new Date(award.ngayNhanGiai)
+            }))
+        };
+        const newReport = new Report(reportData);
         await newReport.save();
         res.status(201).json(newReport);
     } catch (error) {
@@ -88,7 +86,7 @@ router.get('/get-report/:id', async (req, res) => {
     try {
         const report = await Report.findById(req.params.id);
         if (!report) {
-            return res.status(404).json({ message: 'Không tìm thấy báo cáo' });
+            return res.status(404).json({ message: 'Report not found' });
         }
         res.status(200).json(report);
     } catch (error) {
@@ -124,21 +122,27 @@ router.get('/get-report/:id', async (req, res) => {
  */
 router.put('/update-report/:id', async (req, res) => {
     try {
-        const { _id, ...updateData } = req.body; // Loại bỏ trường _id từ body
-
-        // Tìm kiếm và cập nhật báo cáo dựa trên id (không cập nhật _id)
-        const updatedReport = await Report.findByIdAndUpdate(req.params.id, updateData, { new: true });
-
+        const reportData = {
+            ...req.body,
+            ngayBaoCao: new Date(req.body.ngayBaoCao),
+            danhSachSuKien: req.body.danhSachSuKien.map(event => ({
+                ...event,
+                ngayToChuc: new Date(event.ngayToChuc)
+            })),
+            danhSachGiai: req.body.danhSachGiai.map(award => ({
+                ...award,
+                ngayNhanGiai: new Date(award.ngayNhanGiai)
+            }))
+        };
+        const updatedReport = await Report.findByIdAndUpdate(req.params.id, reportData, { new: true });
         if (!updatedReport) {
-            return res.status(404).json({ message: 'Không tìm thấy báo cáo' });
+            return res.status(404).json({ message: 'Report not found' });
         }
-
         res.status(200).json(updatedReport);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
-
 
 /**
  * @swagger
@@ -160,13 +164,13 @@ router.put('/update-report/:id', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.delete('/delete-report/:id', async (req, res) => {
+router.delete('/delete-report/:id/:clubId', async (req, res) => {
     try {
-        const deletedReport = await Report.findByIdAndDelete(req.params.id);
+        const deletedReport = await Report.findOneAndDelete({ _id: req.params.id, club: req.params.clubId });
         if (!deletedReport) {
-            return res.status(404).json({ message: 'Không tìm thấy báo cáo' });
+            return res.status(404).json({ message: 'Report not found' });
         }
-        res.json({ message: 'Báo cáo đã bị xoá' });
+        res.status(200).json({ message: 'Report deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -193,15 +197,28 @@ router.delete('/delete-report/:id', async (req, res) => {
  *         description: Lỗi máy chủ
  */
 router.get('/get-reports-by-club/:clubId', async (req, res) => {
-    try {
-        const reports = await Report.find({ club: req.params.clubId });
-        if (!reports || reports.length === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy báo cáo cho câu lạc bộ này' });
-        }
-        res.status(200).json(reports);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+  try {
+    const reports = await Report.find({ club: req.params.clubId });
+    const formattedReports = reports.map(report => {
+      const reportObj = report.toObject();
+      return {
+        ...reportObj,
+        ngayBaoCao: reportObj.ngayBaoCao ? reportObj.ngayBaoCao.toISOString() : null,
+        danhSachSuKien: reportObj.danhSachSuKien.map(event => ({
+          ...event,
+          ngayToChuc: event.ngayToChuc ? event.ngayToChuc.toISOString() : null
+        })),
+        danhSachGiai: reportObj.danhSachGiai.map(award => ({
+          ...award,
+          ngayNhanGiai: award.ngayNhanGiai ? award.ngayNhanGiai.toISOString() : null
+        }))
+      };
+    });
+    res.status(200).json(formattedReports);
+  } catch (error) {
+    console.error("Detailed error:", error);
+    res.status(500).json({ message: error.message, stack: error.stack });
+  }
 });
 
 module.exports = router;

@@ -18,6 +18,8 @@ export function SignIn() {
   // Lấy redirect URL từ query parameter
   const [redirectUrl, setRedirectUrl] = useState("/dashboard/home");
 
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const redirect = params.get("redirect");
@@ -28,18 +30,44 @@ export function SignIn() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const response = await axios.post("http://localhost:5500/api/login", {
         email,
         password,
       });
-      if (response.status === 200) {
+      if (response.status === 200 && response.data.token) {
         localStorage.setItem("role", response.data.role);
-        // Chuyển hướng đến redirectUrl sau khi đăng nhập thành công
-        navigate(redirectUrl);
+        localStorage.setItem("token", response.data.token);
+
+        // Decode the JWT token to get the userId
+        const decodedToken = JSON.parse(atob(response.data.token.split('.')[1]));
+        const userId = decodedToken.userId;
+
+        if (userId) {
+          localStorage.setItem("userId", userId);
+
+          // Fetch managed clubs only if userId is available
+          try {
+            const clubsResponse = await axios.get(`http://localhost:5500/api/get-managed-clubs/${userId}`);
+            localStorage.setItem("managedClubs", JSON.stringify(clubsResponse.data));
+          } catch (clubError) {
+            console.error("Error fetching managed clubs:", clubError);
+          }
+
+          // Redirect to the specified URL after successful login
+          navigate(redirectUrl);
+        } else {
+          console.error("Decoded token doesn't contain userId:", decodedToken);
+        }
+      } else {
+        console.error("Login response doesn't contain token:", response.data);
       }
     } catch (error) {
       console.error("Login failed:", error);
+      alert("Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -80,8 +108,8 @@ export function SignIn() {
               }}
             />
           </div>
-          <Button type="submit" className="mt-6" fullWidth>
-            Sign In
+          <Button type="submit" className="mt-6" fullWidth disabled={isLoading}>
+            {isLoading ? "Signing In..." : "Sign In"}
           </Button>
           <Typography variant="paragraph" className="text-center text-blue-gray-500 font-medium mt-4">
             Not registered?

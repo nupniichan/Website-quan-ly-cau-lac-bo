@@ -11,10 +11,10 @@ import {
   DialogBody,
   DialogFooter,
   Input,
-  Select,
-  Option,
   Textarea,
   Spinner,
+  Select,
+  Option,
 } from "@material-tailwind/react";
 import { PlusIcon, PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/solid";
 
@@ -22,8 +22,8 @@ const API_URL = "http://localhost:5500/api";
 
 const ManagePrizes = () => {
   const [prizes, setPrizes] = useState([]);
-  const [clubs, setClubs] = useState([]);
   const [members, setMembers] = useState([]);
+  const [managedClub, setManagedClub] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
@@ -32,43 +32,53 @@ const ManagePrizes = () => {
     ngayDatGiai: "",
     loaiGiai: "",
     thanhVienDatGiai: "",
-    club: "",
     ghiChu: "",
     anhDatGiai: null,
   });
   const [detailPrize, setDetailPrize] = useState(null);
   const [editingPrizeId, setEditingPrizeId] = useState(null);
+  const [currentImage, setCurrentImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
 
   useEffect(() => {
-    fetchPrizes();
-    fetchClubs();
-    fetchMembers();
+    const managedClubsString = localStorage.getItem('managedClubs');
+    if (managedClubsString) {
+      try {
+        const managedClubs = JSON.parse(managedClubsString);
+        if (managedClubs && managedClubs.length > 0) {
+          setManagedClub(managedClubs[0]);
+          fetchPrizes(managedClubs[0]._id);
+          fetchMembers(managedClubs[0]._id);
+        } else {
+          throw new Error("No managed clubs found");
+        }
+      } catch (error) {
+        console.error("Error parsing managed clubs data:", error);
+        alert("Không thể tải thông tin câu lạc bộ. Vui lòng đăng nhập lại.");
+      }
+    } else {
+      console.error("No managed clubs data found");
+      alert("Không tìm thấy thông tin câu lạc bộ. Vui lòng đăng nhập lại.");
+    }
+    setIsLoading(false);
   }, []);
 
-  const fetchPrizes = async () => {
+  const fetchPrizes = async (clubId) => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/get-prizes`);
+      const response = await axios.get(`${API_URL}/get-prizes-by-club/${clubId}`);
       setPrizes(response.data);
     } catch (error) {
       console.error("Error fetching prizes:", error);
+      alert("Lỗi khi tải danh sách giải thưởng");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchClubs = async () => {
+  const fetchMembers = async (clubId) => {
     try {
-      const response = await axios.get(`${API_URL}/get-clubs`);
-      setClubs(response.data);
-    } catch (error) {
-      console.error("Error fetching clubs:", error);
-    }
-  };
-
-  const fetchMembers = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/get-members`);
+      const response = await axios.get(`${API_URL}/get-members-by-club/${clubId}`);
       setMembers(response.data);
     } catch (error) {
       console.error("Error fetching members:", error);
@@ -77,25 +87,35 @@ const ManagePrizes = () => {
 
   const handleAddPrize = async () => {
     try {
+      if (!managedClub) {
+        throw new Error("Managed club information is not available");
+      }
+      
+      const prizeData = {
+        ...newPrize,
+        club: managedClub._id,
+        anhDatGiai: newPrize.anhDatGiai ? newPrize.anhDatGiai.name : null // Send file name or null
+      };
+
+      // If using FormData (for file upload)
       const formData = new FormData();
-      Object.keys(newPrize).forEach(key => {
-        if (key === 'anhDatGiai') {
-          if (newPrize.anhDatGiai) {
-            formData.append('anhDatGiai', newPrize.anhDatGiai);
-          }
+      Object.keys(prizeData).forEach(key => {
+        if (key === 'anhDatGiai' && prizeData[key] instanceof File) {
+          formData.append('anhDatGiai', prizeData[key]);
         } else {
-          formData.append(key, newPrize[key]);
+          formData.append(key, prizeData[key]);
         }
       });
 
       const response = await axios.post(`${API_URL}/add-prize`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      
       setIsDialogOpen(false);
-      fetchPrizes();
+      fetchPrizes(managedClub._id);
     } catch (error) {
       console.error("Error adding prize:", error);
-      alert(`Lỗi khi thêm giải thưởng: ${error.response?.data?.message || 'Không xác định'}`);
+      alert(`Lỗi khi thêm giải thưởng: ${error.response?.data?.message || error.message || 'Không xác định'}`);
     }
   };
 
@@ -104,31 +124,33 @@ const ManagePrizes = () => {
       const formData = new FormData();
       Object.keys(newPrize).forEach(key => {
         if (key === 'anhDatGiai') {
-          if (newPrize.anhDatGiai) {
+          if (newPrize.anhDatGiai && newPrize.anhDatGiai instanceof File) {
             formData.append('anhDatGiai', newPrize.anhDatGiai);
           }
-        } else {
+        } else if (key !== 'club') { // Không thêm trường 'club' vào formData
           formData.append(key, newPrize[key]);
         }
       });
+      // Thêm club ID riêng biệt
+      formData.append('club', managedClub._id);
 
       const response = await axios.put(`${API_URL}/update-prize/${editingPrizeId}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setIsDialogOpen(false);
       setEditingPrizeId(null);
-      fetchPrizes();
+      fetchPrizes(managedClub._id);
     } catch (error) {
       console.error("Error updating prize:", error);
-      alert(`Lỗi khi cập nhật giải thưởng: ${error.response?.data?.message || 'Không xác định'}`);
+      alert(`Lỗi khi cập nhật giải thưởng: ${error.response?.data?.message || error.message || 'Không xác định'}`);
     }
   };
 
-  const handleDeletePrize = async (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa giải thưởng này?")) {
+  const handleDeletePrize = async (prizeId) => {
+    if (window.confirm("Bạn c chắc chắn muốn xóa giải thưởng này?")) {
       try {
-        await axios.delete(`${API_URL}/delete-prize/${id}`);
-        fetchPrizes();
+        const response = await axios.delete(`${API_URL}/delete-prize/${prizeId}/${managedClub.clubId}`);
+        fetchPrizes(managedClub.clubId);
       } catch (error) {
         console.error("Error deleting prize:", error);
         alert(`Lỗi khi xóa giải thưởng: ${error.response?.data?.message || 'Không xác định'}`);
@@ -142,7 +164,6 @@ const ManagePrizes = () => {
       ngayDatGiai: "",
       loaiGiai: "",
       thanhVienDatGiai: "",
-      club: "",
       ghiChu: "",
       anhDatGiai: null,
     });
@@ -153,7 +174,12 @@ const ManagePrizes = () => {
   const openEditDialog = (id) => {
     const prizeToEdit = prizes.find(prize => prize._id === id);
     if (prizeToEdit) {
-      setNewPrize({ ...prizeToEdit, anhDatGiai: null });
+      setNewPrize({ 
+        ...prizeToEdit, 
+        anhDatGiai: null // We'll keep the file input empty, but display the current image separately
+      });
+      setCurrentImage(prizeToEdit.anhDatGiai ? `${API_URL}/uploads/${prizeToEdit.anhDatGiai}` : null);
+      setPreviewImage(null);
       setEditingPrizeId(id);
       setIsDialogOpen(true);
     }
@@ -168,7 +194,19 @@ const ManagePrizes = () => {
   };
 
   const handleImageChange = (e) => {
-    setNewPrize({ ...newPrize, anhDatGiai: e.target.files[0] });
+    const file = e.target.files[0];
+    setNewPrize({ ...newPrize, anhDatGiai: file });
+    
+    // Create a preview of the new image
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPreviewImage(null);
+    }
   };
 
   return (
@@ -193,7 +231,7 @@ const ManagePrizes = () => {
             <table className="w-full min-w-[640px] table-auto">
               <thead>
                 <tr>
-                  {["Tên giải thưởng", "Ngày đạt giải", "Loại giải", "Thành viên đạt giải", "CLB", "Thao tác"].map((el) => (
+                  {["Tên giải thưởng", "Ngày đạt giải", "Loại giải", "Thành viên đạt giải", "Thao tác"].map((el) => (
                     <th key={el} className="border-b border-blue-gray-50 py-3 px-5 text-left">
                       <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                         {el}
@@ -203,7 +241,7 @@ const ManagePrizes = () => {
                 </tr>
               </thead>
               <tbody>
-                {prizes.map(({ _id, tenGiaiThuong, ngayDatGiai, loaiGiai, thanhVienDatGiai, club }, index) => {
+                {prizes.map(({ _id, tenGiaiThuong, ngayDatGiai, loaiGiai, thanhVienDatGiai }, index) => {
                   const className = `py-3 px-5 ${index === prizes.length - 1 ? "" : "border-b border-blue-gray-50"}`;
 
                   return (
@@ -226,11 +264,6 @@ const ManagePrizes = () => {
                       <td className={className}>
                         <Typography className="text-xs font-semibold text-blue-gray-600">
                           {members.find(m => m._id === thanhVienDatGiai)?.hoTen || 'N/A'}
-                        </Typography>
-                      </td>
-                      <td className={className}>
-                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                          {clubs.find(c => c._id === club)?.ten || 'N/A'}
                         </Typography>
                       </td>
                       <td className={className}>
@@ -260,7 +293,7 @@ const ManagePrizes = () => {
         <DialogHeader>{editingPrizeId ? "Chỉnh sửa Giải thưởng" : "Thêm Giải thưởng Mới"}</DialogHeader>
         <DialogBody divider className="grid grid-cols-2 gap-4">
           <Input label="Tên giải thưởng" value={newPrize.tenGiaiThuong} onChange={(e) => setNewPrize({ ...newPrize, tenGiaiThuong: e.target.value })} />
-          <Input type="date" label="Ngày đạt giải" value={newPrize.ngayDatGiai} onChange={(e) => setNewPrize({ ...newPrize, ngayDatGiai: e.target.value })} />
+          <Input type="date" label="Ngày đạt giải" value={newPrize.ngayDatGiai?.split('T')[0]} onChange={(e) => setNewPrize({ ...newPrize, ngayDatGiai: e.target.value })} />
           <Input label="Loại giải" value={newPrize.loaiGiai} onChange={(e) => setNewPrize({ ...newPrize, loaiGiai: e.target.value })} />
           <Select 
             label="Thành viên đạt giải" 
@@ -271,17 +304,22 @@ const ManagePrizes = () => {
               <Option key={member._id} value={member._id}>{member.hoTen}</Option>
             ))}
           </Select>
-          <Select 
-            label="Câu lạc bộ" 
-            value={newPrize.club} 
-            onChange={(value) => setNewPrize({ ...newPrize, club: value })}
-          >
-            {clubs.map((club) => (
-              <Option key={club._id} value={club._id}>{club.ten}</Option>
-            ))}
-          </Select>
           <Textarea label="Ghi chú" value={newPrize.ghiChu} onChange={(e) => setNewPrize({ ...newPrize, ghiChu: e.target.value })} />
-          <Input type="file" label="Ảnh đạt giải" onChange={handleImageChange} accept="image/*" />
+          <div className="flex flex-col gap-2">
+            <Input type="file" label="Ảnh đạt giải mới" onChange={handleImageChange} accept="image/*" />
+            {editingPrizeId && currentImage && (
+              <div>
+                <p>Ảnh hiện tại:</p>
+                <img src={currentImage} alt="Ảnh đạt giải hiện tại" className="max-w-full h-auto mt-2" style={{maxHeight: '100px'}} />
+              </div>
+            )}
+            {previewImage && (
+              <div>
+                <p>Ảnh mới:</p>
+                <img src={previewImage} alt="Ảnh đạt giải mới" className="max-w-full h-auto mt-2" style={{maxHeight: '100px'}} />
+              </div>
+            )}
+          </div>
         </DialogBody>
         <DialogFooter>
           <Button variant="text" color="red" onClick={() => setIsDialogOpen(false)} className="mr-1">
@@ -302,10 +340,12 @@ const ManagePrizes = () => {
             <Typography>Ngày đạt giải: {new Date(detailPrize.ngayDatGiai).toLocaleDateString()}</Typography>
             <Typography>Loại giải: {detailPrize.loaiGiai}</Typography>
             <Typography>Thành viên đạt giải: {members.find(m => m._id === detailPrize.thanhVienDatGiai)?.hoTen || 'N/A'}</Typography>
-            <Typography>Câu lạc bộ: {clubs.find(c => c._id === detailPrize.club)?.ten || 'N/A'}</Typography>
-            <Typography>Ghi chú: {detailPrize.ghiChu}</Typography>
+            <Typography className="col-span-2">Ghi chú: {detailPrize.ghiChu}</Typography>
             {detailPrize.anhDatGiai && (
-              <img src={`${API_URL}/${detailPrize.anhDatGiai}`} alt="Ảnh đạt giải" className="col-span-2 max-w-full h-auto" />
+              <div className="col-span-2">
+                <Typography>Ảnh đạt giải:</Typography>
+                <img src={`${API_URL}/uploads/${detailPrize.anhDatGiai}`} alt="Ảnh đạt giải" className="max-w-full h-auto mt-2" style={{maxHeight: '300px'}} />
+              </div>
             )}
           </DialogBody>
         )}

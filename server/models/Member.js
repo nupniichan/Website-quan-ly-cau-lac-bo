@@ -13,9 +13,9 @@ const memberSchema = new mongoose.Schema({
     tinhTrang: { type: String, required: true },
     suKienDaThamGia: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
     club: { 
-        type: Number, 
+        type: mongoose.Schema.Types.ObjectId, 
         ref: 'Club',
-        set: v => Number(v) // Tự động chuyển đổi thành số khi lưu
+        required: true
     }
 });
 

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Event = require('../models/Event');
-const Club = require('../models/Club');  // Import model của Club nếu cần
+const Club = require('../models/Club');
 
 /**
  * @swagger
@@ -12,12 +12,13 @@ const Club = require('../models/Club');  // Import model của Club nếu cần
  *       required:
  *         - ten
  *         - ngayToChuc
- *         - thoiGianToChuc
+ *         - thoiGianBatDau
+ *         - thoiGianKetThuc
  *         - diaDiem
  *         - noiDung
  *         - nganSachChiTieu
  *         - nguoiPhuTrach
- *         - clubId  // Thêm trường clubId
+ *         - club
  *       properties:
  *         ten:
  *           type: string
@@ -26,24 +27,36 @@ const Club = require('../models/Club');  // Import model của Club nếu cần
  *           type: string
  *           format: date
  *           description: Ngày tổ chức sự kiện
- *         thoiGianToChuc:
+ *         thoiGianBatDau:
  *           type: string
- *           description: Thời gian tổ chức sự kiện
+ *           description: Thời gian bắt đầu sự kiện
+ *         thoiGianKetThuc:
+ *           type: string
+ *           description: Thời gian kết thúc sự kiện
  *         diaDiem:
  *           type: string
  *           description: Địa điểm tổ chức sự kiện
  *         noiDung:
  *           type: string
- *           description: Nội dung sự kiện
+ *           description: Nội dung s kiện
  *         nganSachChiTieu:
  *           type: number
  *           description: Ngân sách chi tiêu cho sự kiện
  *         nguoiPhuTrach:
  *           type: string
  *           description: Người phụ trách sự kiện
- *         clubId:
- *           type: number
+ *         khachMoi:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Danh sách khách mời
+ *         club:
+ *           type: string
  *           description: ID của câu lạc bộ
+ *         trangThai:
+ *           type: string
+ *           enum: [choDuyet, daDuyet, tuChoi]
+ *           description: Trạng thái của sự kiện
  */
 
 /**
@@ -72,24 +85,32 @@ const Club = require('../models/Club');  // Import model của Club nếu cần
 // Thêm sự kiện mới
 router.post('/add-event', async (req, res) => {
     try {
-        const { clubId, ...eventData } = req.body;
+        const { club, khachMoi, ...eventData } = req.body;
 
-        // Đảm bảo clubId là số và tìm câu lạc bộ
-        const club = await Club.findOne({ _id: Number(clubId) });
+        const clubDoc = await Club.findById(club);
 
-        if (!club) {
-            return res.status(404).json({ message: 'Không tìm thấy CLB' });
+        if (!clubDoc) {
+            return res.status(404).json({ message: 'Club not found' });
         }
 
         const newEvent = new Event({
             ...eventData,
-            club: Number(clubId), // Liên kết sự kiện với clubId là số
+            khachMoi: Array.isArray(khachMoi) ? khachMoi : [khachMoi],
+            club: clubDoc._id,
+            trangThai: 'choDuyet' // Set default status to 'choDuyet'
         });
 
         await newEvent.save();
+
+        // Update the club's suKien array
+        await Club.findByIdAndUpdate(clubDoc._id, {
+            $push: { suKien: newEvent._id }
+        });
+
         res.status(201).json(newEvent);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        console.error('Error adding event:', error);
+        res.status(500).json({ message: error.message });
     }
 });
 
@@ -116,12 +137,13 @@ router.post('/add-event', async (req, res) => {
  */
 router.get('/get-event/:id', async (req, res) => {
     try {
-        const event = await Event.findById(req.params.id);  // Tìm kiếm bằng id là số
+        const event = await Event.findById(req.params.id).populate('club', 'ten');
         if (!event) {
             return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
         }
         res.status(200).json(event);
     } catch (error) {
+        console.error('Error fetching event details:', error);
         res.status(500).json({ message: error.message });
     }
 });
@@ -162,13 +184,10 @@ router.get('/get-event/:id', async (req, res) => {
  */
 router.get('/get-events-by-club/:clubId', async (req, res) => {
     try {
-        // Tìm kiếm các sự kiện dựa trên clubId là số
         const events = await Event.find({ club: req.params.clubId });
-
         if (!events || events.length === 0) {
             return res.status(404).json({ message: 'Không tìm thấy sự kiện cho CLB' });
         }
-
         res.status(200).json(events);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -214,20 +233,28 @@ router.get('/get-events', async (req, res) => {
 // Cập nhật sự kiện
 router.put('/update-event/:id', async (req, res) => {
     try {
-        const { club, ...otherData } = req.body;
+        const { khachMoi, ...eventData } = req.body;
+        
+        // Prepare the update data
+        const updateData = {
+            ...eventData,
+            khachMoi: Array.isArray(khachMoi) ? khachMoi : [khachMoi]
+        };
+
+        // Find the event and update it
         const updatedEvent = await Event.findByIdAndUpdate(
-            req.params.id, 
-            { 
-                ...otherData,
-                club: Number(club), // Đảm bảo club là số
-            }, 
-            { new: true }
+            req.params.id,
+            updateData,
+            { new: true, runValidators: true }
         );
+
         if (!updatedEvent) {
             return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
         }
+
         res.status(200).json(updatedEvent);
     } catch (error) {
+        console.error('Error updating event:', error);
         res.status(500).json({ message: error.message });
     }
 });
@@ -257,11 +284,19 @@ router.put('/update-event/:id', async (req, res) => {
 router.delete('/delete-event/:id', async (req, res) => {
     try {
         const deletedEvent = await Event.findByIdAndDelete(req.params.id);
+
         if (!deletedEvent) {
             return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
         }
-        res.status(200).json({ message: 'Sự kiện đã bị xoá' });
+
+        // Remove the event from the associated club
+        await Club.findByIdAndUpdate(deletedEvent.club, {
+            $pull: { suKien: deletedEvent._id }
+        });
+
+        res.status(200).json({ message: 'Sự kiện đã bị xóa', deletedEvent });
     } catch (error) {
+        console.error('Error deleting event:', error);
         res.status(500).json({ message: error.message });
     }
 });
@@ -300,6 +335,21 @@ router.put('/reject-event/:id', async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
+});
+
+// Thêm route mới này
+router.get('/search-events/:clubId', async (req, res) => {
+  try {
+    const { clubId } = req.params;
+    const { query } = req.query;
+    const events = await Event.find({
+      club: clubId,
+      ten: { $regex: query, $options: 'i' }
+    }).limit(5);
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 module.exports = router;

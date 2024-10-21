@@ -2,7 +2,20 @@ const express = require('express');
 const router = express.Router();
 const Prize = require('../models/Prize');
 const Club = require('../models/Club');  // Đảm bảo đã import model Club
+const multer = require('multer');
+const path = require('path');
 
+// Set up multer for file upload
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/') // Make sure this directory exists
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname))
+  }
+});
+
+const upload = multer({ storage: storage });
 
 /**
  * @swagger
@@ -60,25 +73,31 @@ const Club = require('../models/Club');  // Đảm bảo đã import model Club
  *       500:
  *         description: Lỗi máy chủ
  */
-router.post('/add-prize', async (req, res) => {
+router.post('/add-prize', upload.single('anhDatGiai'), async (req, res) => {
     try {
-        const { clubId, ...prizeData } = req.body;
+        const { club, ...prizeData } = req.body;
 
-        // Kiểm tra xem CLB có tồn tại không
-        const club = await Club.findById(clubId);
-        if (!club) {
+        // Validate required fields
+        if (!prizeData.tenGiaiThuong || !prizeData.ngayDatGiai || !prizeData.loaiGiai || !club) {
+            return res.status(400).json({ message: 'Thiếu thông tin bắt buộc' });
+        }
+
+        const clubExists = await Club.findById(club);
+        if (!clubExists) {
             return res.status(404).json({ message: 'Không tìm thấy CLB' });
         }
 
-        // Tạo giải thưởng mới
         const newPrize = new Prize({
             ...prizeData,
-            club: clubId  // Liên kết với clubId
+            club,
+            ngayDatGiai: new Date(prizeData.ngayDatGiai),
+            anhDatGiai: req.file ? req.file.filename : undefined // Chỉ lưu tên file, không lưu đường dẫn đầy đủ
         });
 
-        await newPrize.save();  // Lưu giải thưởng
+        await newPrize.save();
         res.status(201).json(newPrize);
     } catch (error) {
+        console.error('Error adding prize:', error);
         res.status(400).json({ message: error.message });
     }
 });
@@ -200,11 +219,14 @@ router.get('/get-prize/:id', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.put('/update-prize/:id', async (req, res) => {
+router.put('/update-prize/:id', upload.single('anhDatGiai'), async (req, res) => {
     try {
         const { _id, ...updateData } = req.body;
 
-        // Tìm kiếm và cập nhật giải thưởng
+        if (req.file) {
+            updateData.anhDatGiai = req.file.filename;
+        }
+
         const updatedPrize = await Prize.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
         if (!updatedPrize) {
@@ -238,12 +260,12 @@ router.put('/update-prize/:id', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.delete('/delete-prize/:id', async (req, res) => {
+router.delete('/delete-prize/:id/:clubId', async (req, res) => {
     try {
-        const deletedPrize = await Prize.findByIdAndDelete(req.params.id);
+        const deletedPrize = await Prize.findOneAndDelete({ _id: req.params.id, club: req.params.clubId });
 
         if (!deletedPrize) {
-            return res.status(404).json({ message: 'Không tìm thấy giải thưởng' });
+            return res.status(404).json({ message: 'Không tìm thấy giải thưởng hoặc không có quyền xóa' });
         }
 
         res.status(200).json({ message: 'Giải thưởng đã bị xóa' });
@@ -252,5 +274,24 @@ router.delete('/delete-prize/:id', async (req, res) => {
     }
 });
 
+
+router.get('/search-prizes/:clubId', async (req, res) => {
+  try {
+    const { clubId } = req.params;
+    const { query } = req.query;
+    const prizes = await Prize.find({
+      club: clubId,
+      tenGiaiThuong: { $regex: query, $options: 'i' }
+    }).populate('thanhVienDatGiai', 'hoTen').limit(5);
+    res.json(prizes.map(prize => ({
+      _id: prize._id,
+      tenGiai: prize.tenGiaiThuong,
+      nguoiNhanGiai: prize.thanhVienDatGiai ? prize.thanhVienDatGiai.hoTen : 'Không xác định',
+      ngayNhanGiai: prize.ngayDatGiai
+    })));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 module.exports = router;
