@@ -22,15 +22,15 @@ app.use(express.json());
 // Cấu hình multer để lưu trữ hình ảnh
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, 'uploads/');
+        cb(null, "uploads/");
     },
     filename: (req, file, cb) => {
       cb(null, Date.now() + path.extname(file.originalname)); // Thêm timestamp vào tên file
     },
   });
-  
+
   const upload = multer({ storage });
-  
+
   app.use(cors({
     origin: ['http://localhost:5100','http://localhost:5200', 'http://4.242.20.80:5100','http://4.242.20.80:5200']
   }));

@@ -8,7 +8,7 @@ export default defineConfig({
     port: 5200,
     host: true,
     watch: {
-       usePolling: true,
+      usePolling: true,
     },
   }
 })
