@@ -72,24 +72,29 @@ const Club = require('../models/Club');  // Thêm dòng này để import mô h�
  */
 router.post('/add-member', async (req, res) => {
     try {
-        const { clubId, ...memberData } = req.body;
+        const { club, ...memberData } = req.body;
 
-        // Tìm kiếm câu lạc bộ dựa trên _id là số
-        const club = await Club.findById(clubId);  // Sử dụng findById thay vì findOne
+        const clubDoc = await Club.findById(club);
 
-        if (!club) {
+        if (!clubDoc) {
             return res.status(404).json({ message: 'Club not found' });
         }
 
-        // Tạo thành viên mới và liên kết với club
         const newMember = new Member({
             ...memberData,
-            club: club._id  // Liên kết với ObjectId của Club
+            club: clubDoc._id
         });
 
         await newMember.save();
+
+        // Update the club's thanhVien array
+        await Club.findByIdAndUpdate(clubDoc._id, {
+            $push: { thanhVien: newMember._id }
+        });
+
         res.status(201).json(newMember);
     } catch (error) {
+        console.error('Error adding member:', error);
         res.status(500).json({ message: error.message });
     }
 });
@@ -211,22 +216,38 @@ router.get('/get-member/:maSoHocSinh', async (req, res) => {
  *         description: Lỗi máy chủ
  */
 router.put('/update-member/:maSoHocSinh', async (req, res) => {
-    try {
-        // Tìm kiếm thành viên dựa trên maSoHocSinh
-        const updatedMember = await Member.findOneAndUpdate(
-            { maSoHocSinh: req.params.maSoHocSinh },  // Tìm kiếm bằng maSoHocSinh
-            req.body,  // Dữ liệu cập nhật
-            { new: true }  // Trả về bản ghi đã cập nhật
-        );
+  try {
+    const { club, ...memberData } = req.body;
+    
+    const updatedMember = await Member.findOneAndUpdate(
+      { maSoHocSinh: req.params.maSoHocSinh },
+      { ...memberData, club: club },
+      { new: true, runValidators: true }
+    );
 
-        if (!updatedMember) {
-            return res.status(404).json({ message: 'Không tìm thấy thành viên' });
-        }
-
-        res.status(200).json(updatedMember);  // Trả về thành viên đã cập nhật
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    if (!updatedMember) {
+      return res.status(404).json({ message: 'Không tìm thấy thành viên' });
     }
+
+    // Update the member's association with clubs
+    if (club) {
+      // Remove member from old club
+      await Club.updateMany(
+        { thanhVien: updatedMember._id },
+        { $pull: { thanhVien: updatedMember._id } }
+      );
+
+      // Add member to new club
+      await Club.findByIdAndUpdate(club, {
+        $addToSet: { thanhVien: updatedMember._id }
+      });
+    }
+
+    res.status(200).json(updatedMember);
+  } catch (error) {
+    console.error('Error updating member:', error);
+    res.status(500).json({ message: error.message });
+  }
 });
 
 
@@ -250,19 +271,26 @@ router.put('/update-member/:maSoHocSinh', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.delete('/delete-member/:maSoHocSinh', async (req, res) => {
-    try {
-        // Tìm kiếm và xóa thành viên dựa trên maSoHocSinh
-        const deletedMember = await Member.findOneAndDelete({ maSoHocSinh: req.params.maSoHocSinh });
+router.delete('/delete-member/:maSoHocSinh/:clubId', async (req, res) => {
+  try {
+    const { maSoHocSinh, clubId } = req.params;
 
-        if (!deletedMember) {
-            return res.status(404).json({ message: 'Không tìm thấy thành viên' });
-        }
+    const deletedMember = await Member.findOneAndDelete({ maSoHocSinh: maSoHocSinh });
 
-        res.status(200).json({ message: 'Thành viên đã bị xoá' });  // Xóa thành viên thành công
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    if (!deletedMember) {
+      return res.status(404).json({ message: 'Không tìm thấy thành viên' });
     }
+
+    // Remove the member from the associated club
+    await Club.findByIdAndUpdate(clubId, {
+      $pull: { thanhVien: deletedMember._id }
+    });
+
+    res.status(200).json({ message: 'Thành viên đã bị xóa', deletedMember });
+  } catch (error) {
+    console.error('Error deleting member:', error);
+    res.status(500).json({ message: error.message });
+  }
 });
 
 

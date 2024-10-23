@@ -39,20 +39,39 @@ const ManageMembers = () => {
   });
   const [detailMember, setDetailMember] = useState(null);
   const [editingMemberId, setEditingMemberId] = useState(null);
+  const [managedClub, setManagedClub] = useState(null);
 
   useEffect(() => {
-    fetchMembers();
-    fetchClubs();
+    const managedClubsString = localStorage.getItem('managedClubs');
+    if (managedClubsString) {
+      try {
+        const managedClubs = JSON.parse(managedClubsString);
+        if (managedClubs && managedClubs.length > 0) {
+          setManagedClub(managedClubs[0]);
+          fetchMembers(managedClubs[0]._id);
+        } else {
+          throw new Error("No managed clubs found");
+        }
+      } catch (error) {
+        console.error("Error parsing managed clubs data:", error);
+        alert("Không thể tải thông tin câu lạc bộ. Vui lòng đăng nhập lại.");
+      }
+    } else {
+      console.error("No managed clubs data found");
+      alert("Không tìm thấy thông tin câu lạc bộ. Vui lòng đăng nhập lại.");
+    }
+    setIsLoading(false);
+    fetchClubs(); // Add this line to fetch clubs when component mounts
   }, []);
 
-  const fetchMembers = async () => {
+  const fetchMembers = async (clubId) => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/get-members`);
-      console.log('Dữ liệu thành viên:', response.data);
+      const response = await axios.get(`${API_URL}/get-members-by-club/${clubId}`);
       setMembers(response.data);
     } catch (error) {
       console.error("Error fetching members:", error);
+      alert("Lỗi khi tải danh sách thành viên");
     } finally {
       setIsLoading(false);
     }
@@ -67,33 +86,41 @@ const ManageMembers = () => {
     }
   };
 
+  const fetchManagedClub = async (clubId) => {
+    try {
+      const response = await axios.get(`http://localhost:5500/api/get-club/${clubId}`);
+      setManagedClub(response.data);
+      setNewMember(prev => ({ ...prev, club: clubId }));
+    } catch (error) {
+      console.error("Error fetching managed club:", error);
+    }
+  };
+
   const handleAddMember = async () => {
     try {
+      if (!managedClub) {
+        throw new Error("Managed club information is not available");
+      }
+      
       const memberData = {
         ...newMember,
-        club: Number(newMember.club) // Chuyển đổi club thành số
+        club: managedClub._id
       };
       const response = await axios.post(`${API_URL}/add-member`, memberData);
-      console.log('Phản hồi từ server:', response.data);
       setIsDialogOpen(false);
-      fetchMembers();
+      fetchMembers(managedClub._id);
     } catch (error) {
       console.error("Error adding member:", error);
-      alert(`Lỗi khi thêm thành viên: ${error.response?.data?.message || 'Không xác định'}`);
+      alert(`Lỗi khi thêm thành viên: ${error.message || 'Không xác định'}`);
     }
   };
 
   const handleUpdateMember = async () => {
     try {
-      const memberData = {
-        ...newMember,
-        club: Number(newMember.club) // Chuyển đổi club thành số
-      };
-      const response = await axios.put(`${API_URL}/update-member/${editingMemberId}`, memberData);
-      console.log('Phản hồi từ server:', response.data);
+      const response = await axios.put(`${API_URL}/update-member/${editingMemberId}`, newMember);
       setIsDialogOpen(false);
       setEditingMemberId(null);
-      fetchMembers();
+      fetchMembers(managedClub._id);
     } catch (error) {
       console.error("Error updating member:", error);
       alert(`Lỗi khi cập nhật thành viên: ${error.response?.data?.message || 'Không xác định'}`);
@@ -103,9 +130,8 @@ const ManageMembers = () => {
   const handleDeleteMember = async (maSoHocSinh) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa thành viên này?")) {
       try {
-        const response = await axios.delete(`${API_URL}/delete-member/${maSoHocSinh}`);
-        console.log('Phản hồi từ server:', response.data);
-        fetchMembers();
+        const response = await axios.delete(`${API_URL}/delete-member/${maSoHocSinh}/${managedClub._id}`);
+        fetchMembers(managedClub._id);
       } catch (error) {
         console.error("Error deleting member:", error);
         alert(`Lỗi khi xóa thành viên: ${error.response?.data?.message || 'Không xác định'}`);
@@ -133,7 +159,6 @@ const ManageMembers = () => {
   const openEditDialog = async (maSoHocSinh) => {
     try {
       const response = await axios.get(`${API_URL}/get-member/${maSoHocSinh}`);
-      console.log('Thông tin thành viên nhận được:', response.data);
       setNewMember({
         ...response.data,
         ngayThamGia: response.data.ngayThamGia.split('T')[0],
@@ -149,9 +174,13 @@ const ManageMembers = () => {
   const openDetailDialog = async (maSoHocSinh) => {
     try {
       const response = await axios.get(`${API_URL}/get-member/${maSoHocSinh}`);
-      console.log('Thông tin chi tiết thành viên nhận được:', response.data);
       setDetailMember(response.data);
       setIsDetailDialogOpen(true);
+
+      // Ensure clubs are loaded
+      if (clubs.length === 0) {
+        await fetchClubs();
+      }
     } catch (error) {
       console.error("Error fetching member details:", error);
       alert(`Lỗi khi lấy thông tin thành viên: ${error.response?.data?.message || 'Không xác định'}`);
@@ -309,7 +338,9 @@ const ManageMembers = () => {
             <Typography>Ngày tham gia: {new Date(detailMember.ngayThamGia).toLocaleDateString()}</Typography>
             <Typography>Vai trò: {detailMember.vaiTro}</Typography>
             <Typography>Tình trạng: {detailMember.tinhTrang}</Typography>
-            <Typography>Câu lạc bộ: {clubs.find(c => c._id === detailMember.club)?.ten || 'N/A'}</Typography>
+            <Typography>
+              Câu lạc bộ: {clubs.find(c => c._id === detailMember.club)?.ten || 'Đang tải...'}
+            </Typography>
           </DialogBody>
         ) : (
           <Spinner />

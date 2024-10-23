@@ -82,13 +82,10 @@ router.use('/uploads', express.static(path.join(__dirname, '../uploads')));
  */
 router.post('/add-club', upload.single('logo'), async (req, res) => {
   try {
-    console.log('Dữ liệu nhận được:', req.body);
-    console.log('File logo:', req.file);
-
-    const { ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, mieuTa, quyDinh } = req.body;
+    const { ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, mieuTa, quyDinh, truongBanCLB } = req.body;
 
     // Kiểm tra các trường bắt buộc
-    if (!ten || !linhVucHoatDong || !ngayThanhLap || !giaoVienPhuTrach) {
+    if (!ten || !linhVucHoatDong || !ngayThanhLap || !giaoVienPhuTrach || !truongBanCLB) {
       return res.status(400).json({ message: 'Vui lòng điền đầy đủ thông tin bắt buộc' });
     }
 
@@ -99,6 +96,7 @@ router.post('/add-club', upload.single('logo'), async (req, res) => {
       giaoVienPhuTrach,
       mieuTa,
       quyDinh,
+      truongBanCLB,
       logo: req.file ? `/uploads/${req.file.filename}` : undefined
     });
 
@@ -138,12 +136,12 @@ router.get('/get-clubs', async (req, res) => {
 
 /**
  * @swagger
- * /api/get-club/{id}:
+ * /api/get-club/{clubId}:
  *   get:
  *     summary: Lấy thông tin chi tiết của một câu lạc bộ
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: clubId
  *         required: true
  *         schema:
  *           type: number
@@ -160,15 +158,11 @@ router.get('/get-clubs', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.get('/get-club/:id', async (req, res) => {
+router.get('/get-club/:clubId', async (req, res) => {
   try {
-    const { id } = req.params;
+    const { clubId } = req.params;
     
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'ID câu lạc bộ không hợp lệ' });
-    }
-
-    const club = await Club.findById(id);
+    const club = await Club.findOne({ clubId: clubId }).populate('thanhVien');
     if (!club) {
       return res.status(404).json({ message: 'Không tìm thấy câu lạc bộ' });
     }
@@ -181,12 +175,12 @@ router.get('/get-club/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/update-club/{id}:
+ * /api/update-club/{clubId}:
  *   put:
  *     summary: Cập nhật thông tin câu lạc bộ
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: clubId
  *         required: true
  *         schema:
  *           type: number
@@ -209,28 +203,25 @@ router.get('/get-club/:id', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.put('/update-club/:id', upload.single('logo'), async (req, res) => {
+router.put('/update-club/:clubId', upload.single('logo'), async (req, res) => {
   try {
-    const { id } = req.params;
-    console.log('Dữ liệu nhận được:', req.body);
-    console.log('File logo:', req.file);
-    console.log('Logo path:', req.file ? `/uploads/${req.file.filename}` : undefined);
+    const { clubId } = req.params;
+    const { ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, mieuTa, quyDinh, truongBanCLB } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'ID câu lạc bộ không hợp lệ' });
-    }
-
-    const { ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, mieuTa, quyDinh } = req.body;
-
-    const updatedClub = await Club.findByIdAndUpdate(id, {
-      ten,
-      linhVucHoatDong,
-      ngayThanhLap,
-      giaoVienPhuTrach,
-      mieuTa,
-      quyDinh,
-      logo: req.file ? `/uploads/${req.file.filename}` : undefined
-    }, { new: true });
+    const updatedClub = await Club.findOneAndUpdate(
+      { clubId: clubId },
+      {
+        ten,
+        linhVucHoatDong,
+        ngayThanhLap,
+        giaoVienPhuTrach,
+        mieuTa,
+        quyDinh,
+        truongBanCLB,
+        logo: req.file ? `/uploads/${req.file.filename}` : undefined
+      },
+      { new: true }
+    );
 
     if (!updatedClub) {
       return res.status(404).json({ message: 'Không tìm thấy câu lạc bộ' });
@@ -245,12 +236,12 @@ router.put('/update-club/:id', upload.single('logo'), async (req, res) => {
 
 /**
  * @swagger
- * /api/delete-club/{id}:
+ * /api/delete-club/{clubId}:
  *   delete:
  *     summary: Xoá câu lạc bộ
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: clubId
  *         required: true
  *         schema:
  *           type: number
@@ -263,15 +254,11 @@ router.put('/update-club/:id', upload.single('logo'), async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.delete('/delete-club/:id', async (req, res) => {
+router.delete('/delete-club/:clubId', async (req, res) => {
   try {
-    const { id } = req.params;
+    const { clubId } = req.params;
     
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'ID câu lạc bộ không hợp lệ' });
-    }
-
-    const club = await Club.findByIdAndDelete(id);
+    const club = await Club.findOneAndDelete({ clubId: clubId });
     if (!club) {
       return res.status(404).json({ message: 'Không tìm thấy câu lạc bộ' });
     }
@@ -279,6 +266,18 @@ router.delete('/delete-club/:id', async (req, res) => {
   } catch (error) {
     console.error('Lỗi khi xóa câu lạc bộ:', error);
     res.status(500).json({ message: 'Đã xảy ra lỗi khi xóa câu lạc bộ', error: error.message });
+  }
+});
+
+// Add this new route
+router.get('/get-managed-clubs/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const managedClubs = await Club.find({ truongBanCLB: userId });
+    res.status(200).json(managedClubs);
+  } catch (error) {
+    console.error('Lỗi khi lấy thông tin câu lạc bộ quản lý:', error);
+    res.status(500).json({ message: 'Đã xảy ra lỗi khi lấy thông tin câu lạc bộ quản lý', error: error.message });
   }
 });
 

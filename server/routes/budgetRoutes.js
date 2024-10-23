@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Budget = require('../models/Budget');
 const Club = require('../models/Club');
-const BudgetAllocation = require('../models/BudgetAllocation');
 
 /**
  * @swagger
@@ -25,25 +24,23 @@ const BudgetAllocation = require('../models/BudgetAllocation');
  */
 router.post('/add-budget', async (req, res) => {
     try {
-        const { clubId, ...budgetData } = req.body;
-        console.log('Dữ liệu nhận được:', req.body); // Log để kiểm tra
+        const { club, ...budgetData } = req.body;
 
-        // Tìm kiếm club theo clubId
-        const club = await Club.findById(clubId);
-        if (!club) {
-            return res.status(404).json({ message: 'Không tìm thấy CLB' });
+        const clubDoc = await Club.findById(club);
+        if (!clubDoc) {
+            return res.status(404).json({ message: 'Club not found' });
         }
 
-        // Tạo ngân sách mới và liên kết với club
         const newBudget = new Budget({
             ...budgetData,
-            club: clubId
+            club: clubDoc._id
         });
 
         await newBudget.save();
+
         res.status(201).json(newBudget);
     } catch (error) {
-        console.error('Lỗi khi thêm ngân sách:', error);
+        console.error('Error adding budget:', error);
         res.status(500).json({ message: error.message });
     }
 });
@@ -70,12 +67,7 @@ router.post('/add-budget', async (req, res) => {
  */
 router.get('/get-budgets-by-club/:clubId', async (req, res) => {
     try {
-        const budgets = await Budget.find({ club: req.params.clubId });
-
-        if (!budgets || budgets.length === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy ngân sách cho CLB' });
-        }
-
+        const budgets = await Budget.find({ club: req.params.clubId }).populate('club', 'ten');
         res.status(200).json(budgets);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -110,10 +102,13 @@ router.get('/get-budgets-by-club/:clubId', async (req, res) => {
  */
 router.put('/update-budget/:id', async (req, res) => {
     try {
-        const { _id, ...updateData } = req.body;
-
-        // Tìm kiếm và cập nhật ngân sách bằng ID là số
-        const updatedBudget = await Budget.findByIdAndUpdate(req.params.id, updateData, { new: true });
+        const { club, ...updateData } = req.body;
+        
+        const updatedBudget = await Budget.findByIdAndUpdate(
+            req.params.id,
+            { ...updateData, club: club },
+            { new: true, runValidators: true }
+        ).populate('club', 'ten');
 
         if (!updatedBudget) {
             return res.status(404).json({ message: 'Không tìm thấy ngân sách' });
@@ -121,6 +116,7 @@ router.put('/update-budget/:id', async (req, res) => {
 
         res.status(200).json(updatedBudget);
     } catch (error) {
+        console.error('Error updating budget:', error);
         res.status(500).json({ message: error.message });
     }
 });
@@ -168,7 +164,7 @@ router.get('/get-budgets', async (req, res) => {
  */
 router.get('/get-budget/:id', async (req, res) => {
     try {
-        const budget = await Budget.findById(req.params.id);
+        const budget = await Budget.findById(req.params.id).populate('club', 'ten');
         if (!budget) {
             return res.status(404).json({ message: 'Không tìm thấy ngân sách' });
         }
@@ -200,12 +196,7 @@ router.get('/get-budget/:id', async (req, res) => {
  */
 router.get('/get-budgets-by-club/:clubId', async (req, res) => {
     try {
-        const budgets = await Budget.find({ club: req.params.clubId });
-
-        if (!budgets || budgets.length === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy ngân sách cho CLB' });
-        }
-
+        const budgets = await Budget.find({ club: req.params.clubId }).populate('club', 'ten');
         res.status(200).json(budgets);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -233,16 +224,17 @@ router.get('/get-budgets-by-club/:clubId', async (req, res) => {
  *       500:
  *         description: Lỗi máy chủ
  */
-router.delete('/delete-budget/:id', async (req, res) => {
+router.delete('/delete-budget/:id/:clubId', async (req, res) => {
     try {
-        const deletedBudget = await Budget.findByIdAndDelete(req.params.id);
+        const deletedBudget = await Budget.findOneAndDelete({ _id: req.params.id, club: req.params.clubId });
 
         if (!deletedBudget) {
             return res.status(404).json({ message: 'Không tìm thấy ngân sách' });
         }
 
-        res.status(200).json({ message: 'Ngân sách đã bị xóa' });
+        res.status(200).json({ message: 'Ngân sách đã bị xóa', deletedBudget });
     } catch (error) {
+        console.error('Error deleting budget:', error);
         res.status(500).json({ message: error.message });
     }
 });

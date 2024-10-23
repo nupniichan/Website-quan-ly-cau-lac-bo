@@ -41,7 +41,6 @@ const BudgetAllocation = () => {
     setIsLoading(true);
     try {
       const response = await axios.get(`${API_URL}/get-budget-allocations`);
-      console.log('Dữ liệu phân bổ ngân sách:', response.data);
       setAllocations(response.data);
     } catch (error) {
       console.error("Error fetching budget allocations:", error);
@@ -53,7 +52,6 @@ const BudgetAllocation = () => {
   const fetchClubs = async () => {
     try {
       const response = await axios.get(`${API_URL}/get-clubs`);
-      console.log('Danh sách CLB:', response.data);
       setClubs(response.data);
     } catch (error) {
       console.error("Error fetching clubs:", error);
@@ -63,7 +61,6 @@ const BudgetAllocation = () => {
   const handleAddAllocation = async () => {
     try {
       const response = await axios.post(`${API_URL}/add-budget-allocation`, newAllocation);
-      console.log('Phản hồi từ server:', response.data);
       setIsDialogOpen(false);
       fetchAllocations();
     } catch (error) {
@@ -75,7 +72,6 @@ const BudgetAllocation = () => {
   const handleUpdateAllocation = async () => {
     try {
       const response = await axios.put(`${API_URL}/update-budget-allocation/${editingAllocationId}`, newAllocation);
-      console.log('Phản hồi từ server:', response.data);
       setIsDialogOpen(false);
       setEditingAllocationId(null);
       fetchAllocations();
@@ -89,7 +85,6 @@ const BudgetAllocation = () => {
     if (window.confirm("Bạn có chắc chắn muốn xóa phân bổ ngân sách này?")) {
       try {
         const response = await axios.delete(`${API_URL}/delete-budget-allocation/${id}`);
-        console.log('Phản hồi từ server:', response.data);
         fetchAllocations();
       } catch (error) {
         console.error("Error deleting budget allocation:", error);

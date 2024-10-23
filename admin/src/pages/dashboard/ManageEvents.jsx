@@ -12,11 +12,12 @@ import {
   DialogFooter,
   Input,
   Textarea,
-  Select,
-  Option,
   Spinner,
+  IconButton,
 } from "@material-tailwind/react";
-import { PlusIcon, PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, PencilIcon, TrashIcon, EyeIcon, XCircleIcon } from "@heroicons/react/24/solid";
+import TimePicker from 'react-time-picker';
+import 'react-time-picker/dist/TimePicker.css';
 
 const API_URL = "http://localhost:5500/api";
 
@@ -29,26 +30,56 @@ const ManageEvents = () => {
   const [newEvent, setNewEvent] = useState({
     ten: "",
     ngayToChuc: "",
-    thoiGianToChuc: "",
+    thoiGianBatDau: "00:00",
+    thoiGianKetThuc: "00:00",
     diaDiem: "",
     noiDung: "",
     nganSachChiTieu: 0,
     nguoiPhuTrach: "",
-    khachMoi: "",
+    khachMoi: [],
     club: "",
   });
   const [detailEvent, setDetailEvent] = useState(null);
   const [editingEventId, setEditingEventId] = useState(null);
+  const [managedClub, setManagedClub] = useState(null);
+  const [guestInput, setGuestInput] = useState("");
 
   useEffect(() => {
-    fetchClubs().then(() => fetchEvents());
+    const managedClubsString = localStorage.getItem('managedClubs');
+    if (managedClubsString) {
+      try {
+        const managedClubs = JSON.parse(managedClubsString);
+        if (managedClubs && managedClubs.length > 0) {
+          setManagedClub(managedClubs[0]);
+          fetchEvents(managedClubs[0]._id);
+        } else {
+          throw new Error("No managed clubs found");
+        }
+      } catch (error) {
+        console.error("Error parsing managed clubs data:", error);
+        alert("Không thể tải thông tin câu lạc bộ. Vui lòng đăng nhập lại.");
+      }
+    } else {
+      console.error("No managed clubs data found");
+      alert("Không tìm thấy thông tin câu lạc bộ. Vui lòng đăng nhập lại.");
+    }
+    setIsLoading(false);
+    fetchClubs();
   }, []);
 
-  const fetchEvents = async () => {
+  const fetchClubs = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/get-clubs`);
+      setClubs(response.data);
+    } catch (error) {
+      console.error("Error fetching clubs:", error);
+    }
+  };
+
+  const fetchEvents = async (clubId) => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/get-events`);
-      console.log('Dữ liệu sự kiện từ server:', response.data);
+      const response = await axios.get(`${API_URL}/get-events-by-club/${clubId}`);
       setEvents(response.data);
     } catch (error) {
       console.error("Error fetching events:", error);
@@ -57,56 +88,42 @@ const ManageEvents = () => {
     }
   };
 
-  const fetchClubs = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/get-clubs`);
-      console.log('Dữ liệu câu lạc bộ từ server:', response.data);
-      setClubs(response.data);
-    } catch (error) {
-      console.error("Error fetching clubs:", error);
-    }
-  };
-
   const handleAddEvent = async () => {
     try {
+      if (!managedClub) {
+        throw new Error("Managed club information is not available");
+      }
+      
       const eventData = {
         ...newEvent,
-        club: Number(newEvent.club)
+        club: managedClub._id
       };
-      console.log('Dữ liệu sự kiện trước khi gửi:', eventData);
       const response = await axios.post(`${API_URL}/add-event`, eventData);
-      console.log('Phản hồi từ server sau khi thêm:', response.data);
       setIsDialogOpen(false);
-      fetchEvents();
+      fetchEvents(managedClub._id);
     } catch (error) {
       console.error("Error adding event:", error);
-      alert(`Lỗi khi thêm sự kiện: ${error.response?.data?.message || 'Không xác định'}`);
+      alert(`Lỗi khi thêm sự kiện: ${error.message || 'Không xác định'}`);
     }
   };
 
   const handleUpdateEvent = async () => {
     try {
-      const eventData = {
-        ...newEvent,
-        club: Number(newEvent.club)
-      };
-      console.log('Dữ liệu sự kiện trước khi cập nhật:', eventData);
-      const response = await axios.put(`${API_URL}/update-event/${editingEventId}`, eventData);
-      console.log('Phản hồi từ server sau khi cập nhật:', response.data);
+      const response = await axios.put(`${API_URL}/update-event/${editingEventId}`, newEvent);
       setIsDialogOpen(false);
       setEditingEventId(null);
-      fetchEvents();
+      fetchEvents(managedClub._id);
     } catch (error) {
       console.error("Error updating event:", error);
       alert(`Lỗi khi cập nhật sự kiện: ${error.response?.data?.message || 'Không xác định'}`);
     }
   };
 
-  const handleDeleteEvent = async (id) => {
+  const handleDeleteEvent = async (eventId) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa sự kiện này?")) {
       try {
-        await axios.delete(`${API_URL}/delete-event/${id}`);
-        fetchEvents();
+        const response = await axios.delete(`${API_URL}/delete-event/${eventId}`);
+        fetchEvents(managedClub._id);
       } catch (error) {
         console.error("Error deleting event:", error);
         alert(`Lỗi khi xóa sự kiện: ${error.response?.data?.message || 'Không xác định'}`);
@@ -114,24 +131,68 @@ const ManageEvents = () => {
     }
   };
 
-  const openEditDialog = (id) => {
-    const eventToEdit = events.find(event => event._id === id);
-    if (eventToEdit) {
-      console.log('Sự kiện cần chỉnh sửa:', eventToEdit);
+  const openEditDialog = async (id) => {
+    try {
+      const response = await axios.get(`${API_URL}/get-event/${id}`);
       setNewEvent({
-        ...eventToEdit,
-        club: eventToEdit.club.toString()
+        ...response.data,
+        ngayToChuc: response.data.ngayToChuc.split('T')[0],
       });
       setEditingEventId(id);
       setIsDialogOpen(true);
+    } catch (error) {
+      console.error("Error fetching event details:", error);
+      alert(`Lỗi khi lấy thông tin sự kiện: ${error.response?.data?.message || 'Không xác định'}`);
     }
   };
 
-  const openDetailDialog = (id) => {
-    const eventDetail = events.find(event => event._id === id);
-    if (eventDetail) {
-      setDetailEvent(eventDetail);
+  const openDetailDialog = async (id) => {
+    try {
+      const response = await axios.get(`${API_URL}/get-event/${id}`);
+      setDetailEvent(response.data);
       setIsDetailDialogOpen(true);
+
+      if (clubs.length === 0) {
+        await fetchClubs();
+      }
+    } catch (error) {
+      console.error("Error fetching event details:", error);
+      alert(`Lỗi khi lấy thông tin sự kiện: ${error.response?.data?.message || 'Không xác định'}`);
+    }
+  };
+
+  const handleAddGuest = () => {
+    if (guestInput.trim() !== "") {
+      setNewEvent(prev => ({
+        ...prev,
+        khachMoi: [...prev.khachMoi, guestInput.trim()]
+      }));
+      setGuestInput("");
+    }
+  };
+
+  const handleRemoveGuest = (index) => {
+    setNewEvent(prev => ({
+      ...prev,
+      khachMoi: prev.khachMoi.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleEditGuest = (index, newName) => {
+    setNewEvent(prev => ({
+      ...prev,
+      khachMoi: prev.khachMoi.map((guest, i) => i === index ? newName : guest)
+    }));
+  };
+
+  const fetchEventDetails = async (id) => {
+    try {
+      const response = await axios.get(`${API_URL}/get-event/${id}`);
+      setDetailEvent(response.data);
+      setIsDetailDialogOpen(true);
+    } catch (error) {
+      console.error("Error fetching event details:", error);
+      alert(`Lỗi khi lấy thông tin sự kiện: ${error.response?.data?.message || 'Không xác định'}`);
     }
   };
 
@@ -149,12 +210,13 @@ const ManageEvents = () => {
               setNewEvent({
                 ten: "",
                 ngayToChuc: "",
-                thoiGianToChuc: "",
+                thoiGianBatDau: "00:00",
+                thoiGianKetThuc: "00:00",
                 diaDiem: "",
                 noiDung: "",
                 nganSachChiTieu: 0,
                 nguoiPhuTrach: "",
-                khachMoi: "",
+                khachMoi: [],
                 club: "",
               });
               setEditingEventId(null);
@@ -171,7 +233,7 @@ const ManageEvents = () => {
             <table className="w-full min-w-[640px] table-auto">
               <thead>
                 <tr>
-                  {["Tên sự kiện", "Ngày tổ chức", "Địa điểm", "Người phụ trách", "CLB", "Thao tác"].map((el) => (
+                  {["Tên sự kiện", "Ngày tổ chức", "Địa điểm", "Người phụ trách", "Thao tác"].map((el) => (
                     <th key={el} className="border-b border-blue-gray-50 py-3 px-5 text-left">
                       <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                         {el}
@@ -181,7 +243,7 @@ const ManageEvents = () => {
                 </tr>
               </thead>
               <tbody>
-                {events.map(({ _id, ten, ngayToChuc, diaDiem, nguoiPhuTrach, club }, index) => {
+                {events.map(({ _id, ten, ngayToChuc, diaDiem, nguoiPhuTrach }, index) => {
                   const className = index === events.length - 1 ? "p-4" : "p-4 border-b border-blue-gray-50";
                   return (
                     <tr key={_id}>
@@ -203,17 +265,6 @@ const ManageEvents = () => {
                       <td className={className}>
                         <Typography className="text-xs font-semibold text-blue-gray-600">
                           {nguoiPhuTrach}
-                        </Typography>
-                      </td>
-                      <td className={className}>
-                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                          {(() => {
-                            console.log('Club ID:', club);
-                            console.log('Clubs:', clubs);
-                            const foundClub = clubs.find(c => c._id === Number(club));
-                            console.log('Found club:', foundClub);
-                            return foundClub ? foundClub.ten : 'N/A';
-                          })()}
                         </Typography>
                       </td>
                       <td className={className}>
@@ -244,24 +295,68 @@ const ManageEvents = () => {
         <DialogBody divider className="grid grid-cols-2 gap-4">
           <Input label="Tên sự kiện" value={newEvent.ten} onChange={(e) => setNewEvent({ ...newEvent, ten: e.target.value })} />
           <Input type="date" label="Ngày tổ chức" value={newEvent.ngayToChuc} onChange={(e) => setNewEvent({ ...newEvent, ngayToChuc: e.target.value })} />
-          <Input label="Thời gian tổ chức" value={newEvent.thoiGianToChuc} onChange={(e) => setNewEvent({ ...newEvent, thoiGianToChuc: e.target.value })} />
+          <div>
+            <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
+              Thời gian bắt đầu
+            </Typography>
+            <TimePicker
+              onChange={(value) => setNewEvent({ ...newEvent, thoiGianBatDau: value })}
+              value={newEvent.thoiGianBatDau}
+              clearIcon={null}
+              clockIcon={null}
+              format="HH:mm"
+              disableClock={true}
+              className="w-full"
+            />
+          </div>
+          <div>
+            <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
+              Thời gian kết thúc
+            </Typography>
+            <TimePicker
+              onChange={(value) => setNewEvent({ ...newEvent, thoiGianKetThuc: value })}
+              value={newEvent.thoiGianKetThuc}
+              clearIcon={null}
+              clockIcon={null}
+              format="HH:mm"
+              disableClock={true}
+              className="w-full"
+            />
+          </div>
           <Input label="Địa điểm" value={newEvent.diaDiem} onChange={(e) => setNewEvent({ ...newEvent, diaDiem: e.target.value })} />
           <Textarea label="Nội dung" value={newEvent.noiDung} onChange={(e) => setNewEvent({ ...newEvent, noiDung: e.target.value })} className="col-span-2" />
           <Input type="number" label="Ngân sách chi tiêu" value={newEvent.nganSachChiTieu} onChange={(e) => setNewEvent({ ...newEvent, nganSachChiTieu: e.target.value })} />
           <Input label="Người phụ trách" value={newEvent.nguoiPhuTrach} onChange={(e) => setNewEvent({ ...newEvent, nguoiPhuTrach: e.target.value })} />
-          <Input label="Khách mời" value={newEvent.khachMoi} onChange={(e) => setNewEvent({ ...newEvent, khachMoi: e.target.value })} />
-          <Select 
-            label="Câu lạc bộ" 
-            value={newEvent.club.toString()} 
-            onChange={(value) => {
-              console.log('Selected club value:', value);
-              setNewEvent({ ...newEvent, club: value });
-            }}
-          >
-            {clubs.map((club) => (
-              <Option key={club._id} value={club._id.toString()}>{club.ten}</Option>
-            ))}
-          </Select>
+          <div className="col-span-2">
+            <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
+              Khách mời
+            </Typography>
+            <div className="flex items-center gap-2 mb-2">
+              <Input
+                label="Tên khách mời"
+                value={guestInput}
+                onChange={(e) => setGuestInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddGuest()}
+              />
+              <Button onClick={handleAddGuest} className="flex-shrink-0">
+                <PlusIcon className="h-5 w-5" />
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {newEvent.khachMoi.map((guest, index) => (
+                <div key={index} className="flex items-center bg-blue-gray-50 rounded-full px-3 py-1">
+                  <Input
+                    value={guest}
+                    onChange={(e) => handleEditGuest(index, e.target.value)}
+                    className="border-none bg-transparent p-0 text-sm"
+                  />
+                  <IconButton variant="text" color="red" onClick={() => handleRemoveGuest(index)}>
+                    <XCircleIcon className="h-5 w-5" />
+                  </IconButton>
+                </div>
+              ))}
+            </div>
+          </div>
         </DialogBody>
         <DialogFooter>
           <Button variant="text" color="red" onClick={() => setIsDialogOpen(false)} className="mr-1">
@@ -280,21 +375,15 @@ const ManageEvents = () => {
           <DialogBody divider className="grid grid-cols-2 gap-4">
             <Typography>Tên sự kiện: {detailEvent.ten}</Typography>
             <Typography>Ngày tổ chức: {new Date(detailEvent.ngayToChuc).toLocaleDateString()}</Typography>
-            <Typography>Thời gian tổ chức: {detailEvent.thoiGianToChuc}</Typography>
+            <Typography>Thời gian bắt đầu: {detailEvent.thoiGianBatDau}</Typography>
+            <Typography>Thời gian kết thúc: {detailEvent.thoiGianKetThuc}</Typography>
             <Typography>Địa điểm: {detailEvent.diaDiem}</Typography>
             <Typography className="col-span-2">Nội dung: {detailEvent.noiDung}</Typography>
             <Typography>Ngân sách chi tiêu: {detailEvent.nganSachChiTieu}</Typography>
             <Typography>Người phụ trách: {detailEvent.nguoiPhuTrach}</Typography>
-            <Typography>Khách mời: {detailEvent.khachMoi}</Typography>
-            <Typography>
-              Câu lạc bộ: {(() => {
-                console.log('Detail event club:', detailEvent.club);
-                console.log('Clubs in detail:', clubs);
-                const foundClub = clubs.find(c => c._id === Number(detailEvent.club));
-                console.log('Found club in detail:', foundClub);
-                return foundClub ? foundClub.ten : 'N/A';
-              })()}
-            </Typography>
+            <Typography>Khách mời: {detailEvent.khachMoi.join(', ')}</Typography>
+            <Typography>Câu lạc bộ: {detailEvent.club.ten}</Typography>
+            <Typography>Trạng thái: {detailEvent.trangThai}</Typography>
           </DialogBody>
         )}
         <DialogFooter>

@@ -3,7 +3,8 @@
 
 /* Logo styles */
 .logo {
-  height: 6em;
+  width: 6rem;
+  height: 6rem;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;

@@ -3,7 +3,7 @@ const Counter = require('./Counter'); // Đảm bảo đã import đúng
 
 // Schema cho thông tin câu lạc bộ (Club)
 const clubSchema = new mongoose.Schema({
-    clubId: { type: Number, unique: true }, // Thêm clubId và đảm bảo unique
+    clubId: { type: Number, unique: true },
     ten: { type: String, required: true },
     logo: { type: String },
     linhVucHoatDong: { type: String, required: true },
@@ -11,7 +11,8 @@ const clubSchema = new mongoose.Schema({
     ngayThanhLap: { type: Date, required: true },
     giaoVienPhuTrach: { type: String, required: true },
     mieuTa: { type: String, required: true }, 
-    quyDinh: { type: String, required: true }
+    quyDinh: { type: String, required: true },
+    truongBanCLB: { type: String, required: true }
 });
 
 // Middleware để tự động tăng giá trị clubId

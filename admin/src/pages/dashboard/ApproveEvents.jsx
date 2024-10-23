@@ -31,7 +31,6 @@ const ApproveEvents = () => {
     setIsLoading(true);
     try {
       const response = await axios.get(`${API_URL}/get-pending-events`);
-      console.log('Dữ liệu sự kiện chờ duyệt từ server:', response.data);
       setEvents(response.data);
     } catch (error) {
       console.error("Error fetching pending events:", error);
@@ -43,7 +42,6 @@ const ApproveEvents = () => {
   const fetchClubs = async () => {
     try {
       const response = await axios.get(`${API_URL}/get-clubs`);
-      console.log('Dữ liệu câu lạc bộ từ server:', response.data);
       setClubs(response.data);
     } catch (error) {
       console.error("Error fetching clubs:", error);
