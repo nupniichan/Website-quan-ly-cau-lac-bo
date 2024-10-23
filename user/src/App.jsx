@@ -3,7 +3,7 @@ import Footer from './components/Footer.jsx';
 import Header from './components/Header.jsx';
 import Navbar from './components/Navbar.jsx';
 import './App.css';
-import logoImage from './assets/react.svg'; // Update this path
+import logoImage from '../public/imgs/logo.png';
 import Homepage from './Homepage.jsx';
 import AboutSchool from './AboutSchool.jsx';
 import ClubList from './ClubList.jsx';
@@ -24,7 +24,7 @@ function App() {
 
         {/* Image positioned on top of the header and navbar */}
         <div className="image-container">
-          <img src={logoImage} alt="Logo" className="logo" /> {/* Logo Image */}
+          <img src={logoImage} alt="Logo" className="logo"/> {/* Logo Image */}
         </div>
 
         <div className="navbar">
