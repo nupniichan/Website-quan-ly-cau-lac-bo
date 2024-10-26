@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
   Card,
@@ -50,7 +50,7 @@ const ClubReports = () => {
     if (selectedClub) {
       fetchReports();
     }
-  }, [selectedClub]);
+  }, [fetchReports, selectedClub]);
 
   const fetchClubs = async () => {
     try {
@@ -70,7 +70,7 @@ const ClubReports = () => {
     }
   };
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await axios.get(`${API_URL}/get-reports-by-club/${selectedClub}`);
@@ -80,7 +80,7 @@ const ClubReports = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedClub]);
 
   const handleAddReport = async () => {
     try {
@@ -242,9 +242,9 @@ const ClubReports = () => {
           <Input label="Tên báo cáo" value={newReport.tenBaoCao} onChange={(e) => setNewReport({ ...newReport, tenBaoCao: e.target.value })} />
           <Input type="date" label="Ngày báo cáo" value={newReport.ngayBaoCao} onChange={(e) => setNewReport({ ...newReport, ngayBaoCao: e.target.value })} />
           <Input label="Nhân sự phụ trách" value={newReport.nhanSuPhuTrach} onChange={(e) => setNewReport({ ...newReport, nhanSuPhuTrach: e.target.value })} />
-          <Select 
-            label="Danh sách sự kiện" 
-            value={newReport.danhSachSuKien} 
+          <Select
+            label="Danh sách sự kiện"
+            value={newReport.danhSachSuKien}
             onChange={(value) => setNewReport({ ...newReport, danhSachSuKien: value })}
             multiple
           >
