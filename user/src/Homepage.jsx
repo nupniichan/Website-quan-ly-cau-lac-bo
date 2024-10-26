@@ -39,7 +39,7 @@ const Homepage = () => {
     setShowAllClubs(!showAllClubs);
   };
 
-  const displayedClubs = showAllClubs ? clubs : clubs.slice(0, 6);
+  const displayedClubs = clubs.slice(0, 9);
 
   const handleMouseDown = (e) => {
     isDown = true;
@@ -66,8 +66,12 @@ const Homepage = () => {
     scrollContainerRef.current.scrollLeft = scrollLeft - walk;
   };
 
-  const handleClubClick = () => {
-    navigate('/clubs');  // This will navigate to the ClubList page
+//   const handleClubClick = () => {
+//     navigate(`${API_URL}/get-club/${clubId}`);  // This will navigate to the ClubList page
+//   };
+
+  const handleViewMoreClubs = () => {
+    navigate('/clubs');
   };
 
   return (
@@ -141,7 +145,7 @@ const Homepage = () => {
         alt="Curriculum Infographic" 
         className="absolute top-0 left-0 w-2/4 h-full object-contain"
       />              <div className="absolute top-0 left-0 w-full h-full">
-                <p className="text-sm absolute top-[4%] left-[24%]">Chú trọng phát triển năng lực cá nhân, nhấn mạnh việc <b>rèn luyện kĩ năng �� bồi đắp phẩm chất</b></p>
+                <p className="text-sm absolute top-[4%] left-[24%]">Chú trọng phát triển năng lực cá nhân, nhấn mạnh việc <b>rèn luyện kĩ năng  bồi đắp phẩm chất</b></p>
                 <p className="text-sm absolute top-[25%] left-[36%]">Cách tiếp cận học tập chủ động thông qua <b>trải nghiệm, suy ngẫm</b></p>
                 <p className="text-sm absolute top-[44%] left-[25%]">Tập trung <b>phát triển tư duy bậc cao</b> cho học sinh như phân tích, đánh giá, sáng tạo</p>
                 <p className="text-sm absolute top-[63%] left-[36%]">Giúp học sinh vừa <b>hội nhập toàn cầu</b>, vừa <b>giữ gìn và phát huy bản sắc Việt Nam</b></p>
@@ -286,7 +290,7 @@ const Homepage = () => {
                       key={club._id} 
                       className="bg-red-600 text-white h-[55px] w-full sm:w-[325px] flex items-center justify-center cursor-pointer hover:bg-red-700 transition duration-300"
                       style={style}
-                      onClick={handleClubClick}  // Changed this line
+                      onClick={() => navigate(`/clubs/${club.clubId}`)}
                     >
                       <span className="text-center">{club.ten}</span>
                     </div>
@@ -295,16 +299,14 @@ const Homepage = () => {
               </div>
             </div>
           )}
-          {clubs.length > 6 && (
-            <div className="text-center mt-8 sm:mt-12">
-              <button 
-                className="bg-yellow-400 text-black px-6 py-3 rounded-full hover:bg-yellow-500 transition duration-300"
-                onClick={handleClubClick}  // Added this line
-              >
-                {showAllClubs ? "Thu gọn" : "Xem thêm"}
-              </button>
-            </div>
-          )}
+          <div className="text-center mt-8 sm:mt-12">
+            <button 
+              className="bg-yellow-400 text-black px-6 py-3 rounded-full hover:bg-yellow-500 transition duration-300"
+              onClick={handleViewMoreClubs}
+            >
+              Xem thêm
+            </button>
+          </div>
         </div>
       </div>
 
