@@ -31,7 +31,7 @@ function App() {
             <Route path="/" element={<Homepage />} />
             <Route path="/about" element={<AboutSchool />} />
             <Route path="/clubs" element={<ClubList />} />
-            <Route path="/clubs/:clubName" element={<ClubDetails />} />
+            <Route path="/clubs/:clubId" element={<ClubDetails />} />
             <Route path="/curriculum" element={<CurriculumInfo />} />
             <Route path="/news" element={<NewsDetails />} />
             <Route path="/admission" element={<AdmissionStandard />} />

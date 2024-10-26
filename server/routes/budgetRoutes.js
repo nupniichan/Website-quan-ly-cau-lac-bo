@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Budget = require('../models/Budget');
 const Club = require('../models/Club');
+const BudgetAllocation = require('../models/BudgetAllocation');
+const Counter = require('../models/Counter');
 
 /**
  * @swagger
@@ -26,22 +28,30 @@ router.post('/add-budget', async (req, res) => {
     try {
         const { club, ...budgetData } = req.body;
 
-        const clubDoc = await Club.findById(club);
+        // Kiểm tra xem club có tồn tại không
+        const clubDoc = await Club.findOne({ _id: Number(club) });
         if (!clubDoc) {
-            return res.status(404).json({ message: 'Club not found' });
+            return res.status(404).json({ message: 'Không tìm thấy câu lạc bộ' });
         }
 
         const newBudget = new Budget({
             ...budgetData,
-            club: clubDoc._id
+            club: clubDoc._id,
+            ngay: new Date(budgetData.ngay) // Đảm bảo ngày được parse đúng
         });
 
-        await newBudget.save();
-
-        res.status(201).json(newBudget);
+        const savedBudget = await newBudget.save();
+        
+        // Populate thông tin club và trả về
+        const populatedBudget = await Budget.findById(savedBudget._id).populate('club', 'ten');
+        
+        res.status(201).json(populatedBudget);
     } catch (error) {
         console.error('Error adding budget:', error);
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ 
+            message: 'Lỗi khi thêm ngân sách', 
+            error: error.message 
+        });
     }
 });
 
@@ -242,9 +252,12 @@ router.delete('/delete-budget/:id/:clubId', async (req, res) => {
 // Lấy danh sách phân bổ ngân sách
 router.get('/get-budget-allocations', async (req, res) => {
     try {
-        const allocations = await BudgetAllocation.find().populate('club', 'ten');
+        const allocations = await BudgetAllocation.find()
+            .populate('club', 'ten clubId')
+            .sort({ allocationDate: -1 });
         res.status(200).json(allocations);
     } catch (error) {
+        console.error('Error fetching budget allocations:', error);
         res.status(500).json({ message: error.message });
     }
 });
@@ -252,23 +265,80 @@ router.get('/get-budget-allocations', async (req, res) => {
 // Thêm phân bổ ngân sách mới
 router.post('/add-budget-allocation', async (req, res) => {
     try {
-        const newAllocation = new BudgetAllocation(req.body);
-        await newAllocation.save();
-        res.status(201).json(newAllocation);
+        console.log('Received data:', req.body);
+
+        // Lấy ID mới cho BudgetAllocation
+        const counter = await Counter.findByIdAndUpdate(
+            { _id: 'budgetAllocationId' },
+            { $inc: { seq: 1 } },
+            { new: true, upsert: true }
+        );
+
+        // Tìm club bằng _id (ObjectId)
+        const clubDoc = await Club.findById(req.body.club);
+        console.log('Found club:', clubDoc);
+
+        if (!clubDoc) {
+            return res.status(404).json({ 
+                message: 'Không tìm thấy câu lạc bộ',
+                debug: { searchedId: req.body.club }
+            });
+        }
+
+        const newAllocation = new BudgetAllocation({
+            _id: counter.seq, // Thêm _id từ counter
+            club: clubDoc._id,
+            amount: Number(req.body.amount),
+            purpose: req.body.purpose,
+            allocationDate: new Date(req.body.allocationDate)
+        });
+
+        console.log('New allocation data:', newAllocation);
+
+        const savedAllocation = await newAllocation.save();
+        const populatedAllocation = await BudgetAllocation.findById(savedAllocation._id)
+            .populate('club', 'ten clubId');
+
+        res.status(201).json(populatedAllocation);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        console.error('Error details:', error);
+        res.status(400).json({ 
+            message: 'Lỗi khi thêm phân bổ ngân sách',
+            error: error.message,
+            stack: error.stack
+        });
     }
 });
 
 // Cập nhật phân bổ ngân sách
 router.put('/update-budget-allocation/:id', async (req, res) => {
     try {
-        const updatedAllocation = await BudgetAllocation.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const { club, amount, purpose, allocationDate } = req.body;
+        
+        // Tìm club bằng clubId
+        const clubDoc = await Club.findOne({ clubId: Number(club) });
+        if (!clubDoc) {
+            return res.status(404).json({ message: 'Không tìm thấy câu lạc bộ' });
+        }
+
+        const updatedAllocation = await BudgetAllocation.findByIdAndUpdate(
+            req.params.id,
+            {
+                club: clubDoc._id,
+                amount,
+                purpose,
+                allocationDate: new Date(allocationDate)
+            },
+            { new: true, runValidators: true }
+        ).populate('club', 'ten clubId');
+
         if (!updatedAllocation) {
             return res.status(404).json({ message: 'Không tìm thấy phân bổ ngân sách' });
         }
+
         res.status(200).json(updatedAllocation);
     } catch (error) {
+        console.error('Error updating budget allocation:', error);
         res.status(400).json({ message: error.message });
     }
 });

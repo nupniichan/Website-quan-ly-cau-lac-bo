@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import {
   Card,
@@ -43,6 +43,7 @@ const ManageEvents = () => {
   const [editingEventId, setEditingEventId] = useState(null);
   const [managedClub, setManagedClub] = useState(null);
   const [guestInput, setGuestInput] = useState("");
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
     const managedClubsString = localStorage.getItem('managedClubs');
@@ -120,7 +121,7 @@ const ManageEvents = () => {
   };
 
   const handleDeleteEvent = async (eventId) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa sự kiện này?")) {
+    if (window.confirm("Bạn có chc chắn muốn xóa sự kiện này?")) {
       try {
         const response = await axios.delete(`${API_URL}/delete-event/${eventId}`);
         fetchEvents(managedClub._id);
@@ -157,7 +158,7 @@ const ManageEvents = () => {
       }
     } catch (error) {
       console.error("Error fetching event details:", error);
-      alert(`Lỗi khi lấy thông tin sự kiện: ${error.response?.data?.message || 'Không xác định'}`);
+      alert(`Lỗi khi lấy thông tin sự kiện: ${error.response?.data?.message || 'Khng xác định'}`);
     }
   };
 
@@ -196,6 +197,11 @@ const ManageEvents = () => {
     }
   };
 
+  const filteredEvents = useMemo(() => {
+    if (statusFilter === 'all') return events;
+    return events.filter(event => event.trangThai === statusFilter);
+  }, [events, statusFilter]);
+
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
       <Card>
@@ -205,26 +211,67 @@ const ManageEvents = () => {
           </Typography>
         </CardHeader>
         <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-          <div className="flex justify-end p-4">
-            <Button className="flex items-center gap-3" color="cyan" size="sm" onClick={() => {
-              setNewEvent({
-                ten: "",
-                ngayToChuc: "",
-                thoiGianBatDau: "00:00",
-                thoiGianKetThuc: "00:00",
-                diaDiem: "",
-                noiDung: "",
-                nganSachChiTieu: 0,
-                nguoiPhuTrach: "",
-                khachMoi: [],
-                club: "",
-              });
-              setEditingEventId(null);
-              setIsDialogOpen(true);
-            }}>
+          <div className="flex justify-between items-center p-4">
+            <div className="flex gap-2">
+              <Button
+                variant={statusFilter === 'all' ? 'gradient' : 'outlined'}
+                color="cyan"
+                size="sm"
+                onClick={() => setStatusFilter('all')}
+              >
+                Tất cả
+              </Button>
+              <Button
+                variant={statusFilter === 'choDuyet' ? 'gradient' : 'outlined'}
+                color="cyan"
+                size="sm"
+                onClick={() => setStatusFilter('choDuyet')}
+              >
+                Chờ duyệt
+              </Button>
+              <Button
+                variant={statusFilter === 'daDuyet' ? 'gradient' : 'outlined'}
+                color="cyan"
+                size="sm"
+                onClick={() => setStatusFilter('daDuyet')}
+              >
+                Đã duyệt
+              </Button>
+              <Button
+                variant={statusFilter === 'tuChoi' ? 'gradient' : 'outlined'}
+                color="cyan"
+                size="sm"
+                onClick={() => setStatusFilter('tuChoi')}
+              >
+                Đã từ chối
+              </Button>
+            </div>
+            
+            <Button 
+              className="flex items-center gap-3" 
+              color="cyan" 
+              size="sm" 
+              onClick={() => {
+                setNewEvent({
+                  ten: "",
+                  ngayToChuc: "",
+                  thoiGianBatDau: "00:00",
+                  thoiGianKetThuc: "00:00",
+                  diaDiem: "",
+                  noiDung: "",
+                  nganSachChiTieu: 0,
+                  nguoiPhuTrach: "",
+                  khachMoi: [],
+                  club: "",
+                });
+                setEditingEventId(null);
+                setIsDialogOpen(true);
+              }}
+            >
               <PlusIcon strokeWidth={2} className="h-4 w-4" /> Thêm sự kiện
             </Button>
           </div>
+
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Spinner className="h-12 w-12" color="cyan" />
@@ -233,7 +280,7 @@ const ManageEvents = () => {
             <table className="w-full min-w-[640px] table-auto">
               <thead>
                 <tr>
-                  {["Tên sự kiện", "Ngày tổ chức", "Địa điểm", "Người phụ trách", "Thao tác"].map((el) => (
+                  {["Tên sự kiện", "Ngày tổ chức", "Địa điểm", "Người phụ trách", "Trạng thái", "Thao tác"].map((el) => (
                     <th key={el} className="border-b border-blue-gray-50 py-3 px-5 text-left">
                       <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                         {el}
@@ -243,8 +290,20 @@ const ManageEvents = () => {
                 </tr>
               </thead>
               <tbody>
-                {events.map(({ _id, ten, ngayToChuc, diaDiem, nguoiPhuTrach }, index) => {
-                  const className = index === events.length - 1 ? "p-4" : "p-4 border-b border-blue-gray-50";
+                {filteredEvents.map(({ 
+                  _id, 
+                  ten, 
+                  ngayToChuc, 
+                  thoiGianBatDau,
+                  thoiGianKetThuc,
+                  diaDiem, 
+                  nguoiPhuTrach, 
+                  trangThai 
+                }, index) => {
+                  const className = index === filteredEvents.length - 1 
+                    ? "p-4" 
+                    : "p-4 border-b border-blue-gray-50";
+
                   return (
                     <tr key={_id}>
                       <td className={className}>
@@ -253,9 +312,17 @@ const ManageEvents = () => {
                         </Typography>
                       </td>
                       <td className={className}>
-                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                          {new Date(ngayToChuc).toLocaleDateString()}
-                        </Typography>
+                        <div className="flex flex-col">
+                          <Typography className="text-xs font-semibold text-blue-gray-600">
+                            {new Date(ngayToChuc).toLocaleDateString('vi-VN')}
+                          </Typography>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="w-1 h-1 bg-blue-gray-300 rounded-full"></div>
+                            <Typography className="text-xs text-blue-gray-500">
+                              {thoiGianBatDau} - {thoiGianKetThuc}
+                            </Typography>
+                          </div>
+                        </div>
                       </td>
                       <td className={className}>
                         <Typography className="text-xs font-semibold text-blue-gray-600">
@@ -269,14 +336,33 @@ const ManageEvents = () => {
                       </td>
                       <td className={className}>
                         <div className="flex items-center gap-2">
+                          {trangThai === 'choDuyet' && (
+                            <Typography className="text-xs font-semibold text-orange-500">
+                              Chờ duyệt
+                            </Typography>
+                          )}
+                          {trangThai === 'daDuyet' && (
+                            <Typography className="text-xs font-semibold text-green-500">
+                              Đã duyệt
+                            </Typography>
+                          )}
+                          {trangThai === 'tuChoi' && (
+                            <Typography className="text-xs font-semibold text-red-500">
+                              Đã từ chối
+                            </Typography>
+                          )}
+                        </div>
+                      </td>
+                      <td className={className}>
+                        <div className="flex items-center gap-2">
                           <Button size="sm" color="green" className="flex items-center gap-2" onClick={() => openDetailDialog(_id)}>
-                            <EyeIcon strokeWidth={2} className="h-4 w-4" /> Chi tiết
+                            <EyeIcon strokeWidth={2} className="h-4 w-4" />
                           </Button>
                           <Button size="sm" color="blue" className="flex items-center gap-2" onClick={() => openEditDialog(_id)}>
-                            <PencilIcon strokeWidth={2} className="h-4 w-4" /> Sửa
+                            <PencilIcon strokeWidth={2} className="h-4 w-4" />
                           </Button>
                           <Button size="sm" color="red" className="flex items-center gap-2" onClick={() => handleDeleteEvent(_id)}>
-                            <TrashIcon strokeWidth={2} className="h-4 w-4" /> Xóa
+                            <TrashIcon strokeWidth={2} className="h-4 w-4" />
                           </Button>
                         </div>
                       </td>
@@ -383,7 +469,27 @@ const ManageEvents = () => {
             <Typography>Người phụ trách: {detailEvent.nguoiPhuTrach}</Typography>
             <Typography>Khách mời: {detailEvent.khachMoi.join(', ')}</Typography>
             <Typography>Câu lạc bộ: {detailEvent.club.ten}</Typography>
-            <Typography>Trạng thái: {detailEvent.trangThai}</Typography>
+            <Typography className="col-span-2">
+              <span className="font-semibold">Trạng thái:</span>{" "}
+              <span className={`
+                ${detailEvent.trangThai === 'choDuyet' && 'text-orange-500'}
+                ${detailEvent.trangThai === 'daDuyet' && 'text-green-500'}
+                ${detailEvent.trangThai === 'tuChoi' && 'text-red-500'}
+                font-semibold
+              `}>
+                {detailEvent.trangThai === 'choDuyet' && 'Chờ duyệt'}
+                {detailEvent.trangThai === 'daDuyet' && 'Đã duyệt'}
+                {detailEvent.trangThai === 'tuChoi' && 'Đã từ chối'}
+              </span>
+            </Typography>
+            
+            {/* Hiển thị lý do từ chối nếu có */}
+            {detailEvent.trangThai === 'tuChoi' && detailEvent.lyDoTuChoi && (
+              <Typography className="col-span-2">
+                <span className="font-semibold text-red-500">Lý do từ chối:</span>{" "}
+                <span className="text-red-500">{detailEvent.lyDoTuChoi}</span>
+              </Typography>
+            )}
           </DialogBody>
         )}
         <DialogFooter>

@@ -43,6 +43,7 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
+      'no-undef': 'off',
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'react/prop-types': 'off',
       'react/react-in-jsx-scope': 'off',
