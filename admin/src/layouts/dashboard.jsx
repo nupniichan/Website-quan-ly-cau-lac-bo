@@ -31,8 +31,8 @@ import ManageEvents from "../pages/dashboard/ManageEvents.jsx";
 import ManageBudget from "../pages/dashboard/ManageBudget.jsx";
 import ManagePrizes from "../pages/dashboard/ManagePrizes.jsx";
 import ActivityReports from "../pages/dashboard/ActivityReports.jsx";
-import Table from "../pages/dashboard/Tables.jsx";
-import Profile from "../pages/dashboard/Profile.jsx";
+import Table from "../pages/dashboard/tables.jsx";
+import Profile from "../pages/dashboard/profile.jsx";
 
 export function Dashboard() {
     const [controller, dispatch] = useMaterialTailwindController();
