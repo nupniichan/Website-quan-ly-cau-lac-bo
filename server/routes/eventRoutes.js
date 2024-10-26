@@ -197,9 +197,17 @@ router.get('/get-events-by-club/:clubId', async (req, res) => {
 
 router.get('/get-events', async (req, res) => {
     try {
-        const events = await Event.find();
+        console.log('API get-events được gọi');
+        const events = await Event.find()
+            .populate({
+                path: 'club',
+                select: 'ten'  // Chỉ lấy trường 'ten' của club
+            })
+            .sort({ ngayToChuc: -1 });
+        console.log('Events from DB:', events);
         res.status(200).json(events);
     } catch (error) {
+        console.error('Error:', error);
         res.status(500).json({ message: error.message });
     }
 });
@@ -264,7 +272,7 @@ router.put('/update-event/:id', async (req, res) => {
  * @swagger
  * /api/delete-event/{id}:
  *   delete:
- *     summary: Xoá sự kiện
+ *     summary: Xoá s�� kiện
  *     parameters:
  *       - in: path
  *         name: id
@@ -327,7 +335,15 @@ router.put('/approve-event/:id', async (req, res) => {
 // Từ chối sự kiện
 router.put('/reject-event/:id', async (req, res) => {
     try {
-        const updatedEvent = await Event.findByIdAndUpdate(req.params.id, { trangThai: 'tuChoi' }, { new: true });
+        const { lyDoTuChoi } = req.body;
+        const updatedEvent = await Event.findByIdAndUpdate(
+            req.params.id, 
+            { 
+                trangThai: 'tuChoi',
+                lyDoTuChoi: lyDoTuChoi 
+            }, 
+            { new: true }
+        );
         if (!updatedEvent) {
             return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
         }

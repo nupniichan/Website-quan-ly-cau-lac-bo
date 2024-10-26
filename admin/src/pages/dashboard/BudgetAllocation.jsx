@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import {
     Button,
@@ -14,6 +14,7 @@ import {
     Select,
     Spinner,
     Typography,
+    IconButton,
 } from "@material-tailwind/react";
 import {
     EyeIcon,
@@ -36,6 +37,15 @@ const BudgetAllocation = () => {
         allocationDate: "",
     });
     const [editingAllocationId, setEditingAllocationId] = useState(null);
+    const [filters, setFilters] = useState({
+        club: '',
+        startDate: '',
+        endDate: '',
+        minAmount: '',
+        maxAmount: ''
+    });
+    const [detailAllocation, setDetailAllocation] = useState(null);
+    const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
     useEffect(() => {
         fetchAllocations();
@@ -67,18 +77,37 @@ const BudgetAllocation = () => {
 
     const handleAddAllocation = async () => {
         try {
+            if (!newAllocation.club) {
+                alert('Vui lòng chọn câu lạc bộ');
+                return;
+            }
+
+            const formattedData = {
+                club: newAllocation.club, // Đây là ObjectId
+                amount: Number(newAllocation.amount),
+                purpose: newAllocation.purpose,
+                allocationDate: newAllocation.allocationDate
+            };
+
+            console.log('Data being sent:', formattedData);
+
             const response = await axios.post(
                 `${API_URL}/add-budget-allocation`,
-                newAllocation,
+                formattedData
             );
+            
+            console.log('Response:', response.data);
             setIsDialogOpen(false);
             fetchAllocations();
         } catch (error) {
             console.error("Error adding budget allocation:", error);
+            if (error.response?.data) {
+                console.error("Error response data:", error.response.data);
+            }
             alert(
                 `Lỗi khi thêm phân bổ ngân sách: ${
-                    error.response?.data?.message || "Không xác định"
-                }`,
+                    error.response?.data?.message || error.message || "Không xác định"
+                }`
             );
         }
     };
@@ -124,10 +153,10 @@ const BudgetAllocation = () => {
 
     const openAddDialog = () => {
         setNewAllocation({
-            club: "",
+            club: "", // Để trống, người dùng sẽ chọn
             amount: 0,
             purpose: "",
-            allocationDate: "",
+            allocationDate: new Date().toISOString().split('T')[0] // Set ngày hiện tại
         });
         setEditingAllocationId(null);
         setIsDialogOpen(true);
@@ -146,6 +175,22 @@ const BudgetAllocation = () => {
             setIsDialogOpen(true);
         }
     };
+
+    const openDetailDialog = (allocation) => {
+        setDetailAllocation(allocation);
+        setIsDetailDialogOpen(true);
+    };
+
+    const filteredAllocations = useMemo(() => {
+        return allocations.filter(allocation => {
+            const matchClub = !filters.club || allocation.club._id === filters.club;
+            const matchDate = (!filters.startDate || new Date(allocation.allocationDate) >= new Date(filters.startDate)) &&
+                            (!filters.endDate || new Date(allocation.allocationDate) <= new Date(filters.endDate));
+            const matchAmount = (!filters.minAmount || allocation.amount >= Number(filters.minAmount)) &&
+                              (!filters.maxAmount || allocation.amount <= Number(filters.maxAmount));
+            return matchClub && matchDate && matchAmount;
+        });
+    }, [allocations, filters]);
 
     return (
         <div className="mt-12 mb-8 flex flex-col gap-12">
@@ -172,133 +217,193 @@ const BudgetAllocation = () => {
                             Thêm phân bổ
                         </Button>
                     </div>
-                    {isLoading
-                        ? (
-                            <div className="flex justify-center items-center h-64">
-                                <Spinner className="h-12 w-12" color="purple" />
-                            </div>
-                        )
-                        : allocations.length === 0
-                        ? (
-                            <Typography className="text-center py-4">
-                                Chưa có phân bổ ngân sách nào.
-                            </Typography>
-                        )
-                        : (
-                            <table className="w-full min-w-[640px] table-auto">
-                                <thead>
-                                    <tr>
-                                        {[
-                                            "Câu lạc bộ",
-                                            "Số tiền",
-                                            "Mục đích",
-                                            "Ngày phân bổ",
-                                            "Thao tác",
-                                        ].map((el) => (
-                                            <th
-                                                key={el}
-                                                className="border-b border-blue-gray-50 py-3 px-5 text-left"
-                                            >
-                                                <Typography
-                                                    variant="small"
-                                                    className="text-[11px] font-bold uppercase text-blue-gray-400"
-                                                >
-                                                    {el}
-                                                </Typography>
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {allocations.map(
-                                        (
-                                            {
-                                                _id,
-                                                club,
-                                                amount,
-                                                purpose,
-                                                allocationDate,
-                                            },
-                                            key,
-                                        ) => {
-                                            const className = `py-3 px-5 ${
-                                                key === allocations.length - 1
-                                                    ? ""
-                                                    : "border-b border-blue-gray-50"
-                                            }`;
+                    {/* Thêm phần filter */}
+                    <div className="px-6 py-3 bg-gray-50">
+                        <div className="grid grid-cols-5 gap-4">
+                            <Select
+                                label="Câu lạc bộ"
+                                value={filters.club}
+                                onChange={(value) => setFilters({...filters, club: value})}
+                            >
+                                <Option value="">Tất cả</Option>
+                                {clubs.map((club) => (
+                                    <Option key={club._id} value={club._id}>
+                                        {club.ten}
+                                    </Option>
+                                ))}
+                            </Select>
+                            <Input
+                                type="date"
+                                label="Từ ngày"
+                                value={filters.startDate}
+                                onChange={(e) => setFilters({...filters, startDate: e.target.value})}
+                            />
+                            <Input
+                                type="date"
+                                label="Đến ngày"
+                                value={filters.endDate}
+                                onChange={(e) => setFilters({...filters, endDate: e.target.value})}
+                            />
+                            <Input
+                                type="number"
+                                label="Số tiền từ"
+                                value={filters.minAmount}
+                                onChange={(e) => setFilters({...filters, minAmount: e.target.value})}
+                            />
+                            <Input
+                                type="number"
+                                label="Số tiền đến"
+                                value={filters.maxAmount}
+                                onChange={(e) => setFilters({...filters, maxAmount: e.target.value})}
+                            />
+                        </div>
+                    </div>
 
-                                            return (
-                                                <tr key={_id}>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {clubs.find((c) =>
-                                                                c._id === club
-                                                            )?.ten || "N/A"}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {amount
-                                                                .toLocaleString()}
-                                                            {" "}
-                                                            VND
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {purpose}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {new Date(
-                                                                allocationDate,
-                                                            ).toLocaleDateString()}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <div className="flex items-center gap-2">
-                                                            <Button
-                                                                size="sm"
-                                                                color="blue"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    openEditDialog(
-                                                                        _id,
-                                                                    )}
-                                                            >
-                                                                <PencilIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />{" "}
-                                                                Sửa
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                color="red"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    handleDeleteAllocation(
-                                                                        _id,
-                                                                    )}
-                                                            >
-                                                                <TrashIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />{" "}
-                                                                Xóa
-                                                            </Button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        },
-                                    )}
-                                </tbody>
-                            </table>
-                        )}
+                    {/* Bảng hiển thị */}
+                    <table className="w-full min-w-[640px] table-auto">
+                        <thead>
+                            <tr>
+                                {[
+                                    "Câu lạc bộ",
+                                    "Số tiền",
+                                    "Mục đích",
+                                    "Ngày phân bổ",
+                                    "Thao tác",
+                                ].map((el) => (
+                                    <th
+                                        key={el}
+                                        className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                                    >
+                                        <Typography
+                                            variant="small"
+                                            className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                        >
+                                            {el}
+                                        </Typography>
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredAllocations.map(({_id, club, amount, purpose, allocationDate}, key) => {
+                                const className = `py-3 px-5 ${
+                                    key === filteredAllocations.length - 1
+                                        ? ""
+                                        : "border-b border-blue-gray-50"
+                                }`;
+
+                                return (
+                                    <tr key={_id}>
+                                        <td className={className}>
+                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                {club?.ten || "N/A"}
+                                            </Typography>
+                                        </td>
+                                        <td className={className}>
+                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                {amount
+                                                    .toLocaleString()}
+                                                {" "}
+                                                VND
+                                            </Typography>
+                                        </td>
+                                        <td className={className}>
+                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                {purpose}
+                                            </Typography>
+                                        </td>
+                                        <td className={className}>
+                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                {new Date(
+                                                    allocationDate,
+                                                ).toLocaleDateString()}
+                                            </Typography>
+                                        </td>
+                                        <td className={className}>
+                                            <div className="flex items-center gap-2">
+                                                <IconButton
+                                                    color="blue"
+                                                    onClick={() => openDetailDialog({_id, club, amount, purpose, allocationDate})}
+                                                >
+                                                    <EyeIcon className="h-4 w-4" />
+                                                </IconButton>
+                                                <Button
+                                                    size="sm"
+                                                    color="blue"
+                                                    className="flex items-center gap-2"
+                                                    onClick={() =>
+                                                        openEditDialog(
+                                                            _id,
+                                                        )}
+                                                >
+                                                    <PencilIcon
+                                                        strokeWidth={2}
+                                                        className="h-4 w-4"
+                                                    />{" "}
+                                                    Sửa
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    color="red"
+                                                    className="flex items-center gap-2"
+                                                    onClick={() =>
+                                                        handleDeleteAllocation(
+                                                            _id,
+                                                        )}
+                                                >
+                                                    <TrashIcon
+                                                        strokeWidth={2}
+                                                        className="h-4 w-4"
+                                                    />{" "}
+                                                    Xóa
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
                 </CardBody>
             </Card>
+
+            {/* Dialog Chi tiết */}
+            <Dialog
+                open={isDetailDialogOpen}
+                handler={() => setIsDetailDialogOpen(false)}
+                size="lg"
+            >
+                <DialogHeader>Chi tiết Phân bổ Ngân sách</DialogHeader>
+                <DialogBody divider>
+                    {detailAllocation && (
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Typography variant="small" className="font-bold">Câu lạc bộ:</Typography>
+                                <Typography>{detailAllocation.club?.ten || "N/A"}</Typography>
+                            </div>
+                            <div>
+                                <Typography variant="small" className="font-bold">Số tiền:</Typography>
+                                <Typography>{detailAllocation.amount.toLocaleString()} VND</Typography>
+                            </div>
+                            <div>
+                                <Typography variant="small" className="font-bold">Mục đích:</Typography>
+                                <Typography>{detailAllocation.purpose}</Typography>
+                            </div>
+                            <div>
+                                <Typography variant="small" className="font-bold">Ngày phân bổ:</Typography>
+                                <Typography>
+                                    {new Date(detailAllocation.allocationDate).toLocaleDateString()}
+                                </Typography>
+                            </div>
+                        </div>
+                    )}
+                </DialogBody>
+                <DialogFooter>
+                    <Button variant="text" color="red" onClick={() => setIsDetailDialogOpen(false)}>
+                        Đóng
+                    </Button>
+                </DialogFooter>
+            </Dialog>
 
             {/* Dialog thêm/sửa phân bổ ngân sách */}
             <Dialog
@@ -308,20 +413,20 @@ const BudgetAllocation = () => {
             >
                 <DialogHeader>
                     {editingAllocationId
-                        ? "Ch���nh sửa Phân bổ Ngân sách"
+                        ? "Chnh sửa Phân bổ Ngân sách"
                         : "Thêm Phân bổ Ngân sách Mới"}
                 </DialogHeader>
                 <DialogBody divider className="grid grid-cols-2 gap-4">
                     <Select
                         label="Câu lạc bộ"
-                        value={newAllocation.club
-                            ? newAllocation.club.toString()
-                            : ""}
-                        onChange={(value) =>
-                            setNewAllocation({ ...newAllocation, club: value })}
+                        value={newAllocation.club}
+                        onChange={(value) => {
+                            console.log('Selected club:', value);
+                            setNewAllocation({ ...newAllocation, club: value });
+                        }}
                     >
                         {clubs.map((club) => (
-                            <Option key={club._id} value={club._id.toString()}>
+                            <Option key={club._id} value={club._id}>
                                 {club.ten}
                             </Option>
                         ))}
@@ -333,7 +438,7 @@ const BudgetAllocation = () => {
                         onChange={(e) =>
                             setNewAllocation({
                                 ...newAllocation,
-                                amount: e.target.value,
+                                amount: Number(e.target.value)
                             })}
                     />
                     <Input
@@ -342,17 +447,18 @@ const BudgetAllocation = () => {
                         onChange={(e) =>
                             setNewAllocation({
                                 ...newAllocation,
-                                purpose: e.target.value,
+                                purpose: e.target.value
                             })}
                     />
                     <Input
                         type="date"
                         label="Ngày phân bổ"
                         value={newAllocation.allocationDate}
-                        onChange={(e) => setNewAllocation({
-                            ...newAllocation,
-                            allocationDate: e.target.value,
-                        })}
+                        onChange={(e) =>
+                            setNewAllocation({
+                                ...newAllocation,
+                                allocationDate: e.target.value
+                            })}
                     />
                 </DialogBody>
                 <DialogFooter>

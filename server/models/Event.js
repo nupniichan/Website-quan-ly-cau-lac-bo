@@ -13,10 +13,11 @@ const eventSchema = new mongoose.Schema({
     khachMoi: [{ type: String }], // Array of strings for multiple guests
     club: { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Club',
+        ref: 'Club',  // Đảm bảo tên này khớp với model Club của bạn
         required: true
     },
-    trangThai: { type: String, enum: ['choDuyet', 'daDuyet', 'tuChoi'], default: 'choDuyet' }
+    trangThai: { type: String, enum: ['choDuyet', 'daDuyet', 'tuChoi'], default: 'choDuyet' },
+    lyDoTuChoi: { type: String } // Thêm trường này
 });
 
 const Event = mongoose.model('Event', eventSchema);
