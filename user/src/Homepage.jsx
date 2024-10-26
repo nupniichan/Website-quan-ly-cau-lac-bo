@@ -1,11 +1,45 @@
-import  { useRef } from 'react';
+import  { useRef, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaGraduationCap, FaBookReader, FaBrain, FaGlobeAmericas, FaLaptop } from 'react-icons/fa';
 
+const API_URL = "http://localhost:5500/api";
+
 const Homepage = () => {
+  const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
   let isDown = false;
   let startX;
   let scrollLeft;
+
+  const [clubs, setClubs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAllClubs, setShowAllClubs] = useState(false);
+
+  useEffect(() => {
+    fetchClubs();
+  }, []);
+
+  const fetchClubs = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/get-clubs`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setClubs(data);
+    } catch (error) {
+      console.error("Error fetching clubs:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleShowAllClubs = () => {
+    setShowAllClubs(!showAllClubs);
+  };
+
+  const displayedClubs = clubs.slice(0, 9);
 
   const handleMouseDown = (e) => {
     isDown = true;
@@ -30,6 +64,14 @@ const Homepage = () => {
     const x = e.pageX - scrollContainerRef.current.offsetLeft;
     const walk = (x - startX) * 1; // Tăng tốc độ kéo
     scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+//   const handleClubClick = () => {
+//     navigate(`${API_URL}/get-club/${clubId}`);  // This will navigate to the ClubList page
+//   };
+
+  const handleViewMoreClubs = () => {
+    navigate('/clubs');
   };
 
   return (
@@ -103,7 +145,7 @@ const Homepage = () => {
         alt="Curriculum Infographic" 
         className="absolute top-0 left-0 w-2/4 h-full object-contain"
       />              <div className="absolute top-0 left-0 w-full h-full">
-                <p className="text-sm absolute top-[4%] left-[24%]">Chú trọng phát triển năng lực cá nhân, nhấn mạnh việc <b>rèn luyện kĩ năng – bồi đắp phẩm chất</b></p>
+                <p className="text-sm absolute top-[4%] left-[24%]">Chú trọng phát triển năng lực cá nhân, nhấn mạnh việc <b>rèn luyện kĩ năng  bồi đắp phẩm chất</b></p>
                 <p className="text-sm absolute top-[25%] left-[36%]">Cách tiếp cận học tập chủ động thông qua <b>trải nghiệm, suy ngẫm</b></p>
                 <p className="text-sm absolute top-[44%] left-[25%]">Tập trung <b>phát triển tư duy bậc cao</b> cho học sinh như phân tích, đánh giá, sáng tạo</p>
                 <p className="text-sm absolute top-[63%] left-[36%]">Giúp học sinh vừa <b>hội nhập toàn cầu</b>, vừa <b>giữ gìn và phát huy bản sắc Việt Nam</b></p>
@@ -147,7 +189,7 @@ const Homepage = () => {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-8 md:space-y-0 md:space-x-4">
             <div className="flex flex-col items-center text-center max-w-xs mt-6">
               <img src="../public/imgs/icon-achievement-1.png" alt="Global Education" className="w-20 h-auto mb-4" />
-              <p className="text-sm text-gray-600">Trường học kết hợp phương pháp giảng dạy mới nhất mang lại kết quả tốt nhất</p>
+              <p className="text-sm text-gray-600">Trường học kết hợp phương pháp giảng dạy mới nhất mang lại kết quả tốt nht</p>
             </div>
             <div className="flex flex-col items-center text-center max-w-xs">
               <img src="../public/imgs/icon-achievement-2.png" alt="30 Years Experience" className="w-20 h-25 mb-4" />
@@ -210,53 +252,58 @@ const Homepage = () => {
           <h2 className="text-xl sm:text-2xl font-bold text-center text-[#004D86] mb-8 sm:mb-12">
             Các câu lạc bộ tại trường
           </h2>
-          <div className="flex justify-center">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-[1125px]">
-              {[
-                "Câu lạc bộ tin học", "Câu lạc bộ tình nguyện", "Câu lạc bộ âm nhạc",
-                "Câu lạc bộ nhiếp ảnh", "Câu lạc bộ nhật ngữ", "Câu lạc bộ anime",
-                "Câu lạc bộ anh ngữ", "Câu lạc bộ nhiệp ảnh", "Câu lạc bộ 7SEC",
-                "Câu lạc bộ hài kịch", "Câu lạc bộ thể thao", "Câu lạc bộ hội học sinh"
-              ].map((club, index) => {
-                const column = index % 3;
-                let style = {};
-                
-                if (window.innerWidth >= 1024) { // Large screens (lg and above)
-                  if (column === 0) { // Left column
-                    style = {
-                      borderTopRightRadius: '20px',
-                      borderBottomLeftRadius: '20px'
-                    };
-                  } else if (column === 1) { // Middle column
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <p>Đang tải...</p>
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-[1125px]">
+                {displayedClubs.map((club, index) => {
+                  const column = index % 3;
+                  let style = {};
+                  
+                  if (window.innerWidth >= 1024) {
+                    if (column === 0) {
+                      style = {
+                        borderTopRightRadius: '20px',
+                        borderBottomLeftRadius: '20px'
+                      };
+                    } else if (column === 1) {
+                      style = {
+                        borderRadius: '20px'
+                      };
+                    } else {
+                      style = {
+                        borderTopLeftRadius: '20px',
+                        borderBottomRightRadius: '20px'
+                      };
+                    }
+                  } else {
                     style = {
                       borderRadius: '20px'
                     };
-                  } else { // Right column
-                    style = {
-                      borderTopLeftRadius: '20px',
-                      borderBottomRightRadius: '20px'
-                    };
                   }
-                } else { // Small and medium screens
-                  style = {
-                    borderRadius: '20px'
-                  };
-                }
 
-                return (
-                  <div 
-                    key={index} 
-                    className="bg-red-600 text-white h-[55px] w-full sm:w-[325px] flex items-center justify-center cursor-pointer hover:bg-red-700 transition duration-300"
-                    style={style}
-                  >
-                    <span className="text-center">{club}</span>
-                  </div>
-                );
-              })}
+                  return (
+                    <div 
+                      key={club._id} 
+                      className="bg-red-600 text-white h-[55px] w-full sm:w-[325px] flex items-center justify-center cursor-pointer hover:bg-red-700 transition duration-300"
+                      style={style}
+                      onClick={() => navigate(`/clubs/${club.clubId}`)}
+                    >
+                      <span className="text-center">{club.ten}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
           <div className="text-center mt-8 sm:mt-12">
-            <button className="bg-yellow-400 text-black px-6 py-3 rounded-full hover:bg-yellow-500 transition duration-300">
+            <button 
+              className="bg-yellow-400 text-black px-6 py-3 rounded-full hover:bg-yellow-500 transition duration-300"
+              onClick={handleViewMoreClubs}
+            >
               Xem thêm
             </button>
           </div>

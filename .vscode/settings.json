@@ -1,9 +1,0 @@
-{
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "Prettier-SQL.tabSizeOverride": 4,
-    "prettier.tabWidth": 4,
-    "markdown-preview-enhanced.enableExtendedTableSyntax": true,
-    "editor.detectIndentation": false,
-    "editor.indentSize": "tabSize",
-    "editor.tabSize": 4,
-}
