@@ -135,13 +135,13 @@ const ApproveEvents = () => {
                       <td className={className}>
                         <div className="flex items-center gap-2">
                           <Button size="sm" color="green" className="flex items-center gap-2" onClick={() => handleApproveEvent(_id)}>
-                            <CheckCircleIcon strokeWidth={2} className="h-4 w-4" /> Duyệt
+                            <CheckCircleIcon strokeWidth={2} className="h-4 w-4" />
                           </Button>
                           <Button size="sm" color="red" className="flex items-center gap-2" onClick={() => handleRejectEvent(_id)}>
-                            <XCircleIcon strokeWidth={2} className="h-4 w-4" /> Từ chối
+                            <XCircleIcon strokeWidth={2} className="h-4 w-4" />
                           </Button>
                           <Button size="sm" color="blue" className="flex items-center gap-2" onClick={() => openDetailDialog(_id)}>
-                            <EyeIcon strokeWidth={2} className="h-4 w-4" /> Chi tiết
+                            <EyeIcon strokeWidth={2} className="h-4 w-4" />
                           </Button>
                         </div>
                       </td>
