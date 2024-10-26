@@ -14,6 +14,7 @@ import {
     Select,
     Spinner,
     Textarea,
+    Tooltip,
     Typography,
 } from "@material-tailwind/react";
 import {
@@ -145,7 +146,7 @@ const ClubReports = () => {
     };
 
     // Thêm hàm lọc báo cáo
-    const filteredReports = reports.filter(report => 
+    const filteredReports = reports.filter((report) =>
         !filterClub || report.club === filterClub
     );
 
@@ -164,115 +165,182 @@ const ClubReports = () => {
                 <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
                     {/* Chỉ giữ lại phần bộ lọc và hiển thị tên câu lạc bộ đã chọn */}
                     <div className="px-6 mb-4">
-                        <div className="w-72">
+                        <div className="w-72 absolute z-[60]">
+                            {/* NOTE absolute positioning for dropdown options */}
                             <Select
                                 label="Lọc theo câu lạc bộ"
                                 value={filterClub}
                                 onChange={(value) => setFilterClub(value)}
                             >
-                                <Option value="">Tất cả câu lạc bộ</Option>
-                                {clubs.map((club) => (
-                                    <Option key={club._id} value={club._id}>
-                                        {club.ten}
-                                    </Option>
-                                ))}
+                                <Option value="" className="bg-transparent">
+                                    <strong>Tất cả</strong>
+                                </Option>
+
+                                <hr className="my-2 border-t border-gray-300" />
+
+                                {/* NOTE filter dropdown responsive and shiz */}
+                                <div className="lg:max-h-48 md:max-h-32 sm:max-h-20 overflow-y-auto">
+                                    {clubs.map((club) => (
+                                        <Option
+                                            key={club._id}
+                                            value={club._id}
+                                            className="bg-transparent"
+                                        >
+                                            {club.ten}
+                                        </Option>
+                                    ))}
+                                </div>
                             </Select>
                         </div>
                         {filterClub && (
                             <Typography
                                 variant="small"
                                 color="blue-gray"
-                                className="mt-2 font-normal"
+                                className="font-normal translate-x-3 translate-y-[0.61rem] absolute z-0 pointer-events-none"
+                                // NOTE alignment and disable interactions for chosen option with the "All" option
                             >
-                                Đang xem báo cáo của: {clubs.find(c => c._id === filterClub)?.ten}
+                                {clubs.find((c) => c._id === filterClub)?.ten}
                             </Typography>
                         )}
                     </div>
 
-                    {isLoading ? (
-                        <div className="flex justify-center items-center h-64">
-                            <Spinner className="h-16 w-16 text-blue-500/10" />
-                        </div>
-                    ) : (
-                        <table className="w-full min-w-[640px] table-auto">
-                            <thead>
-                                <tr>
-                                    {[
-                                        "Tên báo cáo",
-                                        "Ngày báo cáo",
-                                        "Nhân sự phụ trách",
-                                        "Câu lạc bộ",
-                                        "Hành động",
-                                    ].map((el) => (
-                                        <th key={el} className="border-b border-blue-gray-50 py-3 px-5 text-left">
-                                            <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
-                                                {el}
-                                            </Typography>
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredReports.map(
-                                    ({
-                                        _id,
-                                        tenBaoCao,
-                                        ngayBaoCao,
-                                        nhanSuPhuTrach,
-                                        danhSachSuKien,
-                                        danhSachGiai,
-                                        tongNganSachChiTieu,
-                                        tongThu,
-                                        ketQuaDatDuoc,
-                                        club,
-                                    }, key) => {
-                                        const className = `py-3 px-5 ${
-                                            key === filteredReports.length - 1
-                                                ? ""
-                                                : "border-b border-blue-gray-50"
-                                        }`;
+                    {isLoading
+                        ? (
+                            <div className="flex justify-center items-center h-64 mt-14">
+                                <Spinner className="h-16 w-16 text-blue-500/10" />
+                            </div>
+                        )
+                        : (
+                            <table className="w-full min-w-[640px] table-auto mt-14">
+                                <thead>
+                                    <tr>
+                                        {[
+                                            "Tên báo cáo",
+                                            "Ngày báo cáo",
+                                            "Nhân sự phụ trách",
+                                            "Câu lạc bộ",
+                                            "Hành động",
+                                        ].map((el) => (
+                                            <th
+                                                key={el}
+                                                className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                                            >
+                                                <Typography
+                                                    variant="small"
+                                                    className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                                >
+                                                    {el}
+                                                </Typography>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredReports.map(
+                                        ({
+                                            _id,
+                                            tenBaoCao,
+                                            ngayBaoCao,
+                                            nhanSuPhuTrach,
+                                            danhSachSuKien,
+                                            danhSachGiai,
+                                            tongNganSachChiTieu,
+                                            tongThu,
+                                            ketQuaDatDuoc,
+                                            club,
+                                        }, key) => {
+                                            const className = `py-3 px-5 ${
+                                                key ===
+                                                        filteredReports.length -
+                                                            1
+                                                    ? ""
+                                                    : "border-b border-blue-gray-50"
+                                            }`;
 
-                                        return (
-                                            <tr key={_id}>
-                                                <td className={className}>
-                                                    <Typography variant="small" color="blue-gray" className="font-semibold">
-                                                        {tenBaoCao}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {new Date(ngayBaoCao).toLocaleDateString()}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {nhanSuPhuTrach}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {clubs.find(c => c._id === club)?.ten || "N/A"}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <div className="flex items-center gap-2">
-                                                        <Button
-                                                            size="sm"
-                                                            color="green"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() => openDetailDialog(_id)}
+                                            return (
+                                                <tr key={_id}>
+                                                    <td className={className}>
+                                                        <Typography
+                                                            variant="small"
+                                                            color="blue-gray"
+                                                            className="font-semibold"
                                                         >
-                                                            <EyeIcon strokeWidth={2} className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    },
-                                )}
-                            </tbody>
-                        </table>
-                    )}
+                                                            {tenBaoCao}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography
+                                                            variant="small"
+                                                            color="blue-gray"
+                                                            className="font-normal"
+                                                        >
+                                                            {new Date(
+                                                                ngayBaoCao,
+                                                            ).toLocaleDateString()}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography
+                                                            variant="small"
+                                                            color="blue-gray"
+                                                            className="font-normal"
+                                                        >
+                                                            {nhanSuPhuTrach}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography
+                                                            variant="small"
+                                                            color="blue-gray"
+                                                            className="font-normal"
+                                                        >
+                                                            {clubs.find((c) =>
+                                                                c._id === club
+                                                            )?.ten || "N/A"}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <div className="flex items-center gap-2">
+                                                            <Tooltip
+                                                                content="Xem"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                            >
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="blue"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openDetailDialog(
+                                                                            _id,
+                                                                        )}
+                                                                >
+                                                                    <EyeIcon
+                                                                        strokeWidth={2}
+                                                                        className="h-4 w-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        },
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
                 </CardBody>
             </Card>
 
@@ -289,30 +357,27 @@ const ClubReports = () => {
                     <Input
                         label="Tên báo cáo"
                         value={newReport.tenBaoCao}
-                        onChange={(e) =>
-                            setNewReport({
-                                ...newReport,
-                                tenBaoCao: e.target.value,
-                            })}
+                        onChange={(e) => setNewReport({
+                            ...newReport,
+                            tenBaoCao: e.target.value,
+                        })}
                     />
                     <Input
                         type="date"
                         label="Ngày báo cáo"
                         value={newReport.ngayBaoCao}
-                        onChange={(e) =>
-                            setNewReport({
-                                ...newReport,
-                                ngayBaoCao: e.target.value,
-                            })}
+                        onChange={(e) => setNewReport({
+                            ...newReport,
+                            ngayBaoCao: e.target.value,
+                        })}
                     />
                     <Input
                         label="Nhân sự phụ trách"
                         value={newReport.nhanSuPhuTrach}
-                        onChange={(e) =>
-                            setNewReport({
-                                ...newReport,
-                                nhanSuPhuTrach: e.target.value,
-                            })}
+                        onChange={(e) => setNewReport({
+                            ...newReport,
+                            nhanSuPhuTrach: e.target.value,
+                        })}
                     />
                     <Select
                         label="Danh sách sự kiện"
@@ -407,40 +472,81 @@ const ClubReports = () => {
                 {detailReport && (
                     <DialogBody divider className="grid gap-4">
                         <div className="grid grid-cols-2 gap-4">
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
-                                ID: <span className="font-normal">{detailReport._id}</span>
-                            </Typography>
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
-                                Tên báo cáo: <span className="font-normal">{detailReport.tenBaoCao}</span>
-                            </Typography>
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
-                                Ngày báo cáo:{" "}
+                            <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="font-semibold"
+                            >
+                                ID:{" "}
                                 <span className="font-normal">
-                                    {new Date(detailReport.ngayBaoCao).toLocaleDateString()}
+                                    {detailReport._id}
                                 </span>
                             </Typography>
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                            <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="font-semibold"
+                            >
+                                Tên báo cáo:{" "}
+                                <span className="font-normal">
+                                    {detailReport.tenBaoCao}
+                                </span>
+                            </Typography>
+                            <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="font-semibold"
+                            >
+                                Ngày báo cáo:{" "}
+                                <span className="font-normal">
+                                    {new Date(detailReport.ngayBaoCao)
+                                        .toLocaleDateString()}
+                                </span>
+                            </Typography>
+                            <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="font-semibold"
+                            >
                                 Nhân sự phụ trách:{" "}
-                                <span className="font-normal">{detailReport.nhanSuPhuTrach}</span>
+                                <span className="font-normal">
+                                    {detailReport.nhanSuPhuTrach}
+                                </span>
                             </Typography>
                         </div>
 
                         <div className="border-t pt-4">
-                            <Typography variant="small" color="blue-gray" className="font-semibold mb-2">
+                            <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="font-semibold mb-2"
+                            >
                                 Danh sách sự kiện:
                             </Typography>
                             <ul className="list-disc pl-5">
                                 {detailReport.danhSachSuKien.map((event) => (
                                     <li key={event._id} className="mb-2">
                                         <div className="grid gap-1">
-                                            <Typography variant="small" className="font-semibold">
+                                            <Typography
+                                                variant="small"
+                                                className="font-semibold"
+                                            >
                                                 {event.tenSuKien}
                                             </Typography>
-                                            <Typography variant="small" className="font-normal">
-                                                Người phụ trách: {event.nguoiPhuTrach}
+                                            <Typography
+                                                variant="small"
+                                                className="font-normal"
+                                            >
+                                                Người phụ trách:{" "}
+                                                {event.nguoiPhuTrach}
                                             </Typography>
-                                            <Typography variant="small" className="font-normal">
-                                                Ngày tổ chức: {new Date(event.ngayToChuc).toLocaleDateString()}
+                                            <Typography
+                                                variant="small"
+                                                className="font-normal"
+                                            >
+                                                Ngày tổ chức:{" "}
+                                                {new Date(event.ngayToChuc)
+                                                    .toLocaleDateString()}
                                             </Typography>
                                         </div>
                                     </li>
@@ -449,21 +555,37 @@ const ClubReports = () => {
                         </div>
 
                         <div className="border-t pt-4">
-                            <Typography variant="small" color="blue-gray" className="font-semibold mb-2">
+                            <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="font-semibold mb-2"
+                            >
                                 Danh sách giải thưởng:
                             </Typography>
                             <ul className="list-disc pl-5">
                                 {detailReport.danhSachGiai.map((giai) => (
                                     <li key={giai._id} className="mb-2">
                                         <div className="grid gap-1">
-                                            <Typography variant="small" className="font-semibold">
+                                            <Typography
+                                                variant="small"
+                                                className="font-semibold"
+                                            >
                                                 {giai.tenGiai}
                                             </Typography>
-                                            <Typography variant="small" className="font-normal">
-                                                Người nhận giải: {giai.nguoiNhanGiai}
+                                            <Typography
+                                                variant="small"
+                                                className="font-normal"
+                                            >
+                                                Người nhận giải:{" "}
+                                                {giai.nguoiNhanGiai}
                                             </Typography>
-                                            <Typography variant="small" className="font-normal">
-                                                Ngày nhận giải: {new Date(giai.ngayNhanGiai).toLocaleDateString()}
+                                            <Typography
+                                                variant="small"
+                                                className="font-normal"
+                                            >
+                                                Ngày nhận giải:{" "}
+                                                {new Date(giai.ngayNhanGiai)
+                                                    .toLocaleDateString()}
                                             </Typography>
                                         </div>
                                     </li>
@@ -472,13 +594,22 @@ const ClubReports = () => {
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 border-t pt-4">
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                            <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="font-semibold"
+                            >
                                 Tổng ngân sách chi tiêu:{" "}
                                 <span className="font-normal">
-                                    {detailReport.tongNganSachChiTieu.toLocaleString()} VND
+                                    {detailReport.tongNganSachChiTieu
+                                        .toLocaleString()} VND
                                 </span>
                             </Typography>
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                            <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="font-semibold"
+                            >
                                 Tổng thu:{" "}
                                 <span className="font-normal">
                                     {detailReport.tongThu.toLocaleString()} VND
@@ -487,19 +618,32 @@ const ClubReports = () => {
                         </div>
 
                         <div className="border-t pt-4">
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                            <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="font-semibold"
+                            >
                                 Câu lạc bộ:{" "}
                                 <span className="font-normal">
-                                    {clubs.find((c) => c._id === detailReport.club)?.ten || "N/A"}
+                                    {clubs.find((c) =>
+                                        c._id === detailReport.club
+                                    )?.ten || "N/A"}
                                 </span>
                             </Typography>
                         </div>
 
                         <div className="border-t pt-4">
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                            <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="font-semibold"
+                            >
                                 Kết quả đạt được:
                             </Typography>
-                            <Typography variant="small" className="font-normal mt-1">
+                            <Typography
+                                variant="small"
+                                className="font-normal mt-1"
+                            >
                                 {detailReport.ketQuaDatDuoc}
                             </Typography>
                         </div>

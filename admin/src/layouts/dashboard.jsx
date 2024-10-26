@@ -163,7 +163,7 @@ export function Dashboard() {
                     <Cog6ToothIcon className="h-5 w-5" />
                 </IconButton>
                 <div className="mt-12">
-                    <h1>Dashboard Content</h1>
+                    {/* <h1>&nbsp;</h1> */}
                     <Routes>
                         <Route index element={<Home />} />
                         {currentRoutes.map(({ path, element }) => (

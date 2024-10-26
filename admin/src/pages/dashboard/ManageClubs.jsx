@@ -13,6 +13,7 @@ import {
     Input,
     Textarea,
     Spinner,
+    Tooltip,
 } from "@material-tailwind/react";
 import {
     PlusIcon,
@@ -322,30 +323,57 @@ const ManageClubs = () => {
                                                 </td>
                                                 <td className={className}>
                                                     <div className="flex items-center gap-2">
-                                                        <Button
-                                                            size="sm"
-                                                            color="green"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() => openDetailDialog(clubId)}
+                                                        <Tooltip
+                                                            content="Xem chi tiết"
+                                                            animate={{
+                                                                mount: { scale: 1, y: 0 },
+                                                                unmount: { scale: 0, y: 25 },
+                                                            }}
+                                                            className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                         >
-                                                            <EyeIcon strokeWidth={2} className="h-4 w-4" />{" "}
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            color="blue"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() => openEditDialog(clubId)}
+                                                            <Button
+                                                                size="sm"
+                                                                color="blue"
+                                                                className="flex items-center gap-2"
+                                                                onClick={() => openDetailDialog(clubId)}
+                                                            >
+                                                                <EyeIcon strokeWidth={2} className="h-4 w-4" />{" "}
+                                                            </Button>
+                                                        </Tooltip>
+                                                        <Tooltip
+                                                            content="Sửa"
+                                                            animate={{
+                                                                mount: { scale: 1, y: 0 },
+                                                                unmount: { scale: 0, y: 25 },
+                                                            }}
+                                                            className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                         >
-                                                            <PencilIcon strokeWidth={2} className="h-4 w-4" />{" "}
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            color="red"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() => handleDeleteClub(clubId)}
+                                                            <Button
+                                                                size="sm"
+                                                                color="green"
+                                                                className="flex items-center gap-2"
+                                                                onClick={() => openEditDialog(clubId)}
+                                                            >
+                                                                <PencilIcon strokeWidth={2} className="h-4 w-4" />{" "}
+                                                            </Button>
+                                                        </Tooltip>
+                                                        <Tooltip
+                                                            content="Xoá"
+                                                            animate={{
+                                                                mount: { scale: 1, y: 0 },
+                                                                unmount: { scale: 0, y: 25 },
+                                                            }}
+                                                            className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                         >
-                                                            <TrashIcon strokeWidth={2} className="h-4 w-4" />{" "}
-                                                        </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                color="red"
+                                                                className="flex items-center gap-2"
+                                                                onClick={() => handleDeleteClub(clubId)}
+                                                            >
+                                                                <TrashIcon strokeWidth={2} className="h-4 w-4" />{" "}
+                                                            </Button>
+                                                        </Tooltip>
                                                     </div>
                                                 </td>
                                             </tr>
