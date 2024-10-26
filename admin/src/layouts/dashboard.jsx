@@ -21,18 +21,18 @@ import {
 } from "@heroicons/react/24/solid";
 
 // Import components for each route
-import Home from "../pages/dashboard/Home";
-import ManageClubs from "../pages/dashboard/ManageClubs";
-import ApproveEvents from "../pages/dashboard/ApproveEvents";
-import ClubReports from "../pages/dashboard/ClubReports";
-import BudgetAllocation from "../pages/dashboard/BudgetAllocation";
-import ManageMembers from "../pages/dashboard/ManageMembers";
-import ManageEvents from "../pages/dashboard/ManageEvents";
-import ManageBudget from "../pages/dashboard/ManageBudget";
-import ManagePrizes from "../pages/dashboard/ManagePrizes";
-import ActivityReports from "../pages/dashboard/ActivityReports";
-import Table from "../pages/dashboard/tables";
-import Profile from "../pages/dashboard/profile";
+import Home from "../pages/dashboard/Home.jsx";
+import ManageClubs from "../pages/dashboard/ManageClubs.jsx";
+import ApproveEvents from "../pages/dashboard/ApproveEvents.jsx";
+import ClubReports from "../pages/dashboard/ClubReports.jsx";
+import BudgetAllocation from "../pages/dashboard/BudgetAllocation.jsx";
+import ManageMembers from "../pages/dashboard/ManageMembers.jsx";
+import ManageEvents from "../pages/dashboard/ManageEvents.jsx";
+import ManageBudget from "../pages/dashboard/ManageBudget.jsx";
+import ManagePrizes from "../pages/dashboard/ManagePrizes.jsx";
+import ActivityReports from "../pages/dashboard/ActivityReports.jsx";
+import Table from "../pages/dashboard/Tables.jsx";
+import Profile from "../pages/dashboard/Profile.jsx";
 
 export function Dashboard() {
     const [controller, dispatch] = useMaterialTailwindController();
