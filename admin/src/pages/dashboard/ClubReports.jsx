@@ -32,7 +32,6 @@ const ClubReports = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-    const [selectedClub, setSelectedClub] = useState("");
     const [newReport, setNewReport] = useState({
         tenBaoCao: "",
         ngayBaoCao: "",
@@ -45,8 +44,8 @@ const ClubReports = () => {
     });
     const [detailReport, setDetailReport] = useState(null);
     const [editingReportId, setEditingReportId] = useState(null);
+    const [filterClub, setFilterClub] = useState(""); // Thêm state cho bộ lọc
 
-    
     const fetchClubs = async () => {
         try {
             const response = await axios.get(`${API_URL}/get-clubs`);
@@ -68,23 +67,18 @@ const ClubReports = () => {
     const fetchReports = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await axios.get(
-                `${API_URL}/get-reports-by-club/${selectedClub}`,
-            );
+            const response = await axios.get(`${API_URL}/get-reports`);
             setReports(response.data);
         } catch (error) {
             console.error("Error fetching reports:", error);
         } finally {
             setIsLoading(false);
         }
-    }, [selectedClub]);
+    }, []);
 
     const handleAddReport = async () => {
         try {
-            await axios.post(`${API_URL}/add-report`, {
-                ...newReport,
-                club: selectedClub,
-            });
+            await axios.post(`${API_URL}/add-report`, newReport);
             setIsDialogOpen(false);
             fetchReports();
         } catch (error) {
@@ -95,13 +89,8 @@ const ClubReports = () => {
     useEffect(() => {
         fetchClubs();
         fetchEvents();
+        fetchReports();
     }, []);
-
-    useEffect(() => {
-        if (selectedClub) {
-            fetchReports();
-        }
-    }, [selectedClub]);
 
     const handleUpdateReport = async () => {
         try {
@@ -137,7 +126,7 @@ const ClubReports = () => {
             tongNganSachChiTieu: 0,
             tongThu: 0,
             ketQuaDatDuoc: "",
-            club: selectedClub,
+            club: "",
         });
         setIsDialogOpen(true);
     };
@@ -155,6 +144,11 @@ const ClubReports = () => {
         setIsDetailDialogOpen(true);
     };
 
+    // Thêm hàm lọc báo cáo
+    const filteredReports = reports.filter(report => 
+        !filterClub || report.club === filterClub
+    );
+
     return (
         <div className="mt-12 mb-8 flex flex-col gap-12">
             <Card>
@@ -168,164 +162,117 @@ const ClubReports = () => {
                     </Typography>
                 </CardHeader>
                 <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-                    <div className="flex justify-between items-center mb-4 px-6">
-                        <Select
-                            label="Chọn Câu lạc bộ"
-                            value={selectedClub}
-                            onChange={(value) => setSelectedClub(value)}
-                            className="w-72"
-                        >
-                            {clubs.map((club) => (
-                                <Option
-                                    key={club._id}
-                                    value={club._id.toString()}
-                                >
-                                    {club.ten}
-                                </Option>
-                            ))}
-                        </Select>
-                        <Button
-                            className="flex items-center gap-3"
-                            color="blue"
-                            size="sm"
-                            onClick={openAddDialog}
-                        >
-                            <PlusIcon strokeWidth={2} className="h-4 w-4" />
-                            {" "}
-                            Thêm Báo cáo
-                        </Button>
-                    </div>
-                    {isLoading
-                        ? (
-                            <div className="flex justify-center items-center h-64">
-                                <Spinner className="h-16 w-16 text-blue-500/10" />
-                            </div>
-                        )
-                        : (
-                            <table className="w-full min-w-[640px] table-auto">
-                                <thead>
-                                    <tr>
-                                        {[
-                                            "Tên báo cáo",
-                                            "Ngày báo cáo",
-                                            "Nhân sự phụ trách",
-                                            "Hành động",
-                                        ].map((el) => (
-                                            <th
-                                                key={el}
-                                                className="border-b border-blue-gray-50 py-3 px-5 text-left"
-                                            >
-                                                <Typography
-                                                    variant="small"
-                                                    className="text-[11px] font-bold uppercase text-blue-gray-400"
-                                                >
-                                                    {el}
-                                                </Typography>
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {reports.map(
-                                        (
-                                            {
-                                                _id,
-                                                tenBaoCao,
-                                                ngayBaoCao,
-                                                nhanSuPhuTrach,
-                                            },
-                                            key,
-                                        ) => {
-                                            const className = `py-3 px-5 ${
-                                                key === reports.length - 1
-                                                    ? ""
-                                                    : "border-b border-blue-gray-50"
-                                            }`;
-
-                                            return (
-                                                <tr key={_id}>
-                                                    <td className={className}>
-                                                        <Typography
-                                                            variant="small"
-                                                            color="blue-gray"
-                                                            className="font-semibold"
-                                                        >
-                                                            {tenBaoCao}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography
-                                                            variant="small"
-                                                            color="blue-gray"
-                                                            className="font-normal"
-                                                        >
-                                                            {new Date(
-                                                                ngayBaoCao,
-                                                            ).toLocaleDateString()}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography
-                                                            variant="small"
-                                                            color="blue-gray"
-                                                            className="font-normal"
-                                                        >
-                                                            {nhanSuPhuTrach}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <div className="flex items-center gap-2">
-                                                            <Button
-                                                                size="sm"
-                                                                color="blue"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    openEditDialog(
-                                                                        _id,
-                                                                    )}
-                                                            >
-                                                                <PencilIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                color="red"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    handleDeleteReport(
-                                                                        _id,
-                                                                    )}
-                                                            >
-                                                                <TrashIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                color="green"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    openDetailDialog(
-                                                                        _id,
-                                                                    )}
-                                                            >
-                                                                <EyeIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />
-                                                            </Button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        },
-                                    )}
-                                </tbody>
-                            </table>
+                    {/* Chỉ giữ lại phần bộ lọc và hiển thị tên câu lạc bộ đã chọn */}
+                    <div className="px-6 mb-4">
+                        <div className="w-72">
+                            <Select
+                                label="Lọc theo câu lạc bộ"
+                                value={filterClub}
+                                onChange={(value) => setFilterClub(value)}
+                            >
+                                <Option value="">Tất cả câu lạc bộ</Option>
+                                {clubs.map((club) => (
+                                    <Option key={club._id} value={club._id}>
+                                        {club.ten}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </div>
+                        {filterClub && (
+                            <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="mt-2 font-normal"
+                            >
+                                Đang xem báo cáo của: {clubs.find(c => c._id === filterClub)?.ten}
+                            </Typography>
                         )}
+                    </div>
+
+                    {isLoading ? (
+                        <div className="flex justify-center items-center h-64">
+                            <Spinner className="h-16 w-16 text-blue-500/10" />
+                        </div>
+                    ) : (
+                        <table className="w-full min-w-[640px] table-auto">
+                            <thead>
+                                <tr>
+                                    {[
+                                        "Tên báo cáo",
+                                        "Ngày báo cáo",
+                                        "Nhân sự phụ trách",
+                                        "Câu lạc bộ",
+                                        "Hành động",
+                                    ].map((el) => (
+                                        <th key={el} className="border-b border-blue-gray-50 py-3 px-5 text-left">
+                                            <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
+                                                {el}
+                                            </Typography>
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredReports.map(
+                                    ({
+                                        _id,
+                                        tenBaoCao,
+                                        ngayBaoCao,
+                                        nhanSuPhuTrach,
+                                        danhSachSuKien,
+                                        danhSachGiai,
+                                        tongNganSachChiTieu,
+                                        tongThu,
+                                        ketQuaDatDuoc,
+                                        club,
+                                    }, key) => {
+                                        const className = `py-3 px-5 ${
+                                            key === filteredReports.length - 1
+                                                ? ""
+                                                : "border-b border-blue-gray-50"
+                                        }`;
+
+                                        return (
+                                            <tr key={_id}>
+                                                <td className={className}>
+                                                    <Typography variant="small" color="blue-gray" className="font-semibold">
+                                                        {tenBaoCao}
+                                                    </Typography>
+                                                </td>
+                                                <td className={className}>
+                                                    <Typography variant="small" color="blue-gray" className="font-normal">
+                                                        {new Date(ngayBaoCao).toLocaleDateString()}
+                                                    </Typography>
+                                                </td>
+                                                <td className={className}>
+                                                    <Typography variant="small" color="blue-gray" className="font-normal">
+                                                        {nhanSuPhuTrach}
+                                                    </Typography>
+                                                </td>
+                                                <td className={className}>
+                                                    <Typography variant="small" color="blue-gray" className="font-normal">
+                                                        {clubs.find(c => c._id === club)?.ten || "N/A"}
+                                                    </Typography>
+                                                </td>
+                                                <td className={className}>
+                                                    <div className="flex items-center gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            color="green"
+                                                            className="flex items-center gap-2"
+                                                            onClick={() => openDetailDialog(_id)}
+                                                        >
+                                                            <EyeIcon strokeWidth={2} className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    },
+                                )}
+                            </tbody>
+                        </table>
+                    )}
                 </CardBody>
             </Card>
 
@@ -377,12 +324,11 @@ const ClubReports = () => {
                             })}
                         multiple
                     >
-                        {events.filter((event) => event.club === selectedClub)
-                            .map((event) => (
-                                <Option key={event._id} value={event._id}>
-                                    {event.tenSuKien}
-                                </Option>
-                            ))}
+                        {events.map((event) => (
+                            <Option key={event._id} value={event._id}>
+                                {event.tenSuKien}
+                            </Option>
+                        ))}
                     </Select>
                     <Input
                         type="number"
@@ -414,6 +360,21 @@ const ClubReports = () => {
                             })}
                         className="col-span-2"
                     />
+                    <Select
+                        label="Câu lạc bộ"
+                        value={newReport.club}
+                        onChange={(value) =>
+                            setNewReport({
+                                ...newReport,
+                                club: value,
+                            })}
+                    >
+                        {clubs.map((club) => (
+                            <Option key={club._id} value={club._id}>
+                                {club.ten}
+                            </Option>
+                        ))}
+                    </Select>
                 </DialogBody>
                 <DialogFooter>
                     <Button
@@ -444,94 +405,104 @@ const ClubReports = () => {
             >
                 <DialogHeader>Chi tiết Báo cáo</DialogHeader>
                 {detailReport && (
-                    <DialogBody divider className="grid grid-cols-2 gap-4">
-                        <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-semibold"
-                        >
-                            Tên báo cáo:{" "}
-                            <span className="font-normal">
-                                {detailReport.tenBaoCao}
-                            </span>
-                        </Typography>
-                        <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-semibold"
-                        >
-                            Ngày báo cáo:{" "}
-                            <span className="font-normal">
-                                {new Date(detailReport.ngayBaoCao)
-                                    .toLocaleDateString()}
-                            </span>
-                        </Typography>
-                        <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-semibold"
-                        >
-                            Nhân sự phụ trách:{" "}
-                            <span className="font-normal">
-                                {detailReport.nhanSuPhuTrach}
-                            </span>
-                        </Typography>
-                        <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-semibold"
-                        >
-                            Câu lạc bộ:{" "}
-                            <span className="font-normal">
-                                {clubs.find((c) => c._id === detailReport.club)
-                                    ?.ten || "N/A"}
-                            </span>
-                        </Typography>
-                        <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-semibold col-span-2"
-                        >
-                            Danh sách sự kiện:{" "}
-                            <span className="font-normal">
-                                {detailReport.danhSachSuKien.map((eventId) =>
-                                    events.find((e) =>
-                                        e._id === eventId
-                                    )?.tenSuKien
-                                ).join(", ")}
-                            </span>
-                        </Typography>
-                        <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-semibold"
-                        >
-                            Tổng ngân sách chi tiêu:{" "}
-                            <span className="font-normal">
-                                {detailReport.tongNganSachChiTieu
-                                    .toLocaleString()} VND
-                            </span>
-                        </Typography>
-                        <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-semibold"
-                        >
-                            Tổng thu:{" "}
-                            <span className="font-normal">
-                                {detailReport.tongThu.toLocaleString()} VND
-                            </span>
-                        </Typography>
-                        <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-semibold col-span-2"
-                        >
-                            Kết quả đạt được:{" "}
-                            <span className="font-normal">
+                    <DialogBody divider className="grid gap-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                                ID: <span className="font-normal">{detailReport._id}</span>
+                            </Typography>
+                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                                Tên báo cáo: <span className="font-normal">{detailReport.tenBaoCao}</span>
+                            </Typography>
+                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                                Ngày báo cáo:{" "}
+                                <span className="font-normal">
+                                    {new Date(detailReport.ngayBaoCao).toLocaleDateString()}
+                                </span>
+                            </Typography>
+                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                                Nhân sự phụ trách:{" "}
+                                <span className="font-normal">{detailReport.nhanSuPhuTrach}</span>
+                            </Typography>
+                        </div>
+
+                        <div className="border-t pt-4">
+                            <Typography variant="small" color="blue-gray" className="font-semibold mb-2">
+                                Danh sách sự kiện:
+                            </Typography>
+                            <ul className="list-disc pl-5">
+                                {detailReport.danhSachSuKien.map((event) => (
+                                    <li key={event._id} className="mb-2">
+                                        <div className="grid gap-1">
+                                            <Typography variant="small" className="font-semibold">
+                                                {event.tenSuKien}
+                                            </Typography>
+                                            <Typography variant="small" className="font-normal">
+                                                Người phụ trách: {event.nguoiPhuTrach}
+                                            </Typography>
+                                            <Typography variant="small" className="font-normal">
+                                                Ngày tổ chức: {new Date(event.ngayToChuc).toLocaleDateString()}
+                                            </Typography>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <div className="border-t pt-4">
+                            <Typography variant="small" color="blue-gray" className="font-semibold mb-2">
+                                Danh sách giải thưởng:
+                            </Typography>
+                            <ul className="list-disc pl-5">
+                                {detailReport.danhSachGiai.map((giai) => (
+                                    <li key={giai._id} className="mb-2">
+                                        <div className="grid gap-1">
+                                            <Typography variant="small" className="font-semibold">
+                                                {giai.tenGiai}
+                                            </Typography>
+                                            <Typography variant="small" className="font-normal">
+                                                Người nhận giải: {giai.nguoiNhanGiai}
+                                            </Typography>
+                                            <Typography variant="small" className="font-normal">
+                                                Ngày nhận giải: {new Date(giai.ngayNhanGiai).toLocaleDateString()}
+                                            </Typography>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                                Tổng ngân sách chi tiêu:{" "}
+                                <span className="font-normal">
+                                    {detailReport.tongNganSachChiTieu.toLocaleString()} VND
+                                </span>
+                            </Typography>
+                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                                Tổng thu:{" "}
+                                <span className="font-normal">
+                                    {detailReport.tongThu.toLocaleString()} VND
+                                </span>
+                            </Typography>
+                        </div>
+
+                        <div className="border-t pt-4">
+                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                                Câu lạc bộ:{" "}
+                                <span className="font-normal">
+                                    {clubs.find((c) => c._id === detailReport.club)?.ten || "N/A"}
+                                </span>
+                            </Typography>
+                        </div>
+
+                        <div className="border-t pt-4">
+                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                                Kết quả đạt được:
+                            </Typography>
+                            <Typography variant="small" className="font-normal mt-1">
                                 {detailReport.ketQuaDatDuoc}
-                            </span>
-                        </Typography>
+                            </Typography>
+                        </div>
                     </DialogBody>
                 )}
                 <DialogFooter>
