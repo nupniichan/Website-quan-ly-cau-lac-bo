@@ -331,13 +331,13 @@ const ActivityReports = () => {
                       <td className={className}>
                         <div className="flex items-center gap-2">
                           <Button size="sm" color="green" className="flex items-center gap-2" onClick={() => openDetailDialog(_id)}>
-                            <EyeIcon strokeWidth={2} className="h-4 w-4" /> Chi tiết
+                            <EyeIcon strokeWidth={2} className="h-4 w-4" />
                           </Button>
                           <Button size="sm" color="blue" className="flex items-center gap-2" onClick={() => openEditDialog(_id)}>
-                            <PencilIcon strokeWidth={2} className="h-4 w-4" /> Sửa
+                            <PencilIcon strokeWidth={2} className="h-4 w-4" />
                           </Button>
                           <Button size="sm" color="red" className="flex items-center gap-2" onClick={() => handleDeleteReport(_id)}>
-                            <TrashIcon strokeWidth={2} className="h-4 w-4" /> Xóa
+                            <TrashIcon strokeWidth={2} className="h-4 w-4" />
                           </Button>
                         </div>
                       </td>

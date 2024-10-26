@@ -329,7 +329,6 @@ const ManageClubs = () => {
                                                             onClick={() => openDetailDialog(clubId)}
                                                         >
                                                             <EyeIcon strokeWidth={2} className="h-4 w-4" />{" "}
-                                                            Chi tiết
                                                         </Button>
                                                         <Button
                                                             size="sm"
@@ -338,7 +337,6 @@ const ManageClubs = () => {
                                                             onClick={() => openEditDialog(clubId)}
                                                         >
                                                             <PencilIcon strokeWidth={2} className="h-4 w-4" />{" "}
-                                                            Sửa
                                                         </Button>
                                                         <Button
                                                             size="sm"
@@ -347,7 +345,6 @@ const ManageClubs = () => {
                                                             onClick={() => handleDeleteClub(clubId)}
                                                         >
                                                             <TrashIcon strokeWidth={2} className="h-4 w-4" />{" "}
-                                                            Xóa
                                                         </Button>
                                                     </div>
                                                 </td>

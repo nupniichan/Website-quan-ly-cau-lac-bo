@@ -10,22 +10,22 @@ const ClubDetails = () => {
   return (
     <div className="max-w-5xl mx-auto px-8 py-6 font-sans" style={{ paddingLeft: '50px', paddingRight: '50px' }}>
       <h1 className="text-2xl font-bold mb-6 text-center" style={{ color: '#004D86' }}>{clubName}</h1>
-      
+
       <div className="flex mb-8 items-center">
         <div className="w-1/4 pr-6 flex-shrink-0 flex items-center justify-center">
           <img src={logoclb} alt="Logo câu lạc bộ tin học" className="w-64 h-64 object-contain" />
         </div>
         <div className="w-3/4 flex items-center">
           <p className="text-gray-700 text-lg">
-            Câu lạc bộ tin học là nơi dành cho các bạn đam mê công nghệ và lập trình. 
-            Tại đây, thành viên có cơ hội học hỏi về các ngôn ngữ lập trình như Python, Java, C++,... 
+            Câu lạc bộ tin học là nơi dành cho các bạn đam mê công nghệ và lập trình.
+            Tại đây, thành viên có cơ hội học hỏi về các ngôn ngữ lập trình như Python, Java, C++,...
             và tham gia vào các dự án thực tế, từ đó rèn luyện kỹ năng lập trình và làm việc nhóm.
           </p>
         </div>
       </div>
 
       <h2 className="text-xl font-semibold mb-4" style={{ color: '#004D86' }}>Một số thông tin về câu lạc bộ</h2>
-      
+
       <div className="border rounded-lg overflow-hidden mb-4">
         <table className="w-full text-center">
           <thead>

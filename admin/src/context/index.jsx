@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { reducer } from "./actions";
+import { reducer } from "./action";
 
 export const MaterialTailwind = React.createContext(null);
 MaterialTailwind.displayName = "MaterialTailwindContext";
@@ -28,7 +28,7 @@ export function MaterialTailwindControllerProvider({ children }) {
     );
 }
 
-MaterialTailwindControllerProvider.displayName = "/src/context/index.jsx";
+MaterialTailwindControllerProvider.displayName = "../context/index.jsx";
 
 MaterialTailwindControllerProvider.propTypes = {
     children: PropTypes.node.isRequired,

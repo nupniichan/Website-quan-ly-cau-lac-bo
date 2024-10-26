@@ -2,9 +2,9 @@ import {
     setFixedNavbar,
     setOpenConfigurator,
     setSidenavColor,
-    setSidenavType,
-    useMaterialTailwindController,
-} from "@/context";
+    setSidenavType
+} from "@/context/action";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import {
     Button,

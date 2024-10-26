@@ -7,7 +7,8 @@ import {
     Footer,
     Sidenav,
 } from "@/widgets/layout";
-import { setOpenConfigurator, useMaterialTailwindController } from "@/context";
+import { setOpenConfigurator } from "@/context/action";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 import { useEffect, useState } from "react";
 import {
     CalendarIcon,

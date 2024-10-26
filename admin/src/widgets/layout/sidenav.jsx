@@ -7,7 +7,8 @@ import {
     IconButton,
     Typography,
 } from "@material-tailwind/react";
-import { setOpenSidenav, useMaterialTailwindController } from "@/context";
+import { setOpenSidenav } from "@/context/action";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 import React from "react";
 
 export function Sidenav({ brandImg, brandName, routes }) {

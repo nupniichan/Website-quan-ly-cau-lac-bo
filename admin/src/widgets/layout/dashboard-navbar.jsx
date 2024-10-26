@@ -22,9 +22,9 @@ import {
 } from "@heroicons/react/24/solid";
 import {
     setOpenConfigurator,
-    setOpenSidenav,
-    useMaterialTailwindController,
-} from "@/context";
+    setOpenSidenav
+} from "@/context/action";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
 export function DashboardNavbar() {
     const [controller, dispatch] = useMaterialTailwindController();
