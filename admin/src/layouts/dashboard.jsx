@@ -21,7 +21,7 @@ import {
 } from "@heroicons/react/24/solid";
 
 // Import components for each route
-import Home from "../pages/dashboard/Home.jsx";
+import Home from "../pages/dashboard/home.jsx";
 import ManageClubs from "../pages/dashboard/ManageClubs.jsx";
 import ApproveEvents from "../pages/dashboard/ApproveEvents.jsx";
 import ClubReports from "../pages/dashboard/ClubReports.jsx";
