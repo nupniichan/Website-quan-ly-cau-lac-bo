@@ -435,22 +435,11 @@ const ManageBudget = () => {
                                 noiDung: e.target.value,
                             })}
                     />
-                    <select
-                        value={newBudget.club}
-                        onChange={(e) =>
-                            setNewBudget({
-                                ...newBudget,
-                                club: e.target.value,
-                            })}
-                        className="w-full p-2 border rounded"
-                    >
-                        <option value="">Select Club</option>
-                        {clubs.map((club) => (
-                            <option key={club._id} value={club._id}>
-                                {club.ten}
-                            </option>
-                        ))}
-                    </select>
+                    <Input
+                        label="Câu lạc bộ"
+                        value={club?.ten || ""}
+                        disabled
+                    />
                 </DialogBody>
                 <DialogFooter>
                     <Button

@@ -28,21 +28,27 @@ router.post('/add-budget', async (req, res) => {
     try {
         const { club, ...budgetData } = req.body;
 
+        // Lấy ID mới từ counter
+        const counter = await Counter.findByIdAndUpdate(
+            { _id: 'budgetId' },
+            { $inc: { seq: 1 } },
+            { new: true, upsert: true }
+        );
+
         // Kiểm tra xem club có tồn tại không
-        const clubDoc = await Club.findOne({ _id: Number(club) });
+        const clubDoc = await Club.findById(club);
         if (!clubDoc) {
             return res.status(404).json({ message: 'Không tìm thấy câu lạc bộ' });
         }
 
         const newBudget = new Budget({
+            _id: counter.seq,
             ...budgetData,
             club: clubDoc._id,
-            ngay: new Date(budgetData.ngay) // Đảm bảo ngày được parse đúng
+            ngay: new Date(budgetData.ngay)
         });
 
         const savedBudget = await newBudget.save();
-        
-        // Populate thông tin club và trả về
         const populatedBudget = await Budget.findById(savedBudget._id).populate('club', 'ten');
         
         res.status(201).json(populatedBudget);
@@ -116,7 +122,11 @@ router.put('/update-budget/:id', async (req, res) => {
         
         const updatedBudget = await Budget.findByIdAndUpdate(
             req.params.id,
-            { ...updateData, club: club },
+            { 
+                ...updateData,
+                club: club, // club ID sẽ là ObjectId
+                ngay: new Date(updateData.ngay)
+            },
             { new: true, runValidators: true }
         ).populate('club', 'ten');
 
