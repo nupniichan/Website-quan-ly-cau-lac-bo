@@ -18,7 +18,7 @@ const Navbar = () => {
       </div>
 
       {/* Navigation Links */}
-      <ul className={`flex space-x-6 ml-[25%] pr-3 pl-3 pt-3 pb-3 rounded ${isMobileMenuOpen ? 'flex-col absolute bg-white shadow-lg w-auto z-30 mt-32' : 'hidden md:flex'} md:flex-row`}>
+      <ul className={`flex space-x-6 ml-[25%] pr-3 pl-3 pt-3 pb-3 rounded ${isMobileMenuOpen ? 'flex-col absolute bg-white shadow-lg w-auto z-50 mt-32 right-14' : 'hidden md:flex'} md:flex-row`}>
         <Link to="/about" className="text-black no-underline">
           <li className="text-black no-underline hover:bg-gray-100">Về trường</li>
         </Link>

@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Search, Globe } from 'lucide-react';
 import logoImage from '../assets/logo.png';
+import englishFlag from '../assets/english.png'; // Add path to English flag
+import vietnameseFlag from '../assets/vietnam.png'; // Add path to Vietnamese flag
+
 const Header = () => {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLanguageOpen, setLanguageOpen] = useState(false);
@@ -54,21 +57,19 @@ const Header = () => {
         <div className="absolute inset-0 bg-yellow-500 z-10" />
         <div className="relative flex items-center justify-end px-4 h-full z-20">
           {/* Logo Container */}
-          <div className="absolute left-[10%] z-50 top-[30%]">
-            {/* Mobile Logo */}
-            <img
-              src={logoImage}
-              alt="Logo"
-              className="w-[40%] h-auto md:hidden " // Show on mobile, hide on md and up
-            />
-            
-            {/* Desktop Logo */}
-            <img
-              src={logoImage}
-              alt="Logo"
-              className="hidden md:block w-[20%] h-auto" // Hide on mobile, show on md and up
-            />
-          </div>
+          {/* Mobile Logo */}
+          <img
+            src={logoImage}
+            alt="Logo"
+            className="w-[40%] h-auto md:hidden mr-[40%] mt-[25%] " // Show on mobile, hide on md and up
+          />
+
+          {/* Desktop Logo */}
+          <img
+            src={logoImage}
+            alt="Logo"
+            className="hidden md:block w-[10%] h-auto mr-[20%] mt-[5%]" // Hide on mobile, show on md and up
+          />
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex mr-[10%]">
@@ -105,21 +106,27 @@ const Header = () => {
           }}
         />
         <div className="relative flex items-center justify-end px-4 h-full z-20">
-          {/* Language Dropdown for Desktop */}
-          <div className="hidden md:flex items-center mr-[20px]" ref={languageRef}>
-            <span className="text-white cursor-pointer" onClick={toggleLanguage}>
-              Tiếng việt <ChevronDown size={16} className="inline-block text-white ml-1" />
-            </span>
-            {/* Desktop Language Dropdown Menu */}
-            {isLanguageOpen && (
-              <div className="absolute right-64 mt-32 w-32 bg-white rounded shadow-lg z-50">
-                <ul>
-                  <li className=" py-2 hover:bg-gray-100">English</li>
-                  <li className=" py-2 hover:bg-gray-100">Vietnamese</li>
-                </ul>
-              </div>
-            )}
-          </div>
+        {/* Language Dropdown for Desktop */}
+        <div className="hidden md:flex items-center mr-[20px]" ref={languageRef}>
+          <span className="text-white cursor-pointer" onClick={toggleLanguage}>
+            Tiếng Việt <ChevronDown size={16} className="inline-block text-white ml-1" />
+          </span>
+          {/* Desktop Language Dropdown Menu */}
+          {isLanguageOpen && (
+            <div className="absolute right-64 mt-32 w-32 bg-white rounded shadow-lg z-50">
+              <ul className="m-0 p-1"> {/* Remove default margin and padding */}
+                <li className="flex items-center py-2 hover:bg-gray-100">
+                  <img src={englishFlag} alt="English Flag" className="w-6 h-4 mr-2" />
+                  English
+                </li>
+                <li className="flex items-center py-2 hover:bg-gray-100">
+                  <img src={vietnameseFlag} alt="Vietnamese Flag" className="w-6 h-4 mr-2" />
+                  Vietnamese
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
 
           {/* Language Dropdown for Mobile */}
           <div className="relative flex items-center mr-4 md:hidden" ref={languageRef}>
@@ -132,16 +139,19 @@ const Header = () => {
             {/* Mobile Language Dropdown Menu */}
             {isLanguageOpen && (
               <div className="absolute mt-32 w-32 bg-white rounded-lg shadow-md z-50 right-0">
-                <ul>
-                  <li className="py-2 text-gray-800 hover:bg-gray-100 transition duration-200 rounded-t-lg">
+                <ul className="m-0 p-1"> {/* Remove default margin and padding */}
+                  <li className="flex items-center py-2 text-gray-800 hover:bg-gray-100 transition duration-200 rounded-t-lg">
+                    <img src={englishFlag} alt="English Flag" className="w-6 h-4 mr-2" />
                     English
                   </li>
-                  <li className="py-2 text-gray-800 hover:bg-gray-100 transition duration-200">
+                  <li className="flex items-center py-2 text-gray-800 hover:bg-gray-100 transition duration-200">
+                    <img src={vietnameseFlag} alt="Vietnamese Flag" className="w-6 h-4 mr-2" />
                     Vietnamese
                   </li>
                 </ul>
               </div>
             )}
+
           </div>
 
           {/* Desktop Search Bar */}
