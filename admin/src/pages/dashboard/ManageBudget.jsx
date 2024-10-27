@@ -14,14 +14,15 @@ import {
     Select,
     Spinner,
     Textarea,
+    Tooltip,
     Typography,
 } from "@material-tailwind/react";
 import {
     EyeIcon,
     PencilIcon,
-    PlusIcon,
     TrashIcon,
 } from "@heroicons/react/24/solid";
+import { FaPlus } from "react-icons/fa6";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -189,39 +190,46 @@ const ManageBudget = () => {
     };
 
     return (
-        <div className="mt-12 mb-8 flex flex-col gap-12">
+        <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
                 <CardHeader
                     variant="gradient"
                     color="blue"
-                    className="mb-8 p-6"
+                    className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
                         Quản lý ngân sách
                     </Typography>
                 </CardHeader>
-                <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-                    <div className="flex justify-end mb-4 px-6">
-                        <Button
-                            className="flex items-center gap-3"
-                            color="blue"
-                            size="sm"
-                            onClick={openAddDialog}
+                <CardBody className="px-0 pt-0 pb-2 overflow-auto">
+                    <div className="flex justify-end p-4 px-6 pr-10">
+                        <Tooltip
+                            content="Thêm"
+                            animate={{
+                                mount: { scale: 1, y: 0 },
+                                unmount: { scale: 0, y: 25 },
+                            }}
+                            className="bg-gradient-to-r from-black to-transparent opacity-70"
                         >
-                            <PlusIcon strokeWidth={2} className="h-4 w-4" />
-                            {" "}
-                            Thêm ngân sách
-                        </Button>
+                            <Button
+                                className="flex items-center gap-3"
+                                color="blue"
+                                size="sm"
+                                onClick={openAddDialog}
+                            >
+                                <FaPlus className="w-4 h-4" strokeWidth={'2rem'} />
+                            </Button>
+                        </Tooltip>
                     </div>
                     {isLoading
                         ? (
-                            <div className="flex justify-center items-center h-64">
-                                <Spinner className="h-12 w-12" color="blue" />
+                            <div className="flex items-center justify-center h-64">
+                                <Spinner className="w-12 h-12" color="blue" />
                             </div>
                         )
                         : budgets.length === 0
                         ? (
-                            <Typography className="text-center py-4">
+                            <Typography className="py-4 text-center">
                                 Chưa có ngân sách nào.
                             </Typography>
                         )
@@ -240,7 +248,7 @@ const ManageBudget = () => {
                                         ].map((el) => (
                                             <th
                                                 key={el}
-                                                className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                                                className="px-5 py-3 text-left border-b border-blue-gray-50"
                                             >
                                                 <Typography
                                                     variant="small"
@@ -315,48 +323,99 @@ const ManageBudget = () => {
                                                     </td>
                                                     <td className={className}>
                                                         <div className="flex items-center gap-2">
-                                                            <Button
-                                                                size="sm"
-                                                                color="green"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    openDetailDialog(
-                                                                        _id,
-                                                                    )}
+                                                            <Tooltip
+                                                                content="Xem"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
-                                                                <EyeIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                color="blue"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    openEditDialog(
-                                                                        _id,
-                                                                    )}
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="blue"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openDetailDialog(
+                                                                            _id,
+                                                                        )}
+                                                                >
+                                                                    <EyeIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content="Sửa"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
-                                                                <PencilIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                color="red"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    handleDeleteBudget(
-                                                                        _id,
-                                                                    )}
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="green"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openEditDialog(
+                                                                            _id,
+                                                                        )}
+                                                                >
+                                                                    <PencilIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content="Xóa"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
-                                                                <TrashIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />
-                                                            </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="red"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        handleDeleteBudget(
+                                                                            _id,
+                                                                        )}
+                                                                >
+                                                                    <TrashIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -373,14 +432,14 @@ const ManageBudget = () => {
             <Dialog
                 open={isDialogOpen}
                 handler={() => setIsDialogOpen(false)}
-                size="xl"
+                size="lg"
             >
-                <DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
                     {editingBudgetId
                         ? "Chỉnh sửa Ngân sách"
                         : "Thêm Ngân sách Mới"}
                 </DialogHeader>
-                <DialogBody divider className="grid grid-cols-2 gap-4">
+                <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[80vh] sm:max-h-[47vh]">
                     <Input
                         label="Tên ngân sách"
                         value={newBudget.ten}
@@ -391,49 +450,44 @@ const ManageBudget = () => {
                         type="number"
                         label="Khoản chi tiêu"
                         value={newBudget.khoanChiTieu}
-                        onChange={(e) =>
-                            setNewBudget({
-                                ...newBudget,
-                                khoanChiTieu: e.target.value,
-                            })}
+                        onChange={(e) => setNewBudget({
+                            ...newBudget,
+                            khoanChiTieu: e.target.value,
+                        })}
                     />
                     <Input
                         type="number"
                         label="Nguồn thu"
                         value={newBudget.nguonThu}
-                        onChange={(e) =>
-                            setNewBudget({
-                                ...newBudget,
-                                nguonThu: e.target.value,
-                            })}
+                        onChange={(e) => setNewBudget({
+                            ...newBudget,
+                            nguonThu: e.target.value,
+                        })}
                     />
                     <Input
                         type="date"
                         label="Ngày"
                         value={newBudget.ngay}
-                        onChange={(e) =>
-                            setNewBudget({
-                                ...newBudget,
-                                ngay: e.target.value,
-                            })}
+                        onChange={(e) => setNewBudget({
+                            ...newBudget,
+                            ngay: e.target.value,
+                        })}
                     />
                     <Input
                         label="Thành viên chịu trách nhiệm"
                         value={newBudget.thanhVienChiuTrachNhiem}
-                        onChange={(e) =>
-                            setNewBudget({
-                                ...newBudget,
-                                thanhVienChiuTrachNhiem: e.target.value,
-                            })}
+                        onChange={(e) => setNewBudget({
+                            ...newBudget,
+                            thanhVienChiuTrachNhiem: e.target.value,
+                        })}
                     />
                     <Input
                         label="Nội dung"
                         value={newBudget.noiDung}
-                        onChange={(e) =>
-                            setNewBudget({
-                                ...newBudget,
-                                noiDung: e.target.value,
-                            })}
+                        onChange={(e) => setNewBudget({
+                            ...newBudget,
+                            noiDung: e.target.value,
+                        })}
                     />
                     <Input
                         label="Câu lạc bộ"
@@ -466,12 +520,12 @@ const ManageBudget = () => {
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
-                size="xl"
+                size="lg"
             >
-                <DialogHeader>Chi tiết Ngân sách</DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">Chi tiết Ngân sách</DialogHeader>
                 {detailBudget
                     ? (
-                        <DialogBody divider className="grid grid-cols-2 gap-4">
+                        <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[70vh] sm:max-h-[47vh]">
                             <Typography>
                                 Tên ngân sách: {detailBudget.ten}
                             </Typography>
@@ -484,8 +538,7 @@ const ManageBudget = () => {
                                 {detailBudget.nguonThu.toLocaleString()} VND
                             </Typography>
                             <Typography>
-                                Ngày:{" "}
-                                {new Date(detailBudget.ngay)
+                                Ngày: {new Date(detailBudget.ngay)
                                     .toLocaleDateString()}
                             </Typography>
                             <Typography>

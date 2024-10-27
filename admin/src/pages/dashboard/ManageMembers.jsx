@@ -13,6 +13,7 @@ import {
     Option,
     Select,
     Spinner,
+    Tooltip,
     Typography,
 } from "@material-tailwind/react";
 import {
@@ -21,6 +22,7 @@ import {
     PlusIcon,
     TrashIcon,
 } from "@heroicons/react/24/solid";
+import { FaPlus } from "react-icons/fa6";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -231,40 +233,50 @@ const ManageMembers = () => {
     };
 
     return (
-        <div className="mt-12 mb-8 flex flex-col gap-12">
+        <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
                 <CardHeader
                     variant="gradient"
                     color="blue"
-                    className="mb-8 p-6"
+                    className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
                         Quản lý thành viên
                     </Typography>
                 </CardHeader>
 
-                <CardBody className="overflow-auto px-0 pt-0 pb-2">
-                    <div className="flex justify-end mb-4 px-6">
-                        <Button
-                            className="flex items-center gap-3"
-                            color="blue"
-                            size="sm"
-                            onClick={openAddDialog}
+                <CardBody className="px-0 pt-0 pb-2 overflow-auto">
+                    <div className="flex justify-end p-4 px-6 pr-10">
+                        <Tooltip
+                            content="Thêm"
+                            animate={{
+                                mount: { scale: 1, y: 0 },
+                                unmount: { scale: 0, y: 25 },
+                            }}
+                            className="bg-gradient-to-r from-black to-transparent opacity-70"
                         >
-                            <PlusIcon strokeWidth={2} className="h-4 w-4" />
-                            {" "}
-                            Thêm thành viên
-                        </Button>
+                            <Button
+                                className="flex items-center gap-3"
+                                color="blue"
+                                size="sm"
+                                onClick={openAddDialog}
+                            >
+                                <FaPlus
+                                    className="w-4 h-4"
+                                    strokeWidth={"2rem"}
+                                />
+                            </Button>
+                        </Tooltip>
                     </div>
                     {isLoading
                         ? (
-                            <div className="flex justify-center items-center h-64">
-                                <Spinner className="h-12 w-12" color="blue" />
+                            <div className="flex items-center justify-center h-64">
+                                <Spinner className="w-12 h-12" color="blue" />
                             </div>
                         )
                         : members.length === 0
                         ? (
-                            <Typography className="text-center py-4">
+                            <Typography className="py-4 text-center">
                                 Chưa có thành viên nào.
                             </Typography>
                         )
@@ -282,7 +294,7 @@ const ManageMembers = () => {
                                         ].map((el) => (
                                             <th
                                                 key={el}
-                                                className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                                                className="px-5 py-3 text-left border-b border-blue-gray-50"
                                             >
                                                 <Typography
                                                     variant="small"
@@ -343,48 +355,99 @@ const ManageMembers = () => {
                                                     </td>
                                                     <td className={className}>
                                                         <div className="flex items-center gap-2">
-                                                            <Button
-                                                                size="sm"
-                                                                color="green"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    openDetailDialog(
-                                                                        maSoHocSinh,
-                                                                    )}
+                                                            <Tooltip
+                                                                content="Xem"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
-                                                                <EyeIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                color="blue"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    openEditDialog(
-                                                                        maSoHocSinh,
-                                                                    )}
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="blue"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openDetailDialog(
+                                                                            maSoHocSinh,
+                                                                        )}
+                                                                >
+                                                                    <EyeIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content="Sửa"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
-                                                                <PencilIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                color="red"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    handleDeleteMember(
-                                                                        maSoHocSinh,
-                                                                    )}
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="green"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openEditDialog(
+                                                                            maSoHocSinh,
+                                                                        )}
+                                                                >
+                                                                    <PencilIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content="Xóa"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
-                                                                <TrashIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />
-                                                            </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="red"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        handleDeleteMember(
+                                                                            maSoHocSinh,
+                                                                        )}
+                                                                >
+                                                                    <TrashIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -401,31 +464,29 @@ const ManageMembers = () => {
             <Dialog
                 open={isDialogOpen}
                 handler={() => setIsDialogOpen(false)}
-                size="xl"
+                size="lg"
             >
-                <DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
                     {editingMemberId
                         ? "Chỉnh sửa Thành viên"
                         : "Thêm Thành viên Mới"}
                 </DialogHeader>
-                <DialogBody divider className="grid grid-cols-2 gap-4">
+                <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto max-h-[80vh] sm:max-h-[47vh]">
                     <Input
                         label="Mã số học sinh"
                         value={newMember.maSoHocSinh}
-                        onChange={(e) =>
-                            setNewMember({
-                                ...newMember,
-                                maSoHocSinh: e.target.value,
-                            })}
+                        onChange={(e) => setNewMember({
+                            ...newMember,
+                            maSoHocSinh: e.target.value,
+                        })}
                     />
                     <Input
                         label="Họ tên"
                         value={newMember.hoTen}
-                        onChange={(e) =>
-                            setNewMember({
-                                ...newMember,
-                                hoTen: e.target.value,
-                            })}
+                        onChange={(e) => setNewMember({
+                            ...newMember,
+                            hoTen: e.target.value,
+                        })}
                     />
                     <Select
                         label="Giới tính"
@@ -445,20 +506,18 @@ const ManageMembers = () => {
                     <Input
                         label="Tổ hợp học tập"
                         value={newMember.toHopHocTap}
-                        onChange={(e) =>
-                            setNewMember({
-                                ...newMember,
-                                toHopHocTap: e.target.value,
-                            })}
+                        onChange={(e) => setNewMember({
+                            ...newMember,
+                            toHopHocTap: e.target.value,
+                        })}
                     />
                     <Input
                         label="Thông tin liên lạc"
                         value={newMember.thongTinLienLac}
-                        onChange={(e) =>
-                            setNewMember({
-                                ...newMember,
-                                thongTinLienLac: e.target.value,
-                            })}
+                        onChange={(e) => setNewMember({
+                            ...newMember,
+                            thongTinLienLac: e.target.value,
+                        })}
                     />
                     <Input
                         type="date"
@@ -519,12 +578,12 @@ const ManageMembers = () => {
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
-                size="xl"
+                size="lg"
             >
-                <DialogHeader>Chi tiết Thành viên</DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">Chi tiết Thành viên</DialogHeader>
                 {detailMember
                     ? (
-                        <DialogBody divider className="grid grid-cols-2 gap-4">
+                        <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[65vh] sm:max-h-[47vh]">
                             <Typography>
                                 Mã số học sinh: {detailMember.maSoHocSinh}
                             </Typography>

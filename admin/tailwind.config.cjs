@@ -5,7 +5,12 @@ module.exports = withMT({
     mode: "jit",
     content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
     theme: {
-        extend: {},
+        extend: {
+            screens: {
+                xs: '446px',
+                xxs: '354px'
+            },
+        },
     },
     plugins: [],
 });

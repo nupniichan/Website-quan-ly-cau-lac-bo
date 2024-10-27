@@ -20,9 +20,9 @@ import {
 import {
     EyeIcon,
     PencilIcon,
-    PlusIcon,
     TrashIcon,
 } from "@heroicons/react/24/solid";
+import { FaPlus } from "react-icons/fa6";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -204,33 +204,43 @@ const BudgetAllocation = () => {
     }, [allocations, filters]);
 
     return (
-        <div className="mt-12 mb-8 flex flex-col gap-12">
+        <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
                 <CardHeader
                     variant="gradient"
                     color="purple"
-                    className="mb-8 p-6"
+                    className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
                         Phân bổ ngân sách
                     </Typography>
                 </CardHeader>
-                <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-                    <div className="flex justify-end mb-4 px-6">
-                        <Button
-                            className="flex items-center gap-3"
-                            color="purple"
-                            size="sm"
-                            onClick={openAddDialog}
+                <CardBody className="px-0 pt-0 pb-2 overflow-auto">
+                    <div className="flex justify-end p-4 px-6 pr-10">
+                    <Tooltip
+                            content="Thêm"
+                            animate={{
+                                mount: { scale: 1, y: 0 },
+                                unmount: { scale: 0, y: 25 },
+                            }}
+                            className="bg-gradient-to-r from-black to-transparent opacity-70"
                         >
-                            <PlusIcon strokeWidth={2} className="h-4 w-4" />
-                            {" "}
-                            Thêm phân bổ
-                        </Button>
+                            <Button
+                                className="flex items-center gap-3"
+                                color="purple"
+                                size="sm"
+                                onClick={openAddDialog}
+                            >
+                                <FaPlus
+                                    className="w-4 h-4"
+                                    strokeWidth={"2rem"}
+                                />
+                            </Button>
+                        </Tooltip>
                     </div>
                     {/* Thêm phần filter */}
                     <div className="px-6 py-3 absolute z-[60]">
-                        <div className="gap-4 grid 2xl:grid-cols-5 xl:grid-cols-3 md:grid-cols-3 sm:grid-cols-2">
+                        <div className="grid gap-4 2xl:grid-cols-5 xl:grid-cols-3 md:grid-cols-3 sm:grid-cols-2">
                             <div className="">
                                 <Select
                                     label="Câu lạc bộ"
@@ -244,7 +254,7 @@ const BudgetAllocation = () => {
 
                                     <hr className="my-2 border-t border-gray-300" />
 
-                                    <div className="lg:max-h-48 md:max-h-32 sm:max-h-20 overflow-y-auto">
+                                    <div className="overflow-y-auto lg:max-h-48 md:max-h-32 sm:max-h-20">
                                         {clubs.map((club) => (
                                             <Option
                                                 key={club._id}
@@ -313,7 +323,7 @@ const BudgetAllocation = () => {
                                 ].map((el) => (
                                     <th
                                         key={el}
-                                        className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                                        className="px-5 py-3 text-left border-b border-blue-gray-50"
                                     >
                                         <Typography
                                             variant="small"
@@ -399,7 +409,7 @@ const BudgetAllocation = () => {
                                                                     },
                                                                 )}
                                                         >
-                                                            <EyeIcon className="h-4 w-4" />
+                                                            <EyeIcon className="w-4 h-4" />
                                                         </Button>
                                                     </Tooltip>
                                                     <Tooltip
@@ -427,7 +437,7 @@ const BudgetAllocation = () => {
                                                         >
                                                             <PencilIcon
                                                                 strokeWidth={2}
-                                                                className="h-4 w-4"
+                                                                className="w-4 h-4"
                                                             />
                                                             {" "}
                                                         </Button>
@@ -457,7 +467,7 @@ const BudgetAllocation = () => {
                                                         >
                                                             <TrashIcon
                                                                 strokeWidth={2}
-                                                                className="h-4 w-4"
+                                                                className="w-4 h-4"
                                                             />
                                                             {" "}
                                                         </Button>
@@ -477,12 +487,12 @@ const BudgetAllocation = () => {
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
-                size="lg"
+                size="md"
             >
-                <DialogHeader>Chi tiết Phân bổ Ngân sách</DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">Chi tiết Phân bổ Ngân sách</DialogHeader>
                 <DialogBody divider>
                     {detailAllocation && (
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]">
                             <div>
                                 <Typography
                                     variant="small"
@@ -548,14 +558,15 @@ const BudgetAllocation = () => {
             <Dialog
                 open={isDialogOpen}
                 handler={() => setIsDialogOpen(false)}
-                size="xl"
+                size="md"
             >
-                <DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
                     {editingAllocationId
                         ? "Chnh sửa Phân bổ Ngân sách"
                         : "Thêm Phân bổ Ngân sách Mới"}
                 </DialogHeader>
-                <DialogBody divider className="grid grid-cols-2 gap-4">
+                <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]">
+                {/* TODO Fix dropdown menu isnt on top of everything */}
                     <Select
                         label="Câu lạc bộ"
                         value={newAllocation.club}

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { CloudArrowUpIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
 import {
     Button,
     Card,
@@ -17,11 +17,8 @@ import {
     Tooltip,
     Typography,
 } from "@material-tailwind/react";
-import {
-    EyeIcon,
-    PencilIcon,
-    TrashIcon,
-} from "@heroicons/react/24/solid";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 
 const API_URL = "http://localhost:5500/api";
@@ -257,20 +254,20 @@ const ManagePrizes = () => {
     };
 
     return (
-        <div className="mt-12 mb-8 flex flex-col gap-12">
+        <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
                 <CardHeader
                     variant="gradient"
                     color="blue"
-                    className="mb-8 p-6"
+                    className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
                         Quản lý Giải thưởng
                     </Typography>
                 </CardHeader>
 
-                <CardBody className="overflow-auto px-0 pt-0 pb-2">
-                    <div className="flex justify-end p-4">
+                <CardBody className="px-0 pt-0 pb-2 overflow-auto">
+                    <div className="flex justify-end p-4 px-6 pr-10">
                         <Tooltip
                             content="Thêm"
                             animate={{
@@ -285,14 +282,17 @@ const ManagePrizes = () => {
                                 size="sm"
                                 onClick={openAddDialog}
                             >
-                                <FaPlus className="h-4 w-4" strokeWidth={'2rem'} />
+                                <FaPlus
+                                    className="w-4 h-4"
+                                    strokeWidth={"2rem"}
+                                />
                             </Button>
                         </Tooltip>
                     </div>
                     {isLoading
                         ? (
-                            <div className="flex justify-center items-center h-64">
-                                <Spinner className="h-16 w-16 text-blue-500/10" />
+                            <div className="flex items-center justify-center h-64">
+                                <Spinner className="w-16 h-16 text-blue-500/10" />
                             </div>
                         )
                         : (
@@ -308,7 +308,7 @@ const ManagePrizes = () => {
                                         ].map((el) => (
                                             <th
                                                 key={el}
-                                                className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                                                className="px-5 py-3 text-left border-b border-blue-gray-50"
                                             >
                                                 <Typography
                                                     variant="small"
@@ -370,8 +370,16 @@ const ManagePrizes = () => {
                                                             <Tooltip
                                                                 content="Xem"
                                                                 animate={{
-                                                                    mount: { scale: 1, y: 0 },
-                                                                    unmount: { scale: 0, y: 25 },
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
                                                                 }}
                                                                 className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
@@ -386,15 +394,23 @@ const ManagePrizes = () => {
                                                                 >
                                                                     <EyeIcon
                                                                         strokeWidth={2}
-                                                                        className="h-4 w-4"
+                                                                        className="w-4 h-4"
                                                                     />
                                                                 </Button>
                                                             </Tooltip>
                                                             <Tooltip
                                                                 content="Sửa"
                                                                 animate={{
-                                                                    mount: { scale: 1, y: 0 },
-                                                                    unmount: { scale: 0, y: 25 },
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
                                                                 }}
                                                                 className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
@@ -409,15 +425,23 @@ const ManagePrizes = () => {
                                                                 >
                                                                     <PencilIcon
                                                                         strokeWidth={2}
-                                                                        className="h-4 w-4"
+                                                                        className="w-4 h-4"
                                                                     />
                                                                 </Button>
                                                             </Tooltip>
                                                             <Tooltip
                                                                 content="Xóa"
                                                                 animate={{
-                                                                    mount: { scale: 1, y: 0 },
-                                                                    unmount: { scale: 0, y: 25 },
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
                                                                 }}
                                                                 className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
@@ -432,7 +456,7 @@ const ManagePrizes = () => {
                                                                 >
                                                                     <TrashIcon
                                                                         strokeWidth={2}
-                                                                        className="h-4 w-4"
+                                                                        className="w-4 h-4"
                                                                     />
                                                                 </Button>
                                                             </Tooltip>
@@ -452,50 +476,48 @@ const ManagePrizes = () => {
             <Dialog
                 open={isDialogOpen}
                 handler={() => setIsDialogOpen(false)}
-                size="xl"
+                size="lg"
             >
-                <DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
                     {editingPrizeId
                         ? "Chỉnh sửa Giải thưởng"
                         : "Thêm Giải thưởng Mới"}
                 </DialogHeader>
-                <DialogBody divider className="grid grid-cols-2 gap-4">
+
+                        {/* NOTE Responsiveness for Dialog */}
+                <DialogBody divider className="grid lg:grid-cols-2 gap-4 overflow-y-auto max-h-[80vh] sm:max-h-[47vh]">
                     <Input
                         label="Tên giải thưởng"
                         value={newPrize.tenGiaiThuong}
-                        onChange={(e) =>
-                            setNewPrize({
-                                ...newPrize,
-                                tenGiaiThuong: e.target.value,
-                            })}
+                        onChange={(e) => setNewPrize({
+                            ...newPrize,
+                            tenGiaiThuong: e.target.value,
+                        })}
                     />
                     <Input
                         type="date"
                         label="Ngày đạt giải"
                         value={newPrize.ngayDatGiai?.split("T")[0]}
-                        onChange={(e) =>
-                            setNewPrize({
-                                ...newPrize,
-                                ngayDatGiai: e.target.value,
-                            })}
+                        onChange={(e) => setNewPrize({
+                            ...newPrize,
+                            ngayDatGiai: e.target.value,
+                        })}
                     />
                     <Input
                         label="Loại giải"
                         value={newPrize.loaiGiai}
-                        onChange={(e) =>
-                            setNewPrize({
-                                ...newPrize,
-                                loaiGiai: e.target.value,
-                            })}
+                        onChange={(e) => setNewPrize({
+                            ...newPrize,
+                            loaiGiai: e.target.value,
+                        })}
                     />
                     <Select
                         label="Thành viên đạt giải"
                         value={newPrize.thanhVienDatGiai}
-                        onChange={(value) =>
-                            setNewPrize({
-                                ...newPrize,
-                                thanhVienDatGiai: value,
-                            })}
+                        onChange={(value) => setNewPrize({
+                            ...newPrize,
+                            thanhVienDatGiai: value,
+                        })}
                     >
                         {members.map((member) => (
                             <Option key={member._id} value={member._id}>
@@ -506,43 +528,53 @@ const ManagePrizes = () => {
                     <Textarea
                         label="Ghi chú"
                         value={newPrize.ghiChu}
-                        onChange={(e) =>
-                            setNewPrize({
-                                ...newPrize,
-                                ghiChu: e.target.value,
-                            })}
+                        onChange={(e) => setNewPrize({
+                            ...newPrize,
+                            ghiChu: e.target.value,
+                        })}
                     />
                     <div className="flex flex-col gap-2">
-                        <Input
-                            type="file"
-                            label="Ảnh đạt giải mới"
-                            onChange={handleImageChange}
-                            accept="image/*"
-                        />
-                        {editingPrizeId && currentImage && (
-                            <div>
-                                <p>Ảnh hiện tại:</p>
-                                <img
-                                    src={currentImage}
-                                    alt="Ảnh đạt giải hiện tại"
-                                    className="max-w-full h-auto mt-2"
-                                    style={{ maxHeight: "100px" }}
-                                />
-                            </div>
-                        )}
-                        {previewImage && (
-                            <div>
-                                <p>Ảnh mới:</p>
-                                <img
-                                    src={previewImage}
-                                    alt="Ảnh đạt giải mới"
-                                    className="max-w-full h-auto mt-2"
-                                    style={{ maxHeight: "100px" }}
-                                />
-                            </div>
-                        )}
+                        <Button
+                            variant="gradient"
+                            className="flex items-center gap-3 w-[10.6rem]"
+                            color= "blue"
+                        >
+                            <CloudArrowUpIcon className="w-5 h-5 stroke-2" />
+                            Upload Image
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                className="absolute inset-0 w-full h-full opacity-0"
+                            />
+                        </Button>
+                        <div className="grid grid-cols-2">
+                            {editingPrizeId && currentImage && (
+                                <>
+                                    <p><strong>Ảnh hiện tại:</strong></p>
+                                    <img
+                                        src={currentImage}
+                                        alt="Ảnh đạt giải hiện tại"
+                                        className="h-auto max-w-full mt-2"
+                                        style={{ maxHeight: "100px" }}
+                                    />
+                                </>
+                            )}
+                            {previewImage && (
+                                <>
+                                    <p><strong>Ảnh mới:</strong></p>
+                                    <img
+                                        src={previewImage}
+                                        alt="Ảnh đạt giải mới"
+                                        className="h-auto max-w-full mt-2"
+                                        style={{ maxHeight: "100px" }}
+                                    />
+                                </>
+                            )}
+                        </div>
                     </div>
                 </DialogBody>
+
                 <DialogFooter>
                     <Button
                         variant="text"
@@ -568,25 +600,23 @@ const ManagePrizes = () => {
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
-                size="xl"
+                size="lg"
             >
-                <DialogHeader>Chi tiết Giải thưởng</DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">Chi tiết Giải thưởng</DialogHeader>
                 {detailPrize && (
-                    <DialogBody divider className="grid grid-cols-2 gap-4">
+                    <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[65vh] sm:max-h-[50vh]">
                         <Typography>
                             Tên giải thưởng: {detailPrize.tenGiaiThuong}
                         </Typography>
                         <Typography>
-                            Ngày đạt giải:{" "}
-                            {new Date(detailPrize.ngayDatGiai)
+                            Ngày đạt giải: {new Date(detailPrize.ngayDatGiai)
                                 .toLocaleDateString()}
                         </Typography>
                         <Typography>
                             Loại giải: {detailPrize.loaiGiai}
                         </Typography>
                         <Typography>
-                            Thành viên đạt giải:{" "}
-                            {members.find((m) =>
+                            Thành viên đạt giải: {members.find((m) =>
                                 m._id === detailPrize.thanhVienDatGiai
                             )?.hoTen || "N/A"}
                         </Typography>
@@ -599,7 +629,7 @@ const ManagePrizes = () => {
                                 <img
                                     src={`${API_URL}/uploads/${detailPrize.anhDatGiai}`}
                                     alt="Ảnh đạt giải"
-                                    className="max-w-full h-auto mt-2"
+                                    className="h-auto max-w-full mt-2"
                                     style={{ maxHeight: "300px" }}
                                 />
                             </div>

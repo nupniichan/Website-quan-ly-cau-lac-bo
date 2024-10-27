@@ -247,19 +247,19 @@ const ManageEvents = () => {
     }, [events, statusFilter]);
 
     return (
-        <div className="mt-12 mb-8 flex flex-col gap-12">
+        <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
                 <CardHeader
                     variant="gradient"
                     color="cyan"
-                    className="mb-8 p-6"
+                    className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
                         Quản lý sự kiện
                     </Typography>
                 </CardHeader>
-                <CardBody className="overflow-auto px-0 pt-0 pb-2">
-                    <div className="flex justify-between items-center p-4">
+                <CardBody className="px-0 pt-0 pb-2 overflow-auto">
+                    <div className="flex items-center justify-between p-4">
                         <div className="flex gap-2">
                             <Button
                                 variant={statusFilter === "all"
@@ -271,6 +271,7 @@ const ManageEvents = () => {
                             >
                                 Tất cả
                             </Button>
+
                             <Button
                                 variant={statusFilter === "choDuyet"
                                     ? "gradient"
@@ -281,6 +282,7 @@ const ManageEvents = () => {
                             >
                                 Chờ duyệt
                             </Button>
+
                             <Button
                                 variant={statusFilter === "daDuyet"
                                     ? "gradient"
@@ -291,6 +293,7 @@ const ManageEvents = () => {
                             >
                                 Đã duyệt
                             </Button>
+
                             <Button
                                 variant={statusFilter === "tuChoi"
                                     ? "gradient"
@@ -303,6 +306,7 @@ const ManageEvents = () => {
                             </Button>
                         </div>
 
+                        <div className="pr-6">
                         <Tooltip
                             content="Thêm"
                             animate={{
@@ -333,17 +337,18 @@ const ManageEvents = () => {
                                 }}
                             >
                                 <FaPlus
-                                    className="h-4 w-4"
+                                    className="w-4 h-4"
                                     strokeWidth={"2rem"}
                                 />
                             </Button>
                         </Tooltip>
+                        </div>
                     </div>
 
                     {isLoading
                         ? (
-                            <div className="flex justify-center items-center h-64">
-                                <Spinner className="h-12 w-12" color="cyan" />
+                            <div className="flex items-center justify-center h-64">
+                                <Spinner className="w-12 h-12" color="cyan" />
                             </div>
                         )
                         : (
@@ -360,7 +365,7 @@ const ManageEvents = () => {
                                         ].map((el) => (
                                             <th
                                                 key={el}
-                                                className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                                                className="px-5 py-3 text-left border-b border-blue-gray-50"
                                             >
                                                 <Typography
                                                     variant="small"
@@ -409,7 +414,7 @@ const ManageEvents = () => {
                                                             )}
                                                         </Typography>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <div className="w-1 h-1 bg-blue-gray-300 rounded-full">
+                                                            <div className="w-1 h-1 rounded-full bg-blue-gray-300">
                                                             </div>
                                                             <Typography className="text-xs text-blue-gray-500">
                                                                 {thoiGianBatDau}
@@ -479,7 +484,7 @@ const ManageEvents = () => {
                                                             >
                                                                 <EyeIcon
                                                                     strokeWidth={2}
-                                                                    className="h-4 w-4"
+                                                                    className="w-4 h-4"
                                                                 />
                                                             </Button>
                                                         </Tooltip>
@@ -508,7 +513,7 @@ const ManageEvents = () => {
                                                             >
                                                                 <PencilIcon
                                                                     strokeWidth={2}
-                                                                    className="h-4 w-4"
+                                                                    className="w-4 h-4"
                                                                 />
                                                             </Button>
                                                         </Tooltip>
@@ -537,7 +542,7 @@ const ManageEvents = () => {
                                                             >
                                                                 <TrashIcon
                                                                     strokeWidth={2}
-                                                                    className="h-4 w-4"
+                                                                    className="w-4 h-4"
                                                                 />
                                                             </Button>
                                                         </Tooltip>
@@ -556,12 +561,12 @@ const ManageEvents = () => {
             <Dialog
                 open={isDialogOpen}
                 handler={() => setIsDialogOpen(false)}
-                size="xl"
+                size="lg"
             >
                 <DialogHeader>
                     {editingEventId ? "Chỉnh sửa Sự kiện" : "Thêm Sự kiện Mới"}
                 </DialogHeader>
-                <DialogBody divider className="grid grid-cols-2 gap-4">
+                <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]">
                     <Input
                         label="Tên sự kiện"
                         value={newEvent.ten}
@@ -678,14 +683,14 @@ const ManageEvents = () => {
                                 onClick={handleAddGuest}
                                 className="flex-shrink-0"
                             >
-                                <PlusIcon className="h-5 w-5" />
+                                <PlusIcon className="w-5 h-5" />
                             </Button>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {newEvent.khachMoi.map((guest, index) => (
                                 <div
                                     key={index}
-                                    className="flex items-center bg-blue-gray-50 rounded-full px-3 py-1"
+                                    className="flex items-center px-3 py-1 rounded-full bg-blue-gray-50"
                                 >
                                     <Input
                                         value={guest}
@@ -694,14 +699,14 @@ const ManageEvents = () => {
                                                 index,
                                                 e.target.value,
                                             )}
-                                        className="border-none bg-transparent p-0 text-sm"
+                                        className="p-0 text-sm bg-transparent border-none"
                                     />
                                     <IconButton
                                         variant="text"
                                         color="red"
                                         onClick={() => handleRemoveGuest(index)}
                                     >
-                                        <XCircleIcon className="h-5 w-5" />
+                                        <XCircleIcon className="w-5 h-5" />
                                     </IconButton>
                                 </div>
                             ))}
@@ -733,11 +738,11 @@ const ManageEvents = () => {
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
-                size="xl"
+                size="lg"
             >
-                <DialogHeader>Chi tiết Sự kiện</DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">Chi tiết Sự kiện</DialogHeader>
                 {detailEvent && (
-                    <DialogBody divider className="grid grid-cols-2 gap-4">
+                    <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[47vh]">
                         <Typography>Tên sự kiện: {detailEvent.ten}</Typography>
                         <Typography>
                             Ngày tổ chức: {new Date(detailEvent.ngayToChuc)

@@ -1,7 +1,6 @@
 import {
     EyeIcon,
     PencilIcon,
-    PlusIcon,
     TrashIcon,
 } from "@heroicons/react/24/solid";
 import { FaPlus } from "react-icons/fa6";
@@ -320,20 +319,20 @@ const ActivityReports = () => {
     };
 
     return (
-        <div className="mt-12 mb-8 flex flex-col gap-12">
+        <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
                 <CardHeader
                     variant="gradient"
                     color="cyan"
-                    className="mb-8 p-6"
+                    className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
                         Báo cáo hoạt động
                     </Typography>
                 </CardHeader>
 
-                <CardBody className="overflow-auto px-0 pt-0 pb-2">
-                    <div className="flex justify-end p-4">
+                <CardBody className="px-0 pt-0 pb-2 overflow-auto">
+                    <div className="flex justify-end p-4 px-6 pr-10">
                         <Tooltip
                             content="Thêm"
                             animate={{
@@ -348,7 +347,7 @@ const ActivityReports = () => {
                                 size="sm"
                                 onClick={openAddDialog}
                             >
-                                <FaPlus className="h-4 w-4" strokeWidth={'2rem'} />
+                                <FaPlus className="w-4 h-4" strokeWidth={'2rem'} />
                             </Button>
                         </Tooltip>
                     </div>
@@ -373,7 +372,7 @@ const ActivityReports = () => {
                                         ].map((el) => (
                                             <th
                                                 key={el}
-                                                className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                                                className="px-5 py-3 text-left border-b border-blue-gray-50"
                                             >
                                                 <Typography
                                                     variant="small"
@@ -443,7 +442,7 @@ const ActivityReports = () => {
                                                                 >
                                                                     <EyeIcon
                                                                         strokeWidth={2}
-                                                                        className="h-4 w-4"
+                                                                        className="w-4 h-4"
                                                                     />
                                                                 </Button>
                                                             </Tooltip>
@@ -466,7 +465,7 @@ const ActivityReports = () => {
                                                                 >
                                                                     <PencilIcon
                                                                         strokeWidth={2}
-                                                                        className="h-4 w-4"
+                                                                        className="w-4 h-4"
                                                                     />
                                                                 </Button>
                                                             </Tooltip>
@@ -489,7 +488,7 @@ const ActivityReports = () => {
                                                                 >
                                                                     <TrashIcon
                                                                         strokeWidth={2}
-                                                                        className="h-4 w-4"
+                                                                        className="w-4 h-4"
                                                                     />
                                                                 </Button>
                                                             </Tooltip>
@@ -509,12 +508,13 @@ const ActivityReports = () => {
             <Dialog
                 open={isDialogOpen}
                 handler={() => setIsDialogOpen(false)}
-                size="xl"
+                size="lg"
             >
-                <DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
                     {editingReportId ? "Chỉnh sửa Báo cáo" : "Thêm Báo cáo Mới"}
                 </DialogHeader>
-                <DialogBody divider className="grid grid-cols-2 gap-4">
+
+                <DialogBody divider className="grid lg:grid-cols-2 gap-4 overflow-y-auto lg:max-h-[64vh] sm:max-h-[47vh]">
                     <div className="relative">
                         <Input
                             label="Tên báo cáo"
@@ -526,13 +526,13 @@ const ActivityReports = () => {
                                 })}
                         />
                         {eventSuggestions.suggestions.length > 0 && (
-                            <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg">
+                            <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 {eventSuggestions.suggestions.map((
                                     suggestion,
                                 ) => (
                                     <li
                                         key={suggestion._id}
-                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
                                         onClick={() =>
                                             handleEventSuggestionClick(
                                                 suggestion,
@@ -576,7 +576,7 @@ const ActivityReports = () => {
                         {newReport.danhSachSuKien.map((event, index) => (
                             <div
                                 key={index}
-                                className="flex items-center gap-2 mb-2 relative"
+                                className="relative flex items-center gap-2 mb-2"
                             >
                                 <Input
                                     label="Tên sự kiện"
@@ -607,13 +607,13 @@ const ActivityReports = () => {
                                 />
                                 {eventSuggestions.index === index &&
                                     eventSuggestions.suggestions.length > 0 && (
-                                    <ul className="absolute z-50 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg top-full left-0">
+                                    <ul className="absolute left-0 z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg top-full">
                                         {eventSuggestions.suggestions.map((
                                             suggestion,
                                         ) => (
                                             <li
                                                 key={suggestion._id}
-                                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                                className="px-4 py-2 cursor-pointer hover:bg-gray-100"
                                                 onClick={() =>
                                                     handleEventSuggestionClick(
                                                         suggestion,
@@ -650,7 +650,7 @@ const ActivityReports = () => {
                         {newReport.danhSachGiai.map((award, index) => (
                             <div
                                 key={index}
-                                className="flex items-center gap-2 mb-2 relative"
+                                className="relative flex items-center gap-2 mb-2"
                             >
                                 <Input
                                     label="Tên giải"
@@ -683,13 +683,13 @@ const ActivityReports = () => {
                                 />
                                 {awardSuggestions.index === index &&
                                     awardSuggestions.suggestions.length > 0 && (
-                                    <ul className="absolute z-50 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg top-full left-0">
+                                    <ul className="absolute left-0 z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg top-full">
                                         {awardSuggestions.suggestions.map((
                                             suggestion,
                                         ) => (
                                             <li
                                                 key={suggestion._id}
-                                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                                className="px-4 py-2 cursor-pointer hover:bg-gray-100"
                                                 onClick={() =>
                                                     handleAwardSuggestionClick(
                                                         suggestion,
@@ -746,6 +746,7 @@ const ActivityReports = () => {
                         className="col-span-2"
                     />
                 </DialogBody>
+
                 <DialogFooter>
                     <Button
                         variant="text"
@@ -771,11 +772,11 @@ const ActivityReports = () => {
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
-                size="xl"
+                size="lg"
             >
-                <DialogHeader>Chi tiết Báo cáo</DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">Chi tiết Báo cáo</DialogHeader>
                 {detailReport && (
-                    <DialogBody divider className="grid grid-cols-2 gap-4">
+                    <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[47vh]">
                         <Typography>
                             <strong>Tên báo cáo:</strong>{" "}
                             {detailReport.tenBaoCao}
@@ -791,7 +792,7 @@ const ActivityReports = () => {
                         <Typography className="col-span-2">
                             <strong>Danh sách sự kiện:</strong>
                         </Typography>
-                        <ul className="col-span-2 list-disc pl-5">
+                        <ul className="col-span-2 pl-5 list-disc">
                             {detailReport.danhSachSuKien.map((event, index) => (
                                 <li key={index}>
                                     {event.tenSuKien} (Phụ trách:{" "}
@@ -803,7 +804,7 @@ const ActivityReports = () => {
                         <Typography className="col-span-2">
                             <strong>Danh sách giải thưởng:</strong>
                         </Typography>
-                        <ul className="col-span-2 list-disc pl-5">
+                        <ul className="col-span-2 pl-5 list-disc">
                             {detailReport.danhSachGiai.map((award, index) => (
                                 <li key={index}>
                                     {award.tenGiai} (Người nhận:{" "}

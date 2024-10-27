@@ -151,18 +151,19 @@ const ClubReports = () => {
     );
 
     return (
-        <div className="mt-12 mb-8 flex flex-col gap-12">
+        <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
                 <CardHeader
                     variant="gradient"
                     color="blue"
-                    className="mb-8 p-6"
+                    className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
                         Báo cáo Câu lạc bộ
                     </Typography>
                 </CardHeader>
-                <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
+
+                <CardBody className="px-0 pt-4 pb-2 overflow-auto">
                     {/* Chỉ giữ lại phần bộ lọc và hiển thị tên câu lạc bộ đã chọn */}
                     <div className="px-6 mb-4">
                         <div className="w-72 absolute z-[60]">
@@ -179,7 +180,7 @@ const ClubReports = () => {
                                 <hr className="my-2 border-t border-gray-300" />
 
                                 {/* NOTE filter dropdown responsive and shiz */}
-                                <div className="lg:max-h-48 md:max-h-32 sm:max-h-20 overflow-y-auto">
+                                <div className="overflow-y-auto lg:max-h-48 md:max-h-32 sm:max-h-20">
                                     {clubs.map((club) => (
                                         <Option
                                             key={club._id}
@@ -206,8 +207,8 @@ const ClubReports = () => {
 
                     {isLoading
                         ? (
-                            <div className="flex justify-center items-center h-64 mt-14">
-                                <Spinner className="h-16 w-16 text-blue-500/10" />
+                            <div className="flex items-center justify-center h-64 mt-14">
+                                <Spinner className="w-16 h-16 text-blue-500/10" />
                             </div>
                         )
                         : (
@@ -223,7 +224,7 @@ const ClubReports = () => {
                                         ].map((el) => (
                                             <th
                                                 key={el}
-                                                className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                                                className="px-5 py-3 text-left border-b border-blue-gray-50"
                                             >
                                                 <Typography
                                                     variant="small"
@@ -328,7 +329,7 @@ const ClubReports = () => {
                                                                 >
                                                                     <EyeIcon
                                                                         strokeWidth={2}
-                                                                        className="h-4 w-4"
+                                                                        className="w-4 h-4"
                                                                     />
                                                                 </Button>
                                                             </Tooltip>
@@ -466,11 +467,11 @@ const ClubReports = () => {
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
-                size="xl"
+                size="lg"
             >
-                <DialogHeader>Chi tiết Báo cáo</DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">Chi tiết Báo cáo</DialogHeader>
                 {detailReport && (
-                    <DialogBody divider className="grid gap-4">
+                    <DialogBody divider className="grid gap-4 overflow-y-auto lg:max-h-[65vh] sm:max-h-[47vh]">
                         <div className="grid grid-cols-2 gap-4">
                             <Typography
                                 variant="small"
@@ -515,15 +516,15 @@ const ClubReports = () => {
                             </Typography>
                         </div>
 
-                        <div className="border-t pt-4">
+                        <div className="pt-4 border-t">
                             <Typography
                                 variant="small"
                                 color="blue-gray"
-                                className="font-semibold mb-2"
+                                className="mb-2 font-semibold"
                             >
                                 Danh sách sự kiện:
                             </Typography>
-                            <ul className="list-disc pl-5">
+                            <ul className="pl-5 list-disc">
                                 {detailReport.danhSachSuKien.map((event) => (
                                     <li key={event._id} className="mb-2">
                                         <div className="grid gap-1">
@@ -554,15 +555,15 @@ const ClubReports = () => {
                             </ul>
                         </div>
 
-                        <div className="border-t pt-4">
+                        <div className="pt-4 border-t">
                             <Typography
                                 variant="small"
                                 color="blue-gray"
-                                className="font-semibold mb-2"
+                                className="mb-2 font-semibold"
                             >
                                 Danh sách giải thưởng:
                             </Typography>
-                            <ul className="list-disc pl-5">
+                            <ul className="pl-5 list-disc">
                                 {detailReport.danhSachGiai.map((giai) => (
                                     <li key={giai._id} className="mb-2">
                                         <div className="grid gap-1">
@@ -593,7 +594,7 @@ const ClubReports = () => {
                             </ul>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                             <Typography
                                 variant="small"
                                 color="blue-gray"
@@ -617,7 +618,7 @@ const ClubReports = () => {
                             </Typography>
                         </div>
 
-                        <div className="border-t pt-4">
+                        <div className="pt-4 border-t">
                             <Typography
                                 variant="small"
                                 color="blue-gray"
@@ -632,7 +633,7 @@ const ClubReports = () => {
                             </Typography>
                         </div>
 
-                        <div className="border-t pt-4">
+                        <div className="pt-4 border-t">
                             <Typography
                                 variant="small"
                                 color="blue-gray"
@@ -642,7 +643,7 @@ const ClubReports = () => {
                             </Typography>
                             <Typography
                                 variant="small"
-                                className="font-normal mt-1"
+                                className="mt-1 font-normal"
                             >
                                 {detailReport.ketQuaDatDuoc}
                             </Typography>
