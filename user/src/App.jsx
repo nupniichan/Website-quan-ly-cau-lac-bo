@@ -38,7 +38,7 @@ function App() {
             <Route path="/clubs" element={<ClubList />} />
             <Route path="/clubs/:clubId" element={<ClubDetails />} />
             <Route path="/curriculum" element={<CurriculumInfo />} />
-            <Route path="/news" element={<NewsDetails />} />
+            <Route path="/news/:id" element={<NewsDetails />} />
             <Route path="/admission" element={<AdmissionStandard />} />
           </Routes>
         </div>

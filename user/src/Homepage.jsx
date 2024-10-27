@@ -1,4 +1,4 @@
-import  { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaGraduationCap, FaBookReader, FaBrain, FaGlobeAmericas, FaLaptop } from 'react-icons/fa';
 
@@ -14,6 +14,7 @@ const Homepage = () => {
   const [clubs, setClubs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAllClubs, setShowAllClubs] = useState(false);
+  const [newsToShow, setNewsToShow] = useState(4); // Show 4 news items initially
 
   useEffect(() => {
     fetchClubs();
@@ -62,21 +63,80 @@ const Homepage = () => {
     if (!isDown) return;
     e.preventDefault();
     const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 1; // Tăng tốc độ kéo
+    const walk = (x - startX) * 1; // Adjust scroll speed
     scrollContainerRef.current.scrollLeft = scrollLeft - walk;
   };
-
 //   const handleClubClick = () => {
 //     navigate(`${API_URL}/get-club/${clubId}`);  // This will navigate to the ClubList page
 //   };
-
   const handleViewMoreClubs = () => {
     navigate('/clubs');
   };
 
+  const newsItems = [
+    {
+      title: "Học sinh hào hứng trải nghiệm sự 'thay da đổi thịt' của trường",
+      image: "../public/imgs/news1.jpg",
+      date: "3/10/2024",
+      description: "Chiều ngày 3/10/2024 tại Đà Nẵng, Trung tâm ngoại ngữ Đại học RMIT tại Đà Nẵng đã tổ chức lễ ra mắt chương trình Luyện thi IELTS mới,...",
+    },
+    {
+      title: "Nhiều trường và phụ huynh ủng hộ đi học lại sau Tết",
+      image: "../public/imgs/news2.jpg",
+      date: "3/10/2024",
+      description: "Khi nhóm chat của phụ huynh xuất hiện câu hỏi \"Nếu trường mở cửa sau Tết, có cho con đi học không?\", chị Diệu Linh, 42 tuổi, nhanh chóng chn \"Có\".",
+    },
+    {
+      title: "Tích hợp tiếng Anh giúp người học gặt hái thành công",
+      image: "../public/imgs/news3.jpg",
+      date: "3/10/2024",
+      description: "Chủ trương đưa tiếng Anh ngôn ngữ thứ hai gần đây là một bước tiến lớn nhằm tiếp tục giúp người học thành công trong cuộc sống và công việc.",
+    },
+    {
+      title: "Hồi sinh di sản văn hóa với công nghệ 3D tiên tiến",
+      image: "../public/imgs/news4.jpg",
+      date: "7/10/2024",
+      description: "Adobe tổ chức tập huấn cho các bảo tàng và trung tâm lưu trữ trong nước nhằm tìm hiểu về vai trò của công nghệ 3D bảo tồn văn hóa di sản bản địa.",
+    },
+    {
+      title: "Đưa bền vững vào giảng dạy truyền thông và thiết kế",
+      image: "../public/imgs/news5.jpg",
+      date: "5/10/2024",
+      description: "Phù hợp với các Mục tiêu phát triển bền vững và 95,7% trong số đó được tích hợp tính bền vững vào tài liệu giảng dạy và học tập.",
+    },
+    {
+      title: "Chương trình học bổng giúp học sinh khó khăn",
+      image: "../public/imgs/news6.jpg",
+      date: "12/10/2024",
+      description: "Trường phát động chương trình học bổng cho học sinh có hoàn cảnh khó khăn, nhằm hỗ trợ những em có thành tích học tập tốt nhưng gặp khó khăn về tài chính, giúp các em có cơ hội tiếp cận giáo dục chất lượng hơn.",
+    },
+    {
+      title: "Cuộc thi sáng tạo khoa học kỹ thuật năm 2024",
+      image: "../public/imgs/news7.jpg",
+      date: "18/10/2024",
+      description: "Học sinh tham gia cuộc thi sáng tạo với nhiều dự án ấn tượng, thể hiện sự sáng tạo và kỹ năng giải quyết vấn đề. Các dự án được đánh giá cao về tính khả thi và ý nghĩa thực tiễn trong đời sống hàng ngày.",
+    },
+    {
+      title: "Trường tổ chức lễ hội khoa học năm 2024",
+      image: "../public/imgs/news8.jpg",
+      date: "25/10/2024",
+      description: "Vào ngày 25/10/2024, trường đã tổ chức Lễ hội Khoa học, nơi học sinh có cơ hội thể hiện các dự án nghiên cứu và sáng tạo của mình. Sự kiện thu hút đông đảo học sinh, phụ huynh và giáo viên tham gia, tạo không khí hào hứng và khuyến khích học sinh khám phá đam mê khoa học và công nghệ. Nhiều dự án ấn tượng đã được trình bày, thể hiện tài năng và sự sáng tạo của các em.",
+    },
+  ];
+
+  // Function to duplicate news items
+  const handleViewMoreNews = () => {
+    setNewsToShow(prev => prev + 4); // Show 4 more news items
+  };
+
+  const handleNewsClick = (index) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate('/news/' + index); // Pass the index of the news item
+  };
+
   return (
     <div>
-      {/* Banner Section */}
+{/* Banner Section */}
       <div className="relative">
         <img src="../public/imgs/banner.jpg" alt="Trường trung học phổ thông" className="w-full object-cover h-[300px] sm:h-[400px] md:h-[500px]"/>
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 p-4 sm:p-6 border-t-4 border-black w-11/12 sm:w-5/6 md:w-4/6" 
@@ -309,62 +369,20 @@ const Homepage = () => {
           </div>
         </div>
       </div>
-
       {/* News Section */}
       <div className="bg-white pt-0 pb-8 sm:pb-12 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-xl sm:text-2xl font-bold text-[#004D86] mb-6 sm:mb-8">
             Tin tức & sự kiện
           </h2>
-          <div className="overflow-x-auto pb-6 select-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflow: 'hidden' }} 
-               onMouseDown={handleMouseDown}
-               onMouseLeave={handleMouseLeave}
-               onMouseUp={handleMouseUp}
-               onMouseMove={handleMouseMove}
-               ref={scrollContainerRef}>
-            <div className="flex space-x-4 sm:space-x-6 min-w-max">
-              {[
-                {
-                  title:
-                    "Học sinh hào hứng trải nghiệm sự 'thay da đổi thịt' của trường",
-                  image: "../public/imgs/news1.jpg",
-                  date: "3/10/2024",
-                  description:
-                    "Chiều ngày 3/10/2024 tại Đà Nẵng, Trung tâm ngoại ngữ Đại học RMIT tại Đà Nẵng đã tổ chức lễ ra mắt chương trình Luyện thi IELTS mới,...",
-                },
-                {
-                  title: "Nhiều trường và phụ huynh ủng hộ đi học lại sau Tết",
-                  image: "../public/imgs/news2.jpg",
-                  date: "3/10/2024",
-                  description:
-                    "Khi nhóm chat của phụ huynh xuất hiện câu hỏi \"Nếu trường mở cửa sau Tết, có cho con đi học không?\", chị Diệu Linh, 42 tuổi, nhanh chóng chn \"Có\".",
-                },
-                {
-                  title: "Tích hợp tiếng Anh giúp người học gặt hái thành công",
-                  image: "../public/imgs/news3.jpg",
-                  date: "3/10/2024",
-                  description:
-                    "Chủ trương đưa tiếng Anh ngôn ngữ thứ hai gần đây là một bước tiến lớn nhằm tiếp tục giúp người học thành công trong cuộc sống và công việc.",
-                },
-                {
-                  title: "Hồi sinh di sản văn hóa với công nghệ 3D tiên tiến",
-                  image: "../public/imgs/news4.jpg",
-                  date: "7/10/2024",
-                  description:
-                    "Adobe tổ chức tập huấn cho các bảo tàng và trung tâm lưu trữ trong nước nhằm tìm hiểu về vai trò của công nghệ 3D bảo tồn văn hóa di sản bản địa..",
-                },
-                {
-                  title: "Đưa bền vững vào giảng dạy truyền thông và thiết kế",
-                  image: "../public/imgs/news5.jpg",
-                  date: "5/10/2024",
-                  description:
-                    "Phù hợp với các Mục tiêu phát triển bền vững và 95,7% trong số đó được tích hợp tính bền vững vào tài liệu giảng dạy và học tập.",
-                },
-                // Add more news items here if needed
-              ].map((news, index) => (
+          <div className="pb-6">
+            <div className="flex flex-wrap justify-center gap-4">
+              {/* Center items */}
+              {newsItems.slice(0, newsToShow).map((news, index) => (
                 <div
                   key={index}
-                  className="w-[300px] bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
+                  className="w-[300px] bg-white rounded-lg shadow-md overflow-hidden flex flex-col cursor-pointer"
+                  onClick={() => handleNewsClick(index)} // Add onClick handler
                 >
                   <img
                     src={news.image}
@@ -395,18 +413,25 @@ const Homepage = () => {
                     <p className="text-gray-600 text-sm mb-4 line-clamp-3">
                       {news.description}
                     </p>
-                    <button className="mt-auto bg-[#004D86] text-white px-4 py-2 rounded-full hover:bg-blue-700 transition duration-300">
-                      Xem thêm
-                    </button>
                   </div>
                 </div>
               ))}
             </div>
+            {newsToShow < newsItems.length && (
+              <div className="flex justify-center mt-4">
+                <button
+                  className="mt-4 bg-[#004D86] text-white px-4 py-2 rounded-full hover:bg-blue-700 transition duration-300"
+                  onClick={handleViewMoreNews}
+                >
+                  Xem thêm
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default Homepage;
