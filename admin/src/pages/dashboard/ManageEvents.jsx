@@ -18,10 +18,12 @@ import {
     Input,
     Spinner,
     Textarea,
+    Tooltip,
     Typography,
 } from "@material-tailwind/react";
 import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
+import { FaPlus } from "react-icons/fa6";
 import TimePicker from "react-time-picker";
 import "react-time-picker/dist/TimePicker.css";
 
@@ -256,7 +258,7 @@ const ManageEvents = () => {
                         Quản lý sự kiện
                     </Typography>
                 </CardHeader>
-                <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
+                <CardBody className="overflow-auto px-0 pt-0 pb-2">
                     <div className="flex justify-between items-center p-4">
                         <div className="flex gap-2">
                             <Button
@@ -301,31 +303,41 @@ const ManageEvents = () => {
                             </Button>
                         </div>
 
-                        <Button
-                            className="flex items-center gap-3"
-                            color="cyan"
-                            size="sm"
-                            onClick={() => {
-                                setNewEvent({
-                                    ten: "",
-                                    ngayToChuc: "",
-                                    thoiGianBatDau: "00:00",
-                                    thoiGianKetThuc: "00:00",
-                                    diaDiem: "",
-                                    noiDung: "",
-                                    nganSachChiTieu: 0,
-                                    nguoiPhuTrach: "",
-                                    khachMoi: [],
-                                    club: "",
-                                });
-                                setEditingEventId(null);
-                                setIsDialogOpen(true);
+                        <Tooltip
+                            content="Thêm"
+                            animate={{
+                                mount: { scale: 1, y: 0 },
+                                unmount: { scale: 0, y: 25 },
                             }}
+                            className="bg-gradient-to-r from-black to-transparent opacity-70"
                         >
-                            <PlusIcon strokeWidth={2} className="h-4 w-4" />
-                            {" "}
-                            Thêm sự kiện
-                        </Button>
+                            <Button
+                                className="flex items-center gap-3"
+                                color="cyan"
+                                size="sm"
+                                onClick={() => {
+                                    setNewEvent({
+                                        ten: "",
+                                        ngayToChuc: "",
+                                        thoiGianBatDau: "00:00",
+                                        thoiGianKetThuc: "00:00",
+                                        diaDiem: "",
+                                        noiDung: "",
+                                        nganSachChiTieu: 0,
+                                        nguoiPhuTrach: "",
+                                        khachMoi: [],
+                                        club: "",
+                                    });
+                                    setEditingEventId(null);
+                                    setIsDialogOpen(true);
+                                }}
+                            >
+                                <FaPlus
+                                    className="h-4 w-4"
+                                    strokeWidth={"2rem"}
+                                />
+                            </Button>
+                        </Tooltip>
                     </div>
 
                     {isLoading
@@ -442,48 +454,93 @@ const ManageEvents = () => {
                                                 </td>
                                                 <td className={className}>
                                                     <div className="flex items-center gap-2">
-                                                        <Button
-                                                            size="sm"
-                                                            color="green"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() =>
-                                                                openDetailDialog(
-                                                                    _id,
-                                                                )}
+                                                        <Tooltip
+                                                            content="Xem"
+                                                            animate={{
+                                                                mount: {
+                                                                    scale: 1,
+                                                                    y: 0,
+                                                                },
+                                                                unmount: {
+                                                                    scale: 0,
+                                                                    y: 25,
+                                                                },
+                                                            }}
+                                                            className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                         >
-                                                            <EyeIcon
-                                                                strokeWidth={2}
-                                                                className="h-4 w-4"
-                                                            />
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            color="blue"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() =>
-                                                                openEditDialog(
-                                                                    _id,
-                                                                )}
+                                                            <Button
+                                                                size="sm"
+                                                                color="blue"
+                                                                className="flex items-center gap-2"
+                                                                onClick={() =>
+                                                                    openDetailDialog(
+                                                                        _id,
+                                                                    )}
+                                                            >
+                                                                <EyeIcon
+                                                                    strokeWidth={2}
+                                                                    className="h-4 w-4"
+                                                                />
+                                                            </Button>
+                                                        </Tooltip>
+                                                        <Tooltip
+                                                            content="Sửa"
+                                                            animate={{
+                                                                mount: {
+                                                                    scale: 1,
+                                                                    y: 0,
+                                                                },
+                                                                unmount: {
+                                                                    scale: 0,
+                                                                    y: 25,
+                                                                },
+                                                            }}
+                                                            className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                         >
-                                                            <PencilIcon
-                                                                strokeWidth={2}
-                                                                className="h-4 w-4"
-                                                            />
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            color="red"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() =>
-                                                                handleDeleteEvent(
-                                                                    _id,
-                                                                )}
+                                                            <Button
+                                                                size="sm"
+                                                                color="green"
+                                                                className="flex items-center gap-2"
+                                                                onClick={() =>
+                                                                    openEditDialog(
+                                                                        _id,
+                                                                    )}
+                                                            >
+                                                                <PencilIcon
+                                                                    strokeWidth={2}
+                                                                    className="h-4 w-4"
+                                                                />
+                                                            </Button>
+                                                        </Tooltip>
+                                                        <Tooltip
+                                                            content="Xóa"
+                                                            animate={{
+                                                                mount: {
+                                                                    scale: 1,
+                                                                    y: 0,
+                                                                },
+                                                                unmount: {
+                                                                    scale: 0,
+                                                                    y: 25,
+                                                                },
+                                                            }}
+                                                            className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                         >
-                                                            <TrashIcon
-                                                                strokeWidth={2}
-                                                                className="h-4 w-4"
-                                                            />
-                                                        </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                color="red"
+                                                                className="flex items-center gap-2"
+                                                                onClick={() =>
+                                                                    handleDeleteEvent(
+                                                                        _id,
+                                                                    )}
+                                                            >
+                                                                <TrashIcon
+                                                                    strokeWidth={2}
+                                                                    className="h-4 w-4"
+                                                                />
+                                                            </Button>
+                                                        </Tooltip>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -515,11 +572,10 @@ const ManageEvents = () => {
                         type="date"
                         label="Ngày tổ chức"
                         value={newEvent.ngayToChuc}
-                        onChange={(e) =>
-                            setNewEvent({
-                                ...newEvent,
-                                ngayToChuc: e.target.value,
-                            })}
+                        onChange={(e) => setNewEvent({
+                            ...newEvent,
+                            ngayToChuc: e.target.value,
+                        })}
                     />
                     <div>
                         <Typography
@@ -530,11 +586,10 @@ const ManageEvents = () => {
                             Thời gian bắt đầu
                         </Typography>
                         <TimePicker
-                            onChange={(value) =>
-                                setNewEvent({
-                                    ...newEvent,
-                                    thoiGianBatDau: value,
-                                })}
+                            onChange={(value) => setNewEvent({
+                                ...newEvent,
+                                thoiGianBatDau: value,
+                            })}
                             value={newEvent.thoiGianBatDau}
                             clearIcon={null}
                             clockIcon={null}
@@ -685,8 +740,7 @@ const ManageEvents = () => {
                     <DialogBody divider className="grid grid-cols-2 gap-4">
                         <Typography>Tên sự kiện: {detailEvent.ten}</Typography>
                         <Typography>
-                            Ngày tổ chức:{" "}
-                            {new Date(detailEvent.ngayToChuc)
+                            Ngày tổ chức: {new Date(detailEvent.ngayToChuc)
                                 .toLocaleDateString()}
                         </Typography>
                         <Typography>

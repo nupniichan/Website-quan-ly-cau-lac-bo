@@ -4,6 +4,7 @@ import {
     PlusIcon,
     TrashIcon,
 } from "@heroicons/react/24/solid";
+import { FaPlus } from "react-icons/fa6";
 import {
     Button,
     Card,
@@ -18,6 +19,7 @@ import {
     Select,
     Spinner,
     Textarea,
+    Tooltip,
     Typography,
 } from "@material-tailwind/react";
 import axios from "axios";
@@ -329,17 +331,28 @@ const ActivityReports = () => {
                         Báo cáo hoạt động
                     </Typography>
                 </CardHeader>
-                <Button
-                    className="flex items-center gap-3"
-                    color="cyan"
-                    size="sm"
-                    onClick={openAddDialog}
-                >
-                    <PlusIcon strokeWidth={2} className="h-4 w-4" />{" "}
-                    Thêm sự kiện
-                </Button>
 
-                <CardBody>
+                <CardBody className="overflow-auto px-0 pt-0 pb-2">
+                    <div className="flex justify-end p-4">
+                        <Tooltip
+                            content="Thêm"
+                            animate={{
+                                mount: { scale: 1, y: 0 },
+                                unmount: { scale: 0, y: 25 },
+                            }}
+                            className="bg-gradient-to-r from-black to-transparent opacity-70"
+                        >
+                            <Button
+                                className="flex items-center gap-3"
+                                color="cyan"
+                                size="sm"
+                                onClick={openAddDialog}
+                            >
+                                <FaPlus className="h-4 w-4" strokeWidth={'2rem'} />
+                            </Button>
+                        </Tooltip>
+                    </div>
+
                     {isLoading
                         ? <Spinner />
                         : reports.length === 0
@@ -411,48 +424,75 @@ const ActivityReports = () => {
                                                     </td>
                                                     <td className={className}>
                                                         <div className="flex items-center gap-2">
-                                                            <Button
-                                                                size="sm"
-                                                                color="green"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    openDetailDialog(
-                                                                        _id,
-                                                                    )}
+                                                            <Tooltip
+                                                                content="Xem"
+                                                                animate={{
+                                                                    mount: { scale: 1, y: 0 },
+                                                                    unmount: { scale: 0, y: 25 },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
-                                                                <EyeIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                color="blue"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    openEditDialog(
-                                                                        _id,
-                                                                    )}
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="blue"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openDetailDialog(
+                                                                            _id,
+                                                                        )}
+                                                                >
+                                                                    <EyeIcon
+                                                                        strokeWidth={2}
+                                                                        className="h-4 w-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content="Sửa"
+                                                                animate={{
+                                                                    mount: { scale: 1, y: 0 },
+                                                                    unmount: { scale: 0, y: 25 },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
-                                                                <PencilIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                color="red"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    handleDeleteReport(
-                                                                        _id,
-                                                                    )}
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="green"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openEditDialog(
+                                                                            _id,
+                                                                        )}
+                                                                >
+                                                                    <PencilIcon
+                                                                        strokeWidth={2}
+                                                                        className="h-4 w-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content="Xóa"
+                                                                animate={{
+                                                                    mount: { scale: 1, y: 0 },
+                                                                    unmount: { scale: 0, y: 25 },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
-                                                                <TrashIcon
-                                                                    strokeWidth={2}
-                                                                    className="h-4 w-4"
-                                                                />
-                                                            </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="red"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        handleDeleteReport(
+                                                                            _id,
+                                                                        )}
+                                                                >
+                                                                    <TrashIcon
+                                                                        strokeWidth={2}
+                                                                        className="h-4 w-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
                                                         </div>
                                                     </td>
                                                 </tr>
