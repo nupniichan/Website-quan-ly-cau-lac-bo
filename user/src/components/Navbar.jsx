@@ -8,7 +8,7 @@ const Navbar = () => {
         <Link to="/about" className="text-black no-underline"><li className="text-black no-underline">Về trường</li></Link>
           <Link to="/clubs" className="text-black no-underline"><li className="text-black no-underline">Chương trình học</li></Link>
           <Link to="/curriculum" className="text-black no-underline"><li className="text-black no-underline">Khoa học - Công nghệ</li></Link>
-          <Link to="/news" className="text-black no-underline"><li className="text-black no-underline">Hợp tác</li></Link>
+          <Link to="/international-cooperation" className="text-black no-underline"><li className="text-black no-underline">Hợp tác</li></Link>
           <Link to="/admission" className="text-black no-underline"><li className="text-black no-underline">Tuyển sinh lớp 10</li></Link>
         </ul>
       </nav>

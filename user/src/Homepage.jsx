@@ -124,14 +124,14 @@ const Homepage = () => {
     },
   ];
 
-  // Function to duplicate news items
+  
   const handleViewMoreNews = () => {
     setNewsToShow(prev => prev + 4); // Show 4 more news items
   };
 
   const handleNewsClick = (index) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    navigate('/news/' + index); // Pass the index of the news item
+    navigate('/news/' + index); 
   };
 
   return (
