@@ -3,7 +3,6 @@ import {
     PencilIcon,
     TrashIcon,
 } from "@heroicons/react/24/solid";
-import { FaPlus } from "react-icons/fa6";
 import {
     Button,
     Card,
@@ -13,16 +12,14 @@ import {
     DialogBody,
     DialogFooter,
     DialogHeader,
-    Input,
-    Option,
-    Select,
-    Spinner,
+    Input, Spinner,
     Textarea,
     Tooltip,
-    Typography,
+    Typography
 } from "@material-tailwind/react";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { FaPlus } from "react-icons/fa6";
 
 const API_URL = "http://localhost:5500/api";
 

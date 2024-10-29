@@ -166,41 +166,56 @@ const ApproveEvents = () => {
                     color="blue"
                     className="p-6 mb-8"
                 >
-                    <div className="flex items-center justify-between">
-                        <Typography variant="h6" color="white">
-                            Danh sách sự kiện
-                        </Typography>
-                    </div>
+                    <Typography variant="h6" color="white">
+                        Danh sách sự kiện
+                    </Typography>
                 </CardHeader>
-                <CardBody className="px-0 pt-0 pb-2 overflow-auto overflow-x-scroll">
-                    <div className="flex gap-4">
+                <CardBody className="px-0 pt-0 pb-2 overflow-auto">
+                    <div className="flex gap-3 p-4">
                         <Button
-                            color={filter === "all" ? "blue" : "white"}
-                            onClick={() => setFilter("all")}
+                            variant={filter === "all"
+                                    ? "gradient"
+                                    : "outlined"}
+                            // color={filter === "all" ? "blue" : "white"}
+                            color= "blue"
                             size="sm"
+                            onClick={() => setFilter("all")}
                         >
                             Tất cả
                         </Button>
+
                         <Button
-                            color={filter === "choDuyet"
-                                ? "blue"
-                                : "blue-gray"}
-                            onClick={() => setFilter("choDuyet")}
+                            variant={filter === "choDuyet"
+                                    ? "gradient"
+                                    : "outlined"}
+                            // color={filter === "choDuyet" ? "blue" : "blue-gray"}
+                            color= "blue"
                             size="sm"
+                            onClick={() => setFilter("choDuyet")}
                         >
                             Chờ duyệt
                         </Button>
+
                         <Button
-                            color={filter === "daDuyet" ? "blue" : "blue-gray"}
-                            onClick={() => setFilter("daDuyet")}
+                            variant={filter === "daDuyet"
+                                    ? "gradient"
+                                    : "outlined"}
+                            // color={filter === "daDuyet" ? "blue" : "blue-gray"}
+                            color= "blue"
                             size="sm"
+                            onClick={() => setFilter("daDuyet")}
                         >
                             Đã duyệt
                         </Button>
+
                         <Button
-                            color={filter === "tuChoi" ? "blue" : "blue-gray"}
-                            onClick={() => setFilter("tuChoi")}
+                            variant={filter === "tuChoi"
+                                    ? "gradient"
+                                    : "outlined"}
+                            // color={filter === "tuChoi" ? "blue" : "blue-gray"}
+                            color= "blue"
                             size="sm"
+                            onClick={() => setFilter("tuChoi")}
                         >
                             Đã từ chối
                         </Button>
@@ -392,11 +407,16 @@ const ApproveEvents = () => {
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
-                size="xl"
+                size="md"
             >
-                <DialogHeader>Chi tiết Sự kiện</DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
+                    Chi tiết Sự kiện
+                </DialogHeader>
                 {detailEvent && (
-                    <DialogBody divider className="grid grid-cols-2 gap-4">
+                    <DialogBody
+                        divider
+                        className="grid grid-cols-2 gap-4  overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]"
+                    >
                         <Typography>Tên sự kiện: {detailEvent.ten}</Typography>
                         <Typography>
                             Ngày tổ chức: {new Date(detailEvent.ngayToChuc)

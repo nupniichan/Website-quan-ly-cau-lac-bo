@@ -22,7 +22,7 @@ import {
     Typography,
 } from "@material-tailwind/react";
 import axios from "axios";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 import TimePicker from "react-time-picker";
 import "react-time-picker/dist/TimePicker.css";
@@ -260,7 +260,7 @@ const ManageEvents = () => {
                 </CardHeader>
                 <CardBody className="px-0 pt-0 pb-2 overflow-auto">
                     <div className="flex items-center justify-between p-4">
-                        <div className="flex gap-2">
+                        <div className="flex gap-3">
                             <Button
                                 variant={statusFilter === "all"
                                     ? "gradient"
@@ -306,7 +306,7 @@ const ManageEvents = () => {
                             </Button>
                         </div>
 
-                        <div className="pr-6">
+                        <div className="pr-6 -translate-y-[0.05rem]">
                         <Tooltip
                             content="Thêm"
                             animate={{
@@ -563,7 +563,7 @@ const ManageEvents = () => {
                 handler={() => setIsDialogOpen(false)}
                 size="lg"
             >
-                <DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
                     {editingEventId ? "Chỉnh sửa Sự kiện" : "Thêm Sự kiện Mới"}
                 </DialogHeader>
                 <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]">

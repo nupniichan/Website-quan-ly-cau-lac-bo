@@ -1,5 +1,8 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import {
+    EyeIcon,
+    PencilIcon,
+    TrashIcon,
+} from "@heroicons/react/24/solid";
 import {
     Button,
     Card,
@@ -10,18 +13,12 @@ import {
     DialogFooter,
     DialogHeader,
     Input,
-    Option,
-    Select,
     Spinner,
-    Textarea,
     Tooltip,
-    Typography,
+    Typography
 } from "@material-tailwind/react";
-import {
-    EyeIcon,
-    PencilIcon,
-    TrashIcon,
-} from "@heroicons/react/24/solid";
+import axios from "axios";
+import { useEffect, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 
 const API_URL = "http://localhost:5500/api";
@@ -220,6 +217,7 @@ const ManageBudget = () => {
                                 <FaPlus className="w-4 h-4" strokeWidth={'2rem'} />
                             </Button>
                         </Tooltip>
+                        {/* TODO Add Club filter */}
                     </div>
                     {isLoading
                         ? (

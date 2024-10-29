@@ -17,11 +17,7 @@ import {
     Tooltip,
     Typography,
 } from "@material-tailwind/react";
-import {
-    EyeIcon,
-    PencilIcon,
-    TrashIcon,
-} from "@heroicons/react/24/solid";
+import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { FaPlus } from "react-icons/fa6";
 
 const API_URL = "http://localhost:5500/api";
@@ -45,6 +41,7 @@ const BudgetAllocation = () => {
         minAmount: "",
         maxAmount: "",
     });
+    const [filterClub, setFilterClub] = useState("");
     const [detailAllocation, setDetailAllocation] = useState(null);
     const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
@@ -187,16 +184,14 @@ const BudgetAllocation = () => {
         return allocations.filter((allocation) => {
             const matchClub = !filters.club ||
                 allocation.club._id === filters.club;
-            const matchDate =
-                (!filters.startDate ||
-                    new Date(allocation.allocationDate) >=
-                        new Date(filters.startDate)) &&
+            const matchDate = (!filters.startDate ||
+                new Date(allocation.allocationDate) >=
+                    new Date(filters.startDate)) &&
                 (!filters.endDate ||
                     new Date(allocation.allocationDate) <=
                         new Date(filters.endDate));
-            const matchAmount =
-                (!filters.minAmount ||
-                    allocation.amount >= Number(filters.minAmount)) &&
+            const matchAmount = (!filters.minAmount ||
+                allocation.amount >= Number(filters.minAmount)) &&
                 (!filters.maxAmount ||
                     allocation.amount <= Number(filters.maxAmount));
             return matchClub && matchDate && matchAmount;
@@ -217,7 +212,7 @@ const BudgetAllocation = () => {
                 </CardHeader>
                 <CardBody className="px-0 pt-0 pb-2 overflow-auto">
                     <div className="flex justify-end p-4 px-6 pr-10">
-                    <Tooltip
+                        <Tooltip
                             content="Thêm"
                             animate={{
                                 mount: { scale: 1, y: 0 },
@@ -241,32 +236,40 @@ const BudgetAllocation = () => {
                     {/* Thêm phần filter */}
                     <div className="px-6 py-3 absolute z-[60]">
                         <div className="grid gap-4 2xl:grid-cols-5 xl:grid-cols-3 md:grid-cols-3 sm:grid-cols-2">
-                            <div className="">
-                                <Select
-                                    label="Câu lạc bộ"
-                                    value={filters.club}
-                                    onChange={(value) =>
-                                        setFilters({ ...filters, club: value })}
+                            <Select
+                                label="Câu lạc bộ"
+                                value={filters.club}
+                                onChange={(value) =>
+                                    setFilters({ ...filters, club: value })}
+                            >
+                                <Option value="" className="bg-transparent">
+                                    <strong>Tất cả</strong>
+                                </Option>
+
+                                <hr className="my-2 border-t border-gray-300" />
+
+                                <div className="overflow-y-auto lg:max-h-48 md:max-h-32 sm:max-h-20">
+                                    {clubs.map((club) => (
+                                        <Option
+                                            key={club._id}
+                                            value={club._id}
+                                            className="bg-transparent"
+                                        >
+                                            {club.ten}
+                                        </Option>
+                                    ))}
+                                </div>
+                            </Select>
+                            {/* Display filtered club */}
+                            {filters.club && (
+                                <Typography
+                                    variant="small"
+                                    color="blue-gray"
+                                    className="font-normal translate-x-3 translate-y-[0.65rem] absolute z-0 pointer-events-none"
                                 >
-                                    <Option value="" className="bg-transparent">
-                                        <strong>Tất cả</strong>
-                                    </Option>
-
-                                    <hr className="my-2 border-t border-gray-300" />
-
-                                    <div className="overflow-y-auto lg:max-h-48 md:max-h-32 sm:max-h-20">
-                                        {clubs.map((club) => (
-                                            <Option
-                                                key={club._id}
-                                                value={club._id}
-                                                className="bg-transparent"
-                                            >
-                                                {club.ten}
-                                            </Option>
-                                        ))}
-                                    </div>
-                                </Select>
-                            </div>
+                                    {clubs.find((c) => c._id === filters.club)?.ten}
+                                </Typography>
+                            )}
                             <Input
                                 type="date"
                                 label="Từ ngày"
@@ -489,7 +492,9 @@ const BudgetAllocation = () => {
                 handler={() => setIsDetailDialogOpen(false)}
                 size="md"
             >
-                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">Chi tiết Phân bổ Ngân sách</DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
+                    Chi tiết Phân bổ Ngân sách
+                </DialogHeader>
                 <DialogBody divider>
                     {detailAllocation && (
                         <div className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]">
@@ -565,8 +570,10 @@ const BudgetAllocation = () => {
                         ? "Chnh sửa Phân bổ Ngân sách"
                         : "Thêm Phân bổ Ngân sách Mới"}
                 </DialogHeader>
-                <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]">
-                {/* TODO Fix dropdown menu isnt on top of everything */}
+                <DialogBody
+                    divider
+                    className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]"
+                >
                     <Select
                         label="Câu lạc bộ"
                         value={newAllocation.club}
@@ -593,19 +600,21 @@ const BudgetAllocation = () => {
                     <Input
                         label="Mục đích"
                         value={newAllocation.purpose}
-                        onChange={(e) => setNewAllocation({
-                            ...newAllocation,
-                            purpose: e.target.value,
-                        })}
+                        onChange={(e) =>
+                            setNewAllocation({
+                                ...newAllocation,
+                                purpose: e.target.value,
+                            })}
                     />
                     <Input
                         type="date"
                         label="Ngày phân bổ"
                         value={newAllocation.allocationDate}
-                        onChange={(e) => setNewAllocation({
-                            ...newAllocation,
-                            allocationDate: e.target.value,
-                        })}
+                        onChange={(e) =>
+                            setNewAllocation({
+                                ...newAllocation,
+                                allocationDate: e.target.value,
+                            })}
                     />
                 </DialogBody>
                 <DialogFooter>

@@ -193,11 +193,12 @@ const ClubReports = () => {
                                 </div>
                             </Select>
                         </div>
+                        {/* Display filtered club */}
                         {filterClub && (
                             <Typography
                                 variant="small"
                                 color="blue-gray"
-                                className="font-normal translate-x-3 translate-y-[0.61rem] absolute z-0 pointer-events-none"
+                                className="font-normal translate-x-3 translate-y-[0.65rem] absolute z-0 pointer-events-none"
                                 // NOTE alignment and disable interactions for chosen option with the "All" option
                             >
                                 {clubs.find((c) => c._id === filterClub)?.ten}
