@@ -71,10 +71,10 @@ export function Configurator() {
             <div className="flex items-start justify-between px-6 pt-8 pb-6">
                 <div>
                     <Typography variant="h5" color="blue-gray">
-                        Dashboard Configurator
+                        Cấu Hình Bảng Điều Khiển
                     </Typography>
                     <Typography className="font-normal text-blue-gray-600">
-                        See our dashboard options.
+                        Các tùy chọn bảng điều khiển.
                     </Typography>
                 </div>
                 <IconButton
@@ -88,7 +88,7 @@ export function Configurator() {
             <div className="px-6 py-4">
                 <div className="mb-12">
                     <Typography variant="h6" color="blue-gray">
-                        Sidenav Colors
+                        Màu Thanh Bên
                     </Typography>
                     <div className="flex items-center gap-2 mt-3">
                         {Object.keys(sidenavColors).map((color) => (
@@ -108,36 +108,29 @@ export function Configurator() {
                 </div>
                 <div className="mb-12">
                     <Typography variant="h6" color="blue-gray">
-                        Sidenav Types
+                        Kiểu Thanh Bên
                     </Typography>
                     <Typography variant="small" color="gray">
-                        Choose between 3 different sidenav types.
+                        Chọn một trong 3 kiểu thanh bên khác nhau.
                     </Typography>
                     <div className="flex items-center gap-2 mt-3">
                         <Button
-                            variant={sidenavType === "dark"
-                                ? "gradient"
-                                : "outlined"}
+                            variant={sidenavType === "dark" ? "gradient" : "outlined"}
                             onClick={() => setSidenavType(dispatch, "dark")}
                         >
-                            Dark
+                            Tối
                         </Button>
                         <Button
-                            variant={sidenavType === "transparent"
-                                ? "gradient"
-                                : "outlined"}
-                            onClick={() =>
-                                setSidenavType(dispatch, "transparent")}
+                            variant={sidenavType === "transparent" ? "gradient" : "outlined"}
+                            onClick={() => setSidenavType(dispatch, "transparent")}
                         >
-                            Transparent
+                            Trong Suốt
                         </Button>
                         <Button
-                            variant={sidenavType === "white"
-                                ? "gradient"
-                                : "outlined"}
+                            variant={sidenavType === "white" ? "gradient" : "outlined"}
                             onClick={() => setSidenavType(dispatch, "white")}
                         >
-                            White
+                            Sáng
                         </Button>
                     </div>
                 </div>
@@ -145,13 +138,12 @@ export function Configurator() {
                     <hr />
                     <div className="flex items-center justify-between py-5">
                         <Typography variant="h6" color="blue-gray">
-                            Navbar Fixed
+                            Cố Định Thanh Điều Hướng
                         </Typography>
                         <Switch
                             id="navbar-fixed"
                             value={fixedNavbar}
-                            onChange={() =>
-                                setFixedNavbar(dispatch, !fixedNavbar)}
+                            onChange={() => setFixedNavbar(dispatch, !fixedNavbar)}
                         />
                     </div>
                     <hr />

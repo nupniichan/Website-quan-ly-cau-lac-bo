@@ -585,7 +585,7 @@ const ManageClubs = () => {
                                 color="brown"
                             >
                                 <CloudArrowUpIcon className="w-5 h-5 stroke-2" />
-                                Upload Logo
+                                Tải logo lên
                                 <input
                                     type="file"
                                     accept="image/*"

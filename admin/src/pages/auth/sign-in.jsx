@@ -64,7 +64,7 @@ export function SignIn() {
         console.error("Login response doesn't contain token:", response.data);
       }
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("Đăng nhập thất bại:", error);
       alert("Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.");
     } finally {
       setIsLoading(false);
@@ -75,18 +75,20 @@ export function SignIn() {
     <section className="m-8 flex gap-4">
       <div className="w-full lg:w-3/5 mt-24">
         <div className="text-center">
-          <Typography variant="h2" className="font-bold mb-4">Sign In</Typography>
-          <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">Enter your email and password to Sign In.</Typography>
+          <Typography variant="h2" className="font-bold mb-4">Đăng Nhập</Typography>
+          <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">
+            Nhập email và mật khẩu để đăng nhập.
+          </Typography>
         </div>
         <form onSubmit={handleSubmit} className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
           <div className="mb-1 flex flex-col gap-6">
             <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
-              Your email
+              Email của bạn
             </Typography>
             <Input
               size="lg"
-              placeholder="name@mail.com"
-              value={email}  // Sử dụng email ở đây
+              placeholder="ten@email.com"
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
               className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
               labelProps={{
@@ -94,7 +96,7 @@ export function SignIn() {
               }}
             />
             <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
-              Password
+              Mật khẩu
             </Typography>
             <Input
               type="password"
@@ -109,11 +111,11 @@ export function SignIn() {
             />
           </div>
           <Button type="submit" className="mt-6" fullWidth disabled={isLoading}>
-            {isLoading ? "Signing In..." : "Sign In"}
+            {isLoading ? "Đang đăng nhập..." : "Đăng Nhập"}
           </Button>
           <Typography variant="paragraph" className="text-center text-blue-gray-500 font-medium mt-4">
-            Not registered?
-            <Link to="/auth/sign-up" className="text-gray-900 ml-1">Create account</Link>
+            Chưa có tài khoản?
+            <Link to="/auth/sign-up" className="text-gray-900 ml-1">Tạo tài khoản</Link>
           </Typography>
         </form>
       </div>

@@ -73,7 +73,7 @@ export function DashboardNavbar() {
                 </div>
                 <div className="flex items-center">
                     <div className="mr-auto md:mr-4 md:w-56">
-                        <Input label="Search" />
+                        <Input label="Tìm kiếm" />
                     </div>
                     <IconButton
                         variant="text"
@@ -93,7 +93,7 @@ export function DashboardNavbar() {
                             className="hidden items-center gap-1 px-2 xl:flex normal-case text-xs"
                         >
                             <UserCircleIcon className="h-4 w-4 text-blue-gray-500" />
-                            Sign In
+                            Đăng xuất
                         </Button>
                         <IconButton
                             variant="text"
