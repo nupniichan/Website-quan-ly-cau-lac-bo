@@ -22,7 +22,12 @@
         "ngrok": "^5.0.0-beta.2",
         "prop-types": "15.8.1",
         "react": "18.3.1",
+<<<<<<< Updated upstream
         "react-apexcharts": "1.4.1",
+=======
+        "react-apexcharts": "1.4.4",
+        "react-chartjs-2": "^5.2.0",
+>>>>>>> Stashed changes
         "react-dom": "18.3.1",
         "react-router-dom": "6.27.0",
         "react-time-picker": "^7.0.0"
