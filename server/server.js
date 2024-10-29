@@ -10,6 +10,7 @@ const budgetRoutes = require('./routes/budgetRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const prizeRoutes = require('./routes/prizeRoutes');
 const accountRoutes = require('./routes/accountRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 // Import Swagger UI
 const swaggerUi = require('swagger-ui-express');
@@ -81,6 +82,7 @@ app.use('/api', budgetRoutes);
 app.use('/api', reportRoutes);
 app.use('/api', prizeRoutes);
 app.use('/api', accountRoutes);
+app.use('/api', dashboardRoutes);
 
 // Tích hợp Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
