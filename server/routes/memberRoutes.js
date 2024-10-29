@@ -293,5 +293,30 @@ router.delete('/delete-member/:maSoHocSinh/:clubId', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/get-recent-members:
+ *   get:
+ *     summary: Lấy danh sách thành viên mới nhất
+ *     responses:
+ *       200:
+ *         description: Danh sách thành viên mới nhất
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/get-recent-members', async (req, res) => {
+    try {
+        const recentMembers = await Member.find()
+            .populate({
+                path: 'club',
+                select: 'ten'
+            })
+            .sort({ _id: -1 }) // Sắp xếp theo ID giảm dần (mới nhất trước)
+            .limit(10);
+        res.status(200).json(recentMembers);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
 module.exports = router;

@@ -272,7 +272,7 @@ router.put('/update-event/:id', async (req, res) => {
  * @swagger
  * /api/delete-event/{id}:
  *   delete:
- *     summary: Xoá s�� kiện
+ *     summary: Xoá sự kiện
  *     parameters:
  *       - in: path
  *         name: id
@@ -312,7 +312,13 @@ router.delete('/delete-event/:id', async (req, res) => {
 // Lấy danh sách sự kiện chờ duyệt
 router.get('/get-pending-events', async (req, res) => {
     try {
-        const pendingEvents = await Event.find({ trangThai: 'choDuyet' });
+        const pendingEvents = await Event.find({ trangThai: 'choDuyet' })
+            .populate({
+                path: 'club',
+                select: 'ten'  // Chỉ lấy trường 'ten' của club
+            })
+            .sort({ ngayToChuc: -1 })
+            .limit(10);
         res.status(200).json(pendingEvents);
     } catch (error) {
         res.status(500).json({ message: error.message });
