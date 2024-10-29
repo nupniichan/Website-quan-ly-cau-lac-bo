@@ -38,6 +38,8 @@ const ManageClubs = () => {
     });
     const [detailClub, setDetailClub] = useState(null);
     const [editingClubId, setEditingClubId] = useState(null);
+    const [currentLogo, setCurrentLogo] = useState(null);
+    const [previewLogo, setPreviewLogo] = useState(null);
 
     useEffect(() => {
         fetchClubs();
@@ -215,8 +217,20 @@ const ManageClubs = () => {
         }
     };
 
+    // TODO - Preview logo & current logo
     const handleLogoChange = (e) => {
-        setNewClub({ ...newClub, logo: e.target.files[0] });
+        const file = e.target.files[0];
+        setNewClub({ ...newClub, logo: file });
+
+        // if (file) {
+        //     const reader = new FileReader();
+        //     reader.onloadend = () => {
+        //         setPreviewLogo(reader.result);
+        //     };
+        //     reader.readAsDataURL(file);
+        // } else {
+        //     setPreviewLogo(null);
+        // }
     };
 
     return (
@@ -539,7 +553,7 @@ const ManageClubs = () => {
                             setNewClub({ ...newClub, quyDinh: e.target.value })}
                         className="col-span-2"
                     />
-                    {/* TODO Display the uploaded image */}
+
                     <Button
                         variant="gradient"
                         className="flex items-center gap-3 w-[10.6rem] h-[3rem]"
@@ -554,6 +568,30 @@ const ManageClubs = () => {
                             className="absolute inset-0 w-full h-full opacity-0"
                         />
                     </Button>
+                    <div className="grid grid-cols-2">
+                            {editingClubId && currentLogo && (
+                                <>
+                                    <p><strong>Ảnh hiện tại:</strong></p>
+                                    <img
+                                        src={currentLogo}
+                                        alt="Ảnh clb hiện tại"
+                                        className="h-auto max-w-full mt-2"
+                                        style={{ maxHeight: "100px" }}
+                                    />
+                                </>
+                            )}
+                            {previewLogo && (
+                                <>
+                                    <p><strong>Ảnh mới:</strong></p>
+                                    <img
+                                        src={previewLogo}
+                                        alt="Ảnh clb mới"
+                                        className="h-auto max-w-full mt-2"
+                                        style={{ maxHeight: "100px" }}
+                                    />
+                                </>
+                            )}
+                        </div>
                 </DialogBody>
                 <DialogFooter>
                     <Button
