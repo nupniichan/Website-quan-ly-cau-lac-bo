@@ -75,18 +75,18 @@ export function Dashboard() {
             path: "/dashboard/budget-allocation",
             element: <BudgetAllocation />,
         },
-        {
-            icon: <CurrencyDollarIcon />,
-            name: "Table",
-            path: "/dashboard/table",
-            element: <Table />,
-        },
-        {
-            icon: <CurrencyDollarIcon />,
-            name: "Profile",
-            path: "/dashboard/profile",
-            element: <Profile />,
-        },
+        // {
+        //     icon: <CurrencyDollarIcon />,
+        //     name: "Table",
+        //     path: "/dashboard/table",
+        //     element: <Table />,
+        // },
+        // {
+        //     icon: <CurrencyDollarIcon />,
+        //     name: "Profile",
+        //     path: "/dashboard/profile",
+        //     element: <Profile />,
+        // },
     ];
 
     const studentRoutes = [
@@ -126,18 +126,18 @@ export function Dashboard() {
             path: "/dashboard/activity-reports",
             element: <ActivityReports />,
         },
-        {
-            icon: <CurrencyDollarIcon />,
-            name: "Table",
-            path: "/dashboard/table",
-            element: <Table />,
-        },
-        {
-            icon: <CurrencyDollarIcon />,
-            name: "Profile",
-            path: "/dashboard/profile",
-            element: <Profile />,
-        },
+        // {
+        //     icon: <CurrencyDollarIcon />,
+        //     name: "Table",
+        //     path: "/dashboard/table",
+        //     element: <Table />,
+        // },
+        // {
+        //     icon: <CurrencyDollarIcon />,
+        //     name: "Profile",
+        //     path: "/dashboard/profile",
+        //     element: <Profile />,
+        // },
     ];
 
     const currentRoutes = role === "manager" ? principalRoutes : studentRoutes;
