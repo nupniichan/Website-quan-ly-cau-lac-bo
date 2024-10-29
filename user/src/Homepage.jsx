@@ -79,9 +79,9 @@ const Homepage = () => {
       {/* Banner Section */}
       <div className="relative">
         <img src="../public/imgs/banner.jpg" alt="Trường trung học phổ thông" className="w-full object-cover h-[300px] sm:h-[400px] md:h-[500px]"/>
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 p-4 sm:p-6 border-t-4 border-black w-11/12 sm:w-5/6 md:w-4/6" 
-             style={{ 
-               fontFamily: 'Roboto, sans-serif', 
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 p-4 sm:p-6 border-t-4 border-black w-11/12 sm:w-5/6 md:w-4/6"
+             style={{
+               fontFamily: 'Roboto, sans-serif',
                fontWeight: 300,
                backgroundColor: 'rgba(0, 0, 0, 0.65)'
              }}>
@@ -95,7 +95,7 @@ const Homepage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Search Bar */}
       <div className="max-w-3xl mx-auto mt-8 px-4">
         <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 text-[#004D86]">Tìm kiếm</h2>
@@ -140,9 +140,9 @@ const Homepage = () => {
               <button className="bg-[#004D86] text-white px-4 py-2 rounded-full hover:bg-red-600 transition duration-300"></button>
             </div>
             <div className='w-1/2 h-auto relative'>
-      <img 
-        src="../public/imgs/cachdaotao.jpg" 
-        alt="Curriculum Infographic" 
+      <img
+        src="../public/imgs/cachdaotao.jpg"
+        alt="Curriculum Infographic"
         className="absolute top-0 left-0 w-2/4 h-full object-contain"
       />              <div className="absolute top-0 left-0 w-full h-full">
                 <p className="text-sm absolute top-[4%] left-[24%]">Chú trọng phát triển năng lực cá nhân, nhấn mạnh việc <b>rèn luyện kĩ năng  bồi đắp phẩm chất</b></p>
@@ -153,7 +153,7 @@ const Homepage = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Mobile and Tablet version */}
           <div className="lg:hidden space-y-4 sm:space-y-6">
             <div className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow">
@@ -206,12 +206,12 @@ const Homepage = () => {
       {/* Career Guidance and Admissions Section */}
       <div className="flex flex-col md:block">
         {/* Background image for all devices */}
-        <div 
-          className="relative bg-cover bg-center h-[200px] sm:h-[300px] md:h-[24rem] w-full" 
+        <div
+          className="relative bg-cover bg-center h-[200px] sm:h-[300px] md:h-[24rem] w-full"
           style={{backgroundImage: "url('../public/imgs/careers.jpg')"}}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-black to-transparent opacity-70"></div>
-          
+
           {/* Text overlay for medium and larger screens */}
           <div className="hidden md:flex items-end h-full">
             <div className="max-w-6xl mx-auto relative z-10 w-full pb-[7rem] px-4 md:px-2">
@@ -220,16 +220,16 @@ const Homepage = () => {
                   Hướng nghiệp - tuyển sinh cho học sinh
                 </h2>
                 <p className="text-md text-white">
-                  Có rất nhiều hoạt động và dịch vụ hỗ trợ các bạn học sinh lên kế hoạch và 
-                  đưa ra các quyết định về nghề nghiệp, cũng như tìm được ngành nghề 
-                  phù hợp sau khi tốt nghiệp. Chuẩn bị cho việc hướng nghiệp, Kế hoạch và 
+                  Có rất nhiều hoạt động và dịch vụ hỗ trợ các bạn học sinh lên kế hoạch và
+                  đưa ra các quyết định về nghề nghiệp, cũng như tìm được ngành nghề
+                  phù hợp sau khi tốt nghiệp. Chuẩn bị cho việc hướng nghiệp, Kế hoạch và
                   Quyết định nghề nghiệp, Các Chương trình và Sự kiện Hướng nghiệp.
                 </p>
               </div>
             </div>
           </div>
         </div>
-        
+
         {/* Text content for mobile and tablet */}
         <div className="md:hidden px-4 py-6 sm:py-8 bg-[#F5F5F5]">
           <div className="max-w-6xl mx-auto">
@@ -237,15 +237,15 @@ const Homepage = () => {
               Hướng nghiệp - tuyển sinh cho học sinh
             </h2>
             <p className="text-sm sm:text-base text-gray-700">
-              Có rất nhiều hoạt động và dịch vụ hỗ trợ các bạn học sinh lên kế hoạch và 
-              đưa ra các quyết định về nghề nghiệp, cũng như tìm được ngành nghề 
-              phù hợp sau khi tốt nghiệp. Chuẩn bị cho việc hướng nghiệp, Kế hoạch và 
+              Có rất nhiều hoạt động và dịch vụ hỗ trợ các bạn học sinh lên kế hoạch và
+              đưa ra các quyết định về nghề nghiệp, cũng như tìm được ngành nghề
+              phù hợp sau khi tốt nghiệp. Chuẩn bị cho việc hướng nghiệp, Kế hoạch và
               Quyết định nghề nghiệp, Các Chương trình và Sự kiện Hướng nghiệp.
             </p>
           </div>
         </div>
       </div>
-      
+
       {/* School Clubs Section */}
       <div className="bg-white py-8 sm:py-12 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
@@ -262,7 +262,7 @@ const Homepage = () => {
                 {displayedClubs.map((club, index) => {
                   const column = index % 3;
                   let style = {};
-                  
+
                   if (window.innerWidth >= 1024) {
                     if (column === 0) {
                       style = {
@@ -286,8 +286,8 @@ const Homepage = () => {
                   }
 
                   return (
-                    <div 
-                      key={club._id} 
+                    <div
+                      key={club._id}
                       className="bg-red-600 text-white h-[55px] w-full sm:w-[325px] flex items-center justify-center cursor-pointer hover:bg-red-700 transition duration-300"
                       style={style}
                       onClick={() => navigate(`/clubs/${club.clubId}`)}
@@ -300,7 +300,7 @@ const Homepage = () => {
             </div>
           )}
           <div className="text-center mt-8 sm:mt-12">
-            <button 
+            <button
               className="bg-yellow-400 text-black px-6 py-3 rounded-full hover:bg-yellow-500 transition duration-300"
               onClick={handleViewMoreClubs}
             >
@@ -316,7 +316,7 @@ const Homepage = () => {
           <h2 className="text-xl sm:text-2xl font-bold text-[#004D86] mb-6 sm:mb-8">
             Tin tức & sự kiện
           </h2>
-          <div className="overflow-x-auto pb-6 select-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflow: 'hidden' }} 
+          <div className="overflow-x-auto pb-6 select-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflow: 'hidden' }}
                onMouseDown={handleMouseDown}
                onMouseLeave={handleMouseLeave}
                onMouseUp={handleMouseUp}

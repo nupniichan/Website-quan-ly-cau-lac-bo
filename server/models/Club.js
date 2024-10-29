@@ -10,7 +10,7 @@ const clubSchema = new mongoose.Schema({
     thanhVien: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Member' }],
     ngayThanhLap: { type: Date, required: true },
     giaoVienPhuTrach: { type: String, required: true },
-    mieuTa: { type: String, required: true }, 
+    mieuTa: { type: String, required: true },
     quyDinh: { type: String, required: true },
     truongBanCLB: { type: String, required: true }
 });
@@ -20,9 +20,9 @@ clubSchema.pre('save', async function (next) {
     if (this.isNew && !this.clubId) {
         try {
             const counter = await Counter.findByIdAndUpdate(
-                { _id: 'clubId' }, 
-                { $inc: { seq: 1 } }, 
-                { new: true, upsert: true } 
+                { _id: 'clubId' },
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
             );
             this.clubId = counter.seq; // Gán giá trị seq cho clubId
         } catch (error) {
