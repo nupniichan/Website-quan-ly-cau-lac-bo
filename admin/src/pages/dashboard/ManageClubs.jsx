@@ -177,6 +177,7 @@ const ManageClubs = () => {
         });
         setEditingClubId(null);
         setIsDialogOpen(true);
+        setPreviewLogo(null);
     };
 
     const openEditDialog = async (clubId) => {
@@ -188,6 +189,7 @@ const ManageClubs = () => {
             });
             setEditingClubId(clubId);
             setIsDialogOpen(true);
+            setPreviewLogo(null);
         } catch (error) {
             console.error("Error fetching club details:", error);
             if (error.response) {
@@ -222,15 +224,15 @@ const ManageClubs = () => {
         const file = e.target.files[0];
         setNewClub({ ...newClub, logo: file });
 
-        // if (file) {
-        //     const reader = new FileReader();
-        //     reader.onloadend = () => {
-        //         setPreviewLogo(reader.result);
-        //     };
-        //     reader.readAsDataURL(file);
-        // } else {
-        //     setPreviewLogo(null);
-        // }
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPreviewLogo(reader.result);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            setPreviewLogo(null);
+        }
     };
 
     return (
@@ -269,219 +271,242 @@ const ManageClubs = () => {
                         </Tooltip>
                     </div>
 
-        <div className="overflow-auto lg:max-h-[56vh] md:max-h-[75vh] sm:max-h-[85vh]">
-                    {isLoading
-                        ? (
-                            <div className="flex items-center justify-center h-64">
-                                <Spinner className="w-12 h-12" color="brown" />
-                            </div>
-                        )
-                        : clubs.length === 0
-                        ? (
-                            <Typography className="py-4 text-center">
-                                Chưa có câu lạc bộ nào.
-                            </Typography>
-                        )
-                        : (
-                            <table className="w-full min-w-[640px] table-auto">
-                                <thead>
-                                    <tr>
-                                        {[
-                                            "Logo",
-                                            "Tên CLB",
-                                            "Lĩnh vực hoạt động",
-                                            "Ngày thành lập",
-                                            "Giáo viên phụ trách",
-                                            "Trưởng ban CLB",
-                                            "Thao tác",
-                                        ].map((el) => (
-                                            <th
-                                                key={el}
-                                                className="px-5 py-3 text-left border-b border-blue-gray-50"
-                                            >
-                                                <Typography
-                                                    variant="small"
-                                                    className="text-[11px] font-bold uppercase text-blue-gray-400"
+                    <div className="overflow-auto lg:max-h-[56vh] md:max-h-[75vh] sm:max-h-[85vh]">
+                        {isLoading
+                            ? (
+                                <div className="flex items-center justify-center h-64">
+                                    <Spinner
+                                        className="w-12 h-12"
+                                        color="brown"
+                                    />
+                                </div>
+                            )
+                            : clubs.length === 0
+                            ? (
+                                <Typography className="py-4 text-center">
+                                    Chưa có câu lạc bộ nào.
+                                </Typography>
+                            )
+                            : (
+                                <table className="w-full min-w-[640px] table-auto">
+                                    <thead>
+                                        <tr>
+                                            {[
+                                                "Logo",
+                                                "Tên CLB",
+                                                "Lĩnh vực hoạt động",
+                                                "Ngày thành lập",
+                                                "Giáo viên phụ trách",
+                                                "Trưởng ban CLB",
+                                                "Thao tác",
+                                            ].map((el) => (
+                                                <th
+                                                    key={el}
+                                                    className="px-5 py-3 text-left border-b border-blue-gray-50"
                                                 >
-                                                    {el}
-                                                </Typography>
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {clubs.map(
-                                        (
-                                            {
-                                                clubId,
-                                                ten,
-                                                linhVucHoatDong,
-                                                ngayThanhLap,
-                                                giaoVienPhuTrach,
-                                                truongBanCLB,
-                                                logo,
-                                            },
-                                            key,
-                                        ) => {
-                                            const className = `py-3 px-5 ${
-                                                key === clubs.length - 1
-                                                    ? ""
-                                                    : "border-b border-blue-gray-50"
-                                            }`;
+                                                    <Typography
+                                                        variant="small"
+                                                        className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                                    >
+                                                        {el}
+                                                    </Typography>
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {clubs.map(
+                                            (
+                                                {
+                                                    clubId,
+                                                    ten,
+                                                    linhVucHoatDong,
+                                                    ngayThanhLap,
+                                                    giaoVienPhuTrach,
+                                                    truongBanCLB,
+                                                    logo,
+                                                },
+                                                key,
+                                            ) => {
+                                                const className = `py-3 px-5 ${
+                                                    key === clubs.length - 1
+                                                        ? ""
+                                                        : "border-b border-blue-gray-50"
+                                                }`;
 
-                                            return (
-                                                <tr key={clubId}>
-                                                    <td className={className}>
-                                                        <img
-                                                            src={logo
-                                                                ? `${API_URL}/${logo}`
-                                                                : "/img/default-club-logo.png"}
-                                                            alt={ten}
-                                                            className="object-cover w-10 h-10 rounded-full"
-                                                            onError={(e) => {
-                                                                e.target
-                                                                    .onerror =
-                                                                        null;
-                                                                e.target.src =
-                                                                    "/img/default-club-logo.png";
-                                                            }}
-                                                        />
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {ten}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {linhVucHoatDong}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {new Date(
-                                                                ngayThanhLap,
-                                                            ).toLocaleDateString()}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {giaoVienPhuTrach}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {truongBanCLB}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <div className="flex items-center gap-2">
-                                                            <Tooltip
-                                                                content="Xem"
-                                                                animate={{
-                                                                    mount: {
-                                                                        scale:
-                                                                            1,
-                                                                        y: 0,
-                                                                    },
-                                                                    unmount: {
-                                                                        scale:
-                                                                            0,
-                                                                        y: 25,
-                                                                    },
+                                                return (
+                                                    <tr key={clubId}>
+                                                        <td
+                                                            className={className}
+                                                        >
+                                                            <img
+                                                                src={logo
+                                                                    ? `${API_URL}/${logo}`
+                                                                    : "/img/default-club-logo.png"}
+                                                                alt={ten}
+                                                                className="object-cover w-10 h-10 rounded-full"
+                                                                onError={(
+                                                                    e,
+                                                                ) => {
+                                                                    e.target
+                                                                        .onerror =
+                                                                            null;
+                                                                    e.target
+                                                                        .src =
+                                                                            "/img/default-club-logo.png";
                                                                 }}
-                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                            >
-                                                                <Button
-                                                                    size="sm"
-                                                                    color="blue"
-                                                                    className="flex items-center gap-2"
-                                                                    onClick={() =>
-                                                                        openDetailDialog(
-                                                                            clubId,
-                                                                        )}
+                                                            />
+                                                        </td>
+                                                        <td
+                                                            className={className}
+                                                        >
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {ten}
+                                                            </Typography>
+                                                        </td>
+                                                        <td
+                                                            className={className}
+                                                        >
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {linhVucHoatDong}
+                                                            </Typography>
+                                                        </td>
+                                                        <td
+                                                            className={className}
+                                                        >
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {new Date(
+                                                                    ngayThanhLap,
+                                                                ).toLocaleDateString()}
+                                                            </Typography>
+                                                        </td>
+                                                        <td
+                                                            className={className}
+                                                        >
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {giaoVienPhuTrach}
+                                                            </Typography>
+                                                        </td>
+                                                        <td
+                                                            className={className}
+                                                        >
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {truongBanCLB}
+                                                            </Typography>
+                                                        </td>
+                                                        <td
+                                                            className={className}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <Tooltip
+                                                                    content="Xem"
+                                                                    animate={{
+                                                                        mount: {
+                                                                            scale:
+                                                                                1,
+                                                                            y: 0,
+                                                                        },
+                                                                        unmount:
+                                                                            {
+                                                                                scale:
+                                                                                    0,
+                                                                                y: 25,
+                                                                            },
+                                                                    }}
+                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                                 >
-                                                                    <EyeIcon
-                                                                        strokeWidth={2}
-                                                                        className="w-4 h-4"
-                                                                    />
-                                                                    {" "}
-                                                                </Button>
-                                                            </Tooltip>
-                                                            <Tooltip
-                                                                content="Sửa"
-                                                                animate={{
-                                                                    mount: {
-                                                                        scale:
-                                                                            1,
-                                                                        y: 0,
-                                                                    },
-                                                                    unmount: {
-                                                                        scale:
-                                                                            0,
-                                                                        y: 25,
-                                                                    },
-                                                                }}
-                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                            >
-                                                                <Button
-                                                                    size="sm"
-                                                                    color="green"
-                                                                    className="flex items-center gap-2"
-                                                                    onClick={() =>
-                                                                        openEditDialog(
-                                                                            clubId,
-                                                                        )}
+                                                                    <Button
+                                                                        size="sm"
+                                                                        color="blue"
+                                                                        className="flex items-center gap-2"
+                                                                        onClick={() =>
+                                                                            openDetailDialog(
+                                                                                clubId,
+                                                                            )}
+                                                                    >
+                                                                        <EyeIcon
+                                                                            strokeWidth={2}
+                                                                            className="w-4 h-4"
+                                                                        />
+                                                                        {" "}
+                                                                    </Button>
+                                                                </Tooltip>
+                                                                <Tooltip
+                                                                    content="Sửa"
+                                                                    animate={{
+                                                                        mount: {
+                                                                            scale:
+                                                                                1,
+                                                                            y: 0,
+                                                                        },
+                                                                        unmount:
+                                                                            {
+                                                                                scale:
+                                                                                    0,
+                                                                                y: 25,
+                                                                            },
+                                                                    }}
+                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                                 >
-                                                                    <PencilIcon
-                                                                        strokeWidth={2}
-                                                                        className="w-4 h-4"
-                                                                    />
-                                                                    {" "}
-                                                                </Button>
-                                                            </Tooltip>
-                                                            <Tooltip
-                                                                content="Xoá"
-                                                                animate={{
-                                                                    mount: {
-                                                                        scale:
-                                                                            1,
-                                                                        y: 0,
-                                                                    },
-                                                                    unmount: {
-                                                                        scale:
-                                                                            0,
-                                                                        y: 25,
-                                                                    },
-                                                                }}
-                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                            >
-                                                                <Button
-                                                                    size="sm"
-                                                                    color="red"
-                                                                    className="flex items-center gap-2"
-                                                                    onClick={() =>
-                                                                        handleDeleteClub(
-                                                                            clubId,
-                                                                        )}
+                                                                    <Button
+                                                                        size="sm"
+                                                                        color="green"
+                                                                        className="flex items-center gap-2"
+                                                                        onClick={() =>
+                                                                            openEditDialog(
+                                                                                clubId,
+                                                                            )}
+                                                                    >
+                                                                        <PencilIcon
+                                                                            strokeWidth={2}
+                                                                            className="w-4 h-4"
+                                                                        />
+                                                                        {" "}
+                                                                    </Button>
+                                                                </Tooltip>
+                                                                <Tooltip
+                                                                    content="Xoá"
+                                                                    animate={{
+                                                                        mount: {
+                                                                            scale:
+                                                                                1,
+                                                                            y: 0,
+                                                                        },
+                                                                        unmount:
+                                                                            {
+                                                                                scale:
+                                                                                    0,
+                                                                                y: 25,
+                                                                            },
+                                                                    }}
+                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                                 >
-                                                                    <TrashIcon
-                                                                        strokeWidth={2}
-                                                                        className="w-4 h-4"
-                                                                    />
-                                                                    {" "}
-                                                                </Button>
-                                                            </Tooltip>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        },
-                                    )}
-                                </tbody>
-                            </table>
-                        )}
-                        </div>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        color="red"
+                                                                        className="flex items-center gap-2"
+                                                                        onClick={() =>
+                                                                            handleDeleteClub(
+                                                                                clubId,
+                                                                            )}
+                                                                    >
+                                                                        <TrashIcon
+                                                                            strokeWidth={2}
+                                                                            className="w-4 h-4"
+                                                                        />
+                                                                        {" "}
+                                                                    </Button>
+                                                                </Tooltip>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            },
+                                        )}
+                                    </tbody>
+                                </table>
+                            )}
+                    </div>
                 </CardBody>
             </Card>
 
@@ -554,24 +579,27 @@ const ManageClubs = () => {
                         className="col-span-2"
                     />
 
-                    <Button
-                        variant="gradient"
-                        className="flex items-center gap-3 w-[10.6rem] h-[3rem]"
-                        color="brown"
-                    >
-                        <CloudArrowUpIcon className="w-5 h-5 stroke-2" />
-                        Upload Logo
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleLogoChange}
-                            className="absolute inset-0 w-full h-full opacity-0"
-                        />
-                    </Button>
-                    <div className="grid grid-cols-2">
+                    <div className="flex flex-col gap-2">
+                        <Button
+                            variant="gradient"
+                            className="flex items-center gap-3 w-[10.6rem] h-[3rem]"
+                            color="brown"
+                        >
+                            <CloudArrowUpIcon className="w-5 h-5 stroke-2" />
+                            Upload Logo
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleLogoChange}
+                                className="absolute inset-0 w-full h-full opacity-0"
+                            />
+                        </Button>
+                        <div className="grid grid-cols-2">
                             {editingClubId && currentLogo && (
                                 <>
-                                    <p><strong>Ảnh hiện tại:</strong></p>
+                                    <p>
+                                        <strong>Ảnh hiện tại:</strong>
+                                    </p>
                                     <img
                                         src={currentLogo}
                                         alt="Ảnh clb hiện tại"
@@ -582,7 +610,9 @@ const ManageClubs = () => {
                             )}
                             {previewLogo && (
                                 <>
-                                    <p><strong>Ảnh mới:</strong></p>
+                                    <p>
+                                        <strong>Ảnh mới:</strong>
+                                    </p>
                                     <img
                                         src={previewLogo}
                                         alt="Ảnh clb mới"
@@ -592,6 +622,7 @@ const ManageClubs = () => {
                                 </>
                             )}
                         </div>
+                    </div>
                 </DialogBody>
                 <DialogFooter>
                     <Button
@@ -620,10 +651,15 @@ const ManageClubs = () => {
                 handler={() => setIsDetailDialogOpen(false)}
                 size="lg"
             >
-                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">Chi tiết Câu Lạc Bộ</DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
+                    Chi tiết Câu Lạc Bộ
+                </DialogHeader>
                 {detailClub
                     ? (
-                        <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]">
+                        <DialogBody
+                            divider
+                            className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]"
+                        >
                             <img
                                 src={detailClub.logo
                                     ? `${API_URL}/${detailClub.logo}`

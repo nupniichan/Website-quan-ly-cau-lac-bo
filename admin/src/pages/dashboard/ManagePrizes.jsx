@@ -209,6 +209,7 @@ const ManagePrizes = () => {
         });
         setEditingPrizeId(null);
         setIsDialogOpen(true);
+        setPreviewImage(null);
     };
 
     const openEditDialog = (id) => {
