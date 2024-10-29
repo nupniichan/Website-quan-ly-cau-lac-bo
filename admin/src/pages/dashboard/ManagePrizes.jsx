@@ -549,7 +549,7 @@ const ManagePrizes = () => {
                                 className="absolute inset-0 w-full h-full opacity-0"
                             />
                         </Button>
-                        <div className="grid grid-cols-2">
+                        <div className="grid grid-cols-2 font-normal">
                             {editingPrizeId && currentImage && (
                                 <>
                                     <p><strong>Ảnh hiện tại:</strong></p>

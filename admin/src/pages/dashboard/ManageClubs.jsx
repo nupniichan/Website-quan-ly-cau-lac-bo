@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { CloudArrowUpIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
 import {
     Button,
     Card,
@@ -15,9 +15,9 @@ import {
     Tooltip,
     Typography,
 } from "@material-tailwind/react";
-import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
+import axios from "axios";
+import { useEffect, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
-import { CloudArrowUpIcon } from "@heroicons/react/24/outline";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -181,12 +181,18 @@ const ManageClubs = () => {
     };
 
     const openEditDialog = async (clubId) => {
+        const clubToEdit = clubs.find((club) => club.clubId === clubId);
         try {
             const response = await axios.get(`${API_URL}/get-club/${clubId}`);
             setNewClub({
                 ...response.data,
                 ngayThanhLap: response.data.ngayThanhLap.split("T")[0],
             });
+            if (clubToEdit) {
+                setCurrentLogo(
+                    clubToEdit.logo ? `${API_URL}${clubToEdit.logo}` : null,
+                );
+            }
             setEditingClubId(clubId);
             setIsDialogOpen(true);
             setPreviewLogo(null);
@@ -219,7 +225,6 @@ const ManageClubs = () => {
         }
     };
 
-    // TODO - Preview logo & current logo
     const handleLogoChange = (e) => {
         const file = e.target.files[0];
         setNewClub({ ...newClub, logo: file });
@@ -556,14 +561,6 @@ const ManageClubs = () => {
                             giaoVienPhuTrach: e.target.value,
                         })}
                     />
-                    <Input
-                        label="Trưởng ban CLB"
-                        value={newClub.truongBanCLB}
-                        onChange={(e) => setNewClub({
-                            ...newClub,
-                            truongBanCLB: e.target.value,
-                        })}
-                    />
                     <Textarea
                         label="Miêu tả"
                         value={newClub.mieuTa}
@@ -571,58 +568,68 @@ const ManageClubs = () => {
                             setNewClub({ ...newClub, mieuTa: e.target.value })}
                         className="col-span-2"
                     />
+                    <div>
+                        <Input
+                            label="Trưởng ban CLB"
+                            value={newClub.truongBanCLB}
+                            onChange={(e) =>
+                                setNewClub({
+                                    ...newClub,
+                                    truongBanCLB: e.target.value,
+                                })}
+                        />
+                        <div className="flex flex-col gap-2 translate-y-4">
+                            <Button
+                                variant="gradient"
+                                className="flex items-center gap-3 w-[10.6rem] h-[3rem]"
+                                color="brown"
+                            >
+                                <CloudArrowUpIcon className="w-5 h-5 stroke-2" />
+                                Upload Logo
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleLogoChange}
+                                    className="absolute inset-0 w-full h-full opacity-0"
+                                />
+                            </Button>
+                            <div className="grid grid-cols-2 font-normal">
+                                {editingClubId && currentLogo && (
+                                    <>
+                                        <p>
+                                            <strong>Ảnh hiện tại:</strong>
+                                        </p>
+                                        <img
+                                            src={currentLogo}
+                                            alt="Ảnh clb hiện tại"
+                                            className="h-auto max-w-full mt-2"
+                                            style={{ maxHeight: "100px" }}
+                                        />
+                                    </>
+                                )}
+                                {previewLogo && (
+                                    <>
+                                        <p>
+                                            <strong>Ảnh mới:</strong>
+                                        </p>
+                                        <img
+                                            src={previewLogo}
+                                            alt="Ảnh clb mới"
+                                            className="h-auto max-w-full mt-2"
+                                            style={{ maxHeight: "100px" }}
+                                        />
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                     <Textarea
                         label="Quy định"
                         value={newClub.quyDinh}
                         onChange={(e) =>
                             setNewClub({ ...newClub, quyDinh: e.target.value })}
-                        className="col-span-2"
+                        className="col-span-2 transfor"
                     />
-
-                    <div className="flex flex-col gap-2">
-                        <Button
-                            variant="gradient"
-                            className="flex items-center gap-3 w-[10.6rem] h-[3rem]"
-                            color="brown"
-                        >
-                            <CloudArrowUpIcon className="w-5 h-5 stroke-2" />
-                            Upload Logo
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleLogoChange}
-                                className="absolute inset-0 w-full h-full opacity-0"
-                            />
-                        </Button>
-                        <div className="grid grid-cols-2">
-                            {editingClubId && currentLogo && (
-                                <>
-                                    <p>
-                                        <strong>Ảnh hiện tại:</strong>
-                                    </p>
-                                    <img
-                                        src={currentLogo}
-                                        alt="Ảnh clb hiện tại"
-                                        className="h-auto max-w-full mt-2"
-                                        style={{ maxHeight: "100px" }}
-                                    />
-                                </>
-                            )}
-                            {previewLogo && (
-                                <>
-                                    <p>
-                                        <strong>Ảnh mới:</strong>
-                                    </p>
-                                    <img
-                                        src={previewLogo}
-                                        alt="Ảnh clb mới"
-                                        className="h-auto max-w-full mt-2"
-                                        style={{ maxHeight: "100px" }}
-                                    />
-                                </>
-                            )}
-                        </div>
-                    </div>
                 </DialogBody>
                 <DialogFooter>
                     <Button

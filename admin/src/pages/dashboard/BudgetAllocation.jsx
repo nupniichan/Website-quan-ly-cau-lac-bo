@@ -1,5 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
 import {
     Button,
     Card,
@@ -8,16 +7,13 @@ import {
     Dialog,
     DialogBody,
     DialogFooter,
-    DialogHeader,
-    IconButton,
-    Input,
+    DialogHeader, Input,
     Option,
-    Select,
-    Spinner,
-    Tooltip,
-    Typography,
+    Select, Tooltip,
+    Typography
 } from "@material-tailwind/react";
-import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
+import axios from "axios";
+import { useEffect, useMemo, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 
 const API_URL = "http://localhost:5500/api";
@@ -581,6 +577,7 @@ const BudgetAllocation = () => {
                             console.log("Selected club:", value);
                             setNewAllocation({ ...newAllocation, club: value });
                         }}
+                        menuProps={{ className: "absolute z-[70]", id: "club-select-dropdown" }}
                     >
                         {clubs.map((club) => (
                             <Option key={club._id} value={club._id}>
