@@ -11,7 +11,7 @@ const budgetSchema = new mongoose.Schema({
     thanhVienChiuTrachNhiem: { type: String, required: true },
     noiDung: { type: String, required: true },
     club: { 
-        type: Number,  // Thay đổi kiểu dữ liệu thành Number
+        type: mongoose.Schema.Types.ObjectId, 
         ref: 'Club',
         required: true
     }

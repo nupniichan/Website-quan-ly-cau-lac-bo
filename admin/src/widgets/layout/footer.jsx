@@ -43,9 +43,9 @@ Footer.defaultProps = {
   brandName: "Tequinzyy",
   brandLink: "#",
   routes: [
-    { name: "About Us", path: "#" },
-    { name: "Blog", path: "#" },
-    { name: "License", path: "#" },
+    { name: "", path: "#" },
+    { name: "", path: "#" },
+    { name: "", path: "#" },
   ],
 };
 

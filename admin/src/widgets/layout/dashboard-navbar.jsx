@@ -104,11 +104,12 @@ export function DashboardNavbar() {
                         </IconButton>
                     </Link>
                     <Menu>
-                        <MenuHandler>
+                        {/* NOTE navbar notification icon */}
+                        {/* <MenuHandler>
                             <IconButton variant="text" color="blue-gray">
                                 <BellIcon className="h-5 w-5 text-blue-gray-500" />
                             </IconButton>
-                        </MenuHandler>
+                        </MenuHandler> */}
                         <MenuList className="w-max border-0">
                             <MenuItem className="flex items-center gap-3">
                                 <Avatar

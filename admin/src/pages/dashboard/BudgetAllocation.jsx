@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
-import axios from "axios";
+import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
 import {
     Button,
     Card,
@@ -8,20 +7,14 @@ import {
     Dialog,
     DialogBody,
     DialogFooter,
-    DialogHeader,
-    Input,
+    DialogHeader, Input,
     Option,
-    Select,
-    Spinner,
-    Typography,
-    IconButton,
+    Select, Tooltip,
+    Typography
 } from "@material-tailwind/react";
-import {
-    EyeIcon,
-    PencilIcon,
-    PlusIcon,
-    TrashIcon,
-} from "@heroicons/react/24/solid";
+import axios from "axios";
+import { useEffect, useMemo, useState } from "react";
+import { FaPlus } from "react-icons/fa6";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -38,12 +31,13 @@ const BudgetAllocation = () => {
     });
     const [editingAllocationId, setEditingAllocationId] = useState(null);
     const [filters, setFilters] = useState({
-        club: '',
-        startDate: '',
-        endDate: '',
-        minAmount: '',
-        maxAmount: ''
+        club: "",
+        startDate: "",
+        endDate: "",
+        minAmount: "",
+        maxAmount: "",
     });
+    const [filterClub, setFilterClub] = useState("");
     const [detailAllocation, setDetailAllocation] = useState(null);
     const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
@@ -78,7 +72,7 @@ const BudgetAllocation = () => {
     const handleAddAllocation = async () => {
         try {
             if (!newAllocation.club) {
-                alert('Vui lòng chọn câu lạc bộ');
+                alert("Vui lòng chọn câu lạc bộ");
                 return;
             }
 
@@ -86,17 +80,17 @@ const BudgetAllocation = () => {
                 club: newAllocation.club, // Đây là ObjectId
                 amount: Number(newAllocation.amount),
                 purpose: newAllocation.purpose,
-                allocationDate: newAllocation.allocationDate
+                allocationDate: newAllocation.allocationDate,
             };
 
-            console.log('Data being sent:', formattedData);
+            console.log("Data being sent:", formattedData);
 
             const response = await axios.post(
                 `${API_URL}/add-budget-allocation`,
-                formattedData
+                formattedData,
             );
-            
-            console.log('Response:', response.data);
+
+            console.log("Response:", response.data);
             setIsDialogOpen(false);
             fetchAllocations();
         } catch (error) {
@@ -106,8 +100,9 @@ const BudgetAllocation = () => {
             }
             alert(
                 `Lỗi khi thêm phân bổ ngân sách: ${
-                    error.response?.data?.message || error.message || "Không xác định"
-                }`
+                    error.response?.data?.message || error.message ||
+                    "Không xác định"
+                }`,
             );
         }
     };
@@ -156,7 +151,7 @@ const BudgetAllocation = () => {
             club: "", // Để trống, người dùng sẽ chọn
             amount: 0,
             purpose: "",
-            allocationDate: new Date().toISOString().split('T')[0] // Set ngày hiện tại
+            allocationDate: new Date().toISOString().split("T")[0], // Set ngày hiện tại
         });
         setEditingAllocationId(null);
         setIsDialogOpen(true);
@@ -182,85 +177,140 @@ const BudgetAllocation = () => {
     };
 
     const filteredAllocations = useMemo(() => {
-        return allocations.filter(allocation => {
-            const matchClub = !filters.club || allocation.club._id === filters.club;
-            const matchDate = (!filters.startDate || new Date(allocation.allocationDate) >= new Date(filters.startDate)) &&
-                            (!filters.endDate || new Date(allocation.allocationDate) <= new Date(filters.endDate));
-            const matchAmount = (!filters.minAmount || allocation.amount >= Number(filters.minAmount)) &&
-                              (!filters.maxAmount || allocation.amount <= Number(filters.maxAmount));
+        return allocations.filter((allocation) => {
+            const matchClub = !filters.club ||
+                allocation.club._id === filters.club;
+            const matchDate = (!filters.startDate ||
+                new Date(allocation.allocationDate) >=
+                    new Date(filters.startDate)) &&
+                (!filters.endDate ||
+                    new Date(allocation.allocationDate) <=
+                        new Date(filters.endDate));
+            const matchAmount = (!filters.minAmount ||
+                allocation.amount >= Number(filters.minAmount)) &&
+                (!filters.maxAmount ||
+                    allocation.amount <= Number(filters.maxAmount));
             return matchClub && matchDate && matchAmount;
         });
     }, [allocations, filters]);
 
     return (
-        <div className="mt-12 mb-8 flex flex-col gap-12">
+        <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
                 <CardHeader
                     variant="gradient"
                     color="purple"
-                    className="mb-8 p-6"
+                    className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
                         Phân bổ ngân sách
                     </Typography>
                 </CardHeader>
-                <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-                    <div className="flex justify-end mb-4 px-6">
-                        <Button
-                            className="flex items-center gap-3"
-                            color="purple"
-                            size="sm"
-                            onClick={openAddDialog}
+                <CardBody className="px-0 pt-0 pb-2 overflow-auto">
+                    <div className="flex justify-end p-4 px-6 pr-10">
+                        <Tooltip
+                            content="Thêm"
+                            animate={{
+                                mount: { scale: 1, y: 0 },
+                                unmount: { scale: 0, y: 25 },
+                            }}
+                            className="bg-gradient-to-r from-black to-transparent opacity-70"
                         >
-                            <PlusIcon strokeWidth={2} className="h-4 w-4" />
-                            {" "}
-                            Thêm phân bổ
-                        </Button>
+                            <Button
+                                className="flex items-center gap-3"
+                                color="purple"
+                                size="sm"
+                                onClick={openAddDialog}
+                            >
+                                <FaPlus
+                                    className="w-4 h-4"
+                                    strokeWidth={"2rem"}
+                                />
+                            </Button>
+                        </Tooltip>
                     </div>
                     {/* Thêm phần filter */}
-                    <div className="px-6 py-3 bg-gray-50">
-                        <div className="grid grid-cols-5 gap-4">
+                    <div className="px-6 py-3 absolute z-[60]">
+                        <div className="grid gap-4 2xl:grid-cols-5 xl:grid-cols-3 md:grid-cols-3 sm:grid-cols-2">
                             <Select
                                 label="Câu lạc bộ"
                                 value={filters.club}
-                                onChange={(value) => setFilters({...filters, club: value})}
+                                onChange={(value) =>
+                                    setFilters({ ...filters, club: value })}
                             >
-                                <Option value="">Tất cả</Option>
-                                {clubs.map((club) => (
-                                    <Option key={club._id} value={club._id}>
-                                        {club.ten}
-                                    </Option>
-                                ))}
+                                <Option value="" className="bg-transparent">
+                                    <strong>Tất cả</strong>
+                                </Option>
+
+                                <hr className="my-2 border-t border-gray-300" />
+
+                                <div className="overflow-y-auto lg:max-h-48 md:max-h-32 sm:max-h-20">
+                                    {clubs.map((club) => (
+                                        <Option
+                                            key={club._id}
+                                            value={club._id}
+                                            className="bg-transparent"
+                                        >
+                                            {club.ten}
+                                        </Option>
+                                    ))}
+                                </div>
                             </Select>
+                            {/* Display filtered club */}
+                            {filters.club && (
+                                <Typography
+                                    variant="small"
+                                    color="blue-gray"
+                                    className="font-normal translate-x-3 translate-y-[0.65rem] absolute z-0 pointer-events-none"
+                                >
+                                    {clubs.find((c) => c._id === filters.club)?.ten}
+                                </Typography>
+                            )}
                             <Input
                                 type="date"
                                 label="Từ ngày"
                                 value={filters.startDate}
-                                onChange={(e) => setFilters({...filters, startDate: e.target.value})}
+                                onChange={(e) =>
+                                    setFilters({
+                                        ...filters,
+                                        startDate: e.target.value,
+                                    })}
                             />
                             <Input
                                 type="date"
                                 label="Đến ngày"
                                 value={filters.endDate}
-                                onChange={(e) => setFilters({...filters, endDate: e.target.value})}
+                                onChange={(e) =>
+                                    setFilters({
+                                        ...filters,
+                                        endDate: e.target.value,
+                                    })}
                             />
                             <Input
                                 type="number"
                                 label="Số tiền từ"
                                 value={filters.minAmount}
-                                onChange={(e) => setFilters({...filters, minAmount: e.target.value})}
+                                onChange={(e) =>
+                                    setFilters({
+                                        ...filters,
+                                        minAmount: e.target.value,
+                                    })}
                             />
                             <Input
                                 type="number"
                                 label="Số tiền đến"
                                 value={filters.maxAmount}
-                                onChange={(e) => setFilters({...filters, maxAmount: e.target.value})}
+                                onChange={(e) =>
+                                    setFilters({
+                                        ...filters,
+                                        maxAmount: e.target.value,
+                                    })}
                             />
                         </div>
                     </div>
 
                     {/* Bảng hiển thị */}
-                    <table className="w-full min-w-[640px] table-auto">
+                    <table className="w-full min-w-[640px] table-auto 2xl:mt-24 xl:mt-40 lg:mt-44 md:mt-48 sm:mt-52">
                         <thead>
                             <tr>
                                 {[
@@ -272,7 +322,7 @@ const BudgetAllocation = () => {
                                 ].map((el) => (
                                     <th
                                         key={el}
-                                        className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                                        className="px-5 py-3 text-left border-b border-blue-gray-50"
                                     >
                                         <Typography
                                             variant="small"
@@ -285,83 +335,148 @@ const BudgetAllocation = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredAllocations.map(({_id, club, amount, purpose, allocationDate}, key) => {
-                                const className = `py-3 px-5 ${
-                                    key === filteredAllocations.length - 1
-                                        ? ""
-                                        : "border-b border-blue-gray-50"
-                                }`;
+                            {filteredAllocations.map(
+                                (
+                                    {
+                                        _id,
+                                        club,
+                                        amount,
+                                        purpose,
+                                        allocationDate,
+                                    },
+                                    key,
+                                ) => {
+                                    const className = `py-3 px-5 ${
+                                        key === filteredAllocations.length - 1
+                                            ? ""
+                                            : "border-b border-blue-gray-50"
+                                    }`;
 
-                                return (
-                                    <tr key={_id}>
-                                        <td className={className}>
-                                            <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                {club?.ten || "N/A"}
-                                            </Typography>
-                                        </td>
-                                        <td className={className}>
-                                            <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                {amount
-                                                    .toLocaleString()}
-                                                {" "}
-                                                VND
-                                            </Typography>
-                                        </td>
-                                        <td className={className}>
-                                            <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                {purpose}
-                                            </Typography>
-                                        </td>
-                                        <td className={className}>
-                                            <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                {new Date(
-                                                    allocationDate,
-                                                ).toLocaleDateString()}
-                                            </Typography>
-                                        </td>
-                                        <td className={className}>
-                                            <div className="flex items-center gap-2">
-                                                <IconButton
-                                                    color="blue"
-                                                    onClick={() => openDetailDialog({_id, club, amount, purpose, allocationDate})}
-                                                >
-                                                    <EyeIcon className="h-4 w-4" />
-                                                </IconButton>
-                                                <Button
-                                                    size="sm"
-                                                    color="blue"
-                                                    className="flex items-center gap-2"
-                                                    onClick={() =>
-                                                        openEditDialog(
-                                                            _id,
-                                                        )}
-                                                >
-                                                    <PencilIcon
-                                                        strokeWidth={2}
-                                                        className="h-4 w-4"
-                                                    />{" "}
-                                                    Sửa
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    color="red"
-                                                    className="flex items-center gap-2"
-                                                    onClick={() =>
-                                                        handleDeleteAllocation(
-                                                            _id,
-                                                        )}
-                                                >
-                                                    <TrashIcon
-                                                        strokeWidth={2}
-                                                        className="h-4 w-4"
-                                                    />{" "}
-                                                    Xóa
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                                    return (
+                                        <tr key={_id}>
+                                            <td className={className}>
+                                                <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                    {club?.ten || "N/A"}
+                                                </Typography>
+                                            </td>
+                                            <td className={className}>
+                                                <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                    {amount
+                                                        .toLocaleString()} VND
+                                                </Typography>
+                                            </td>
+                                            <td className={className}>
+                                                <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                    {purpose}
+                                                </Typography>
+                                            </td>
+                                            <td className={className}>
+                                                <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                    {new Date(
+                                                        allocationDate,
+                                                    ).toLocaleDateString()}
+                                                </Typography>
+                                            </td>
+                                            <td className={className}>
+                                                <div className="flex items-center gap-2">
+                                                    <Tooltip
+                                                        content="Xem"
+                                                        animate={{
+                                                            mount: {
+                                                                scale: 1,
+                                                                y: 0,
+                                                            },
+                                                            unmount: {
+                                                                scale: 0,
+                                                                y: 25,
+                                                            },
+                                                        }}
+                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                    >
+                                                        <Button
+                                                            size="sm"
+                                                            color="blue"
+                                                            className="flex items-center gap-2"
+                                                            onClick={() =>
+                                                                openDetailDialog(
+                                                                    {
+                                                                        _id,
+                                                                        club,
+                                                                        amount,
+                                                                        purpose,
+                                                                        allocationDate,
+                                                                    },
+                                                                )}
+                                                        >
+                                                            <EyeIcon className="w-4 h-4" />
+                                                        </Button>
+                                                    </Tooltip>
+                                                    <Tooltip
+                                                        content="Sửa"
+                                                        animate={{
+                                                            mount: {
+                                                                scale: 1,
+                                                                y: 0,
+                                                            },
+                                                            unmount: {
+                                                                scale: 0,
+                                                                y: 25,
+                                                            },
+                                                        }}
+                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                    >
+                                                        <Button
+                                                            size="sm"
+                                                            color="green"
+                                                            className="flex items-center gap-2"
+                                                            onClick={() =>
+                                                                openEditDialog(
+                                                                    _id,
+                                                                )}
+                                                        >
+                                                            <PencilIcon
+                                                                strokeWidth={2}
+                                                                className="w-4 h-4"
+                                                            />
+                                                            {" "}
+                                                        </Button>
+                                                    </Tooltip>
+                                                    <Tooltip
+                                                        content="Xóa"
+                                                        animate={{
+                                                            mount: {
+                                                                scale: 1,
+                                                                y: 0,
+                                                            },
+                                                            unmount: {
+                                                                scale: 0,
+                                                                y: 25,
+                                                            },
+                                                        }}
+                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                    >
+                                                        <Button
+                                                            size="sm"
+                                                            color="red"
+                                                            className="flex items-center gap-2"
+                                                            onClick={() =>
+                                                                handleDeleteAllocation(
+                                                                    _id,
+                                                                )}
+                                                        >
+                                                            <TrashIcon
+                                                                strokeWidth={2}
+                                                                className="w-4 h-4"
+                                                            />
+                                                            {" "}
+                                                        </Button>
+                                                    </Tooltip>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                },
+                            )}
                         </tbody>
                     </table>
                 </CardBody>
@@ -371,35 +486,70 @@ const BudgetAllocation = () => {
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
-                size="lg"
+                size="md"
             >
-                <DialogHeader>Chi tiết Phân bổ Ngân sách</DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
+                    Chi tiết Phân bổ Ngân sách
+                </DialogHeader>
                 <DialogBody divider>
                     {detailAllocation && (
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]">
                             <div>
-                                <Typography variant="small" className="font-bold">Câu lạc bộ:</Typography>
-                                <Typography>{detailAllocation.club?.ten || "N/A"}</Typography>
-                            </div>
-                            <div>
-                                <Typography variant="small" className="font-bold">Số tiền:</Typography>
-                                <Typography>{detailAllocation.amount.toLocaleString()} VND</Typography>
-                            </div>
-                            <div>
-                                <Typography variant="small" className="font-bold">Mục đích:</Typography>
-                                <Typography>{detailAllocation.purpose}</Typography>
-                            </div>
-                            <div>
-                                <Typography variant="small" className="font-bold">Ngày phân bổ:</Typography>
+                                <Typography
+                                    variant="small"
+                                    className="font-bold"
+                                >
+                                    Câu lạc bộ:
+                                </Typography>
                                 <Typography>
-                                    {new Date(detailAllocation.allocationDate).toLocaleDateString()}
+                                    {detailAllocation.club?.ten || "N/A"}
+                                </Typography>
+                            </div>
+                            <div>
+                                <Typography
+                                    variant="small"
+                                    className="font-bold"
+                                >
+                                    Số tiền:
+                                </Typography>
+                                <Typography>
+                                    {detailAllocation.amount.toLocaleString()}
+                                    {" "}
+                                    VND
+                                </Typography>
+                            </div>
+                            <div>
+                                <Typography
+                                    variant="small"
+                                    className="font-bold"
+                                >
+                                    Mục đích:
+                                </Typography>
+                                <Typography>
+                                    {detailAllocation.purpose}
+                                </Typography>
+                            </div>
+                            <div>
+                                <Typography
+                                    variant="small"
+                                    className="font-bold"
+                                >
+                                    Ngày phân bổ:
+                                </Typography>
+                                <Typography>
+                                    {new Date(detailAllocation.allocationDate)
+                                        .toLocaleDateString()}
                                 </Typography>
                             </div>
                         </div>
                     )}
                 </DialogBody>
                 <DialogFooter>
-                    <Button variant="text" color="red" onClick={() => setIsDetailDialogOpen(false)}>
+                    <Button
+                        variant="text"
+                        color="red"
+                        onClick={() => setIsDetailDialogOpen(false)}
+                    >
                         Đóng
                     </Button>
                 </DialogFooter>
@@ -409,21 +559,25 @@ const BudgetAllocation = () => {
             <Dialog
                 open={isDialogOpen}
                 handler={() => setIsDialogOpen(false)}
-                size="xl"
+                size="md"
             >
-                <DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
                     {editingAllocationId
                         ? "Chnh sửa Phân bổ Ngân sách"
                         : "Thêm Phân bổ Ngân sách Mới"}
                 </DialogHeader>
-                <DialogBody divider className="grid grid-cols-2 gap-4">
+                <DialogBody
+                    divider
+                    className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]"
+                >
                     <Select
                         label="Câu lạc bộ"
                         value={newAllocation.club}
                         onChange={(value) => {
-                            console.log('Selected club:', value);
+                            console.log("Selected club:", value);
                             setNewAllocation({ ...newAllocation, club: value });
                         }}
+                        menuProps={{ className: "absolute z-[70]", id: "club-select-dropdown" }}
                     >
                         {clubs.map((club) => (
                             <Option key={club._id} value={club._id}>
@@ -435,11 +589,10 @@ const BudgetAllocation = () => {
                         type="number"
                         label="Số tiền"
                         value={newAllocation.amount}
-                        onChange={(e) =>
-                            setNewAllocation({
-                                ...newAllocation,
-                                amount: Number(e.target.value)
-                            })}
+                        onChange={(e) => setNewAllocation({
+                            ...newAllocation,
+                            amount: Number(e.target.value),
+                        })}
                     />
                     <Input
                         label="Mục đích"
@@ -447,7 +600,7 @@ const BudgetAllocation = () => {
                         onChange={(e) =>
                             setNewAllocation({
                                 ...newAllocation,
-                                purpose: e.target.value
+                                purpose: e.target.value,
                             })}
                     />
                     <Input
@@ -457,7 +610,7 @@ const BudgetAllocation = () => {
                         onChange={(e) =>
                             setNewAllocation({
                                 ...newAllocation,
-                                allocationDate: e.target.value
+                                allocationDate: e.target.value,
                             })}
                     />
                 </DialogBody>
