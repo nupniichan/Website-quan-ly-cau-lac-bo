@@ -238,8 +238,8 @@ export function Home() {
             {/* Charts - Improved styling */}
             <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2">
                 <Card className="hover:shadow-lg transition-shadow duration-300">
-                    <CardHeader className={`${cardHeaderStyles} p-4`}>
-                        <Typography variant="h6" color="blue-gray" className="mb-2 font-bold text-xl">
+                    <CardHeader className={`${cardHeaderStyles} p-0`}>
+                        <Typography variant="h6" color="blue-gray" className="mb-2 mt-10 font-bold text-xl">
                             Hoạt Động/Sự Kiện
                         </Typography>
                     </CardHeader>
@@ -250,8 +250,8 @@ export function Home() {
                     </CardBody>
                 </Card>
                 <Card className="hover:shadow-lg transition-shadow duration-300">
-                    <CardHeader className={`${cardHeaderStyles} p-4`}>
-                        <Typography variant="h6" color="blue-gray" className="mb-2 font-bold text-xl">
+                    <CardHeader className={`${cardHeaderStyles} p-0`}>
+                        <Typography variant="h6" color="blue-gray" className="mb-2 mt-10 font-bold text-xl">
                             Giải Thưởng
                         </Typography>
                     </CardHeader>
@@ -265,8 +265,8 @@ export function Home() {
 
             {/* Recent Members Table - Enhanced styling */}
             <Card className="hover:shadow-lg transition-shadow duration-300">
-                <CardHeader className={`${cardHeaderStyles} p-4`}>
-                    <Typography variant="h6" color="blue-gray" className="mb-2 font-bold text-xl">
+                <CardHeader className={`${cardHeaderStyles} p-0`}>
+                    <Typography variant="h6" color="blue-gray" className=" mb-2 mt-10 font-bold text-xl">
                         Thành Viên Mới
                     </Typography>
                 </CardHeader>
@@ -360,20 +360,20 @@ export function Home() {
             </div>
 
             {/* Charts */}
-            <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2">
+            <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 ">
                 <Card>
-                    <CardHeader>
+                    <CardHeader className="p-2">
                         <Typography variant="h6">Thống Kê Sự Kiện</Typography>
                     </CardHeader>
-                    <CardBody>
+                    <CardBody className="h-72">
                         <Line data={schoolEventsData} options={chartOptions} />
                     </CardBody>
                 </Card>
                 <Card>
-                    <CardHeader>
+                    <CardHeader className="p-2">
                         <Typography variant="h6">Thống Kê Giải Thưởng</Typography>
                     </CardHeader>
-                    <CardBody>
+                    <CardBody className="h-72">
                         <Line data={schoolAwardsData} options={chartOptions} />
                     </CardBody>
                 </Card>
@@ -381,13 +381,13 @@ export function Home() {
 
             {/* Pending Events Table - Enhanced styling */}
             <Card className="hover:shadow-lg transition-shadow duration-300">
-                <CardHeader className={`${cardHeaderStyles} p-4 flex items-center justify-between`}>
-                    <Typography variant="h6" color="blue-gray" className="font-semibold">
+                <CardHeader className={`${cardHeaderStyles} flex items-center justify-between`}>
+                    <Typography variant="h6" color="blue-gray" className="font-semibold mt-8">
                         Sự Kiện Chờ Duyệt
                     </Typography>
                     <Link 
                         to="/dashboard/approve-events" 
-                        className="text-blue-500 hover:text-blue-700 font-medium transition-colors duration-300"
+                        className="text-blue-500 hover:text-blue-700 font-medium transition-colors duration-300 mt-8"
                     >
                         Xem tất cả →
                     </Link>

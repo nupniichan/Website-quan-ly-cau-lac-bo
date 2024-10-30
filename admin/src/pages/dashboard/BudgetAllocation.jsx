@@ -568,7 +568,7 @@ const BudgetAllocation = () => {
                 </DialogHeader>
                 <DialogBody
                     divider
-                    className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]"
+                    className="grid grid-cols-2 gap-4 lg:max-h-[60vh]sm:max-h-[45vh]"
                 >
                     <Select
                         label="Câu lạc bộ"
@@ -614,6 +614,7 @@ const BudgetAllocation = () => {
                             })}
                     />
                 </DialogBody>
+                
                 <DialogFooter>
                     <Button
                         variant="text"

@@ -600,8 +600,9 @@ const ManageEvents = () => {
                             clockIcon={null}
                             format="HH:mm"
                             disableClock={true}
-                            className="w-full"
+                            className="w-full" // Add rounded and border classes
                         />
+
                     </div>
                     <div>
                         <Typography
@@ -633,6 +634,7 @@ const ManageEvents = () => {
                                 ...newEvent,
                                 diaDiem: e.target.value,
                             })}
+                            className="textarea"
                     />
                     <Textarea
                         label="Nội dung"
