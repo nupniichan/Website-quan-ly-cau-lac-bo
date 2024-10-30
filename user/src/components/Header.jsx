@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Search, Globe } from 'lucide-react';
+import { ChevronDown, Search, Globe, Menu } from 'lucide-react';
 import logoImage from '../assets/logo.png';
 import englishFlag from '../assets/english.png'; // Add path to English flag
 import vietnameseFlag from '../assets/vietnam.png'; // Add path to Vietnamese flag
-
+import { Link } from 'react-router-dom';
 const Header = () => {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLanguageOpen, setLanguageOpen] = useState(false);
@@ -58,21 +58,28 @@ const Header = () => {
         <div className="relative flex items-center justify-end px-4 h-full z-20">
           {/* Logo Container */}
           {/* Mobile Logo */}
-          <img
-            src={logoImage}
-            alt="Logo"
-            className="w-[40%] h-auto md:hidden mr-[40%] mt-[25%] " // Show on mobile, hide on md and up
-          />
+
+          {/* Mobile Logo */}
+          <Link to="/" className="w-[50%] h-auto md:hidden mr-[30%] mt-[35%]">
+            <img
+              src={logoImage}
+              alt="Logo"
+              className="w-full h-auto" // Ensures the image fits the link
+            />
+          </Link>
 
           {/* Desktop Logo */}
-          <img
-            src={logoImage}
-            alt="Logo"
-            className="hidden md:block w-[10%] h-auto mr-[20%] mt-[5%]" // Hide on mobile, show on md and up
-          />
+          <Link to="/" className="hidden md:block w-[15%] h-auto mr-[20%] mt-[8%]">
+            <img
+              src={logoImage}
+              alt="Logo"
+              className="w-full h-auto" // Ensures the image fits the link
+            />
+          </Link>
+
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex mr-[10%]">
+          <div className="hidden md:flex mr-[2%]">
             <span className="font-bold text-[#004D86] mr-[60px]">Học sinh</span>
             <span className="font-bold text-[#004D86] mr-[60px]">Cựu học sinh</span>
             <span className="font-bold text-[#004D86] mr-[90px]">Đội ngũ giáo viên</span>
@@ -80,8 +87,8 @@ const Header = () => {
 
           {/* Mobile Navigation Button */}
           <div className="md:hidden relative" ref={mobileMenuRef}>
-            <button onClick={toggleMobileMenu} className="font-bold text-[#004D86]">
-              Menu
+            <button onClick={toggleMobileMenu} className="text-[#004D86]">
+              <Menu size={24} /> {/* Use Menu icon here */}
             </button>
             {/* Mobile Menu */}
             {isMobileMenuOpen && (
@@ -113,7 +120,7 @@ const Header = () => {
           </span>
           {/* Desktop Language Dropdown Menu */}
           {isLanguageOpen && (
-            <div className="absolute right-64 mt-32 w-32 bg-white rounded shadow-lg z-50">
+            <div className="absolute right-64 mt-32 w-auto bg-white rounded shadow-lg z-50 px-2 py-2" >
               <ul className="m-0 p-1"> {/* Remove default margin and padding */}
                 <li className="flex items-center py-2 hover:bg-gray-100">
                   <img src={englishFlag} alt="English Flag" className="w-6 h-4 mr-2" />
@@ -139,7 +146,7 @@ const Header = () => {
             {/* Mobile Language Dropdown Menu */}
             {isLanguageOpen && (
               <div className="absolute mt-32 w-32 bg-white rounded-lg shadow-md z-50 right-0">
-                <ul className="m-0 p-1"> {/* Remove default margin and padding */}
+                <ul className="m-0 px-2 py-2"> {/* Remove default margin and padding */}
                   <li className="flex items-center py-2 text-gray-800 hover:bg-gray-100 transition duration-200 rounded-t-lg">
                     <img src={englishFlag} alt="English Flag" className="w-6 h-4 mr-2" />
                     English
