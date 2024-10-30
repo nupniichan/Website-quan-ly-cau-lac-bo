@@ -22,7 +22,7 @@ function App() {
         </div>
 
 
-        <div className="navbar">
+        <div className="">
           <Navbar />
         </div>
         
