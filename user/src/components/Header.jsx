@@ -69,7 +69,7 @@ const Header = () => {
           </Link>
 
           {/* Desktop Logo */}
-          <Link to="/" className="hidden md:block w-[15%] h-auto mr-[20%] mt-[8%]">
+          <Link to="/" className="hidden md:block w-[12%] h-auto mr-[30%] mt-[8%]">
             <img
               src={logoImage}
               alt="Logo"
@@ -120,7 +120,7 @@ const Header = () => {
           </span>
           {/* Desktop Language Dropdown Menu */}
           {isLanguageOpen && (
-            <div className="absolute right-64 mt-32 w-auto bg-white rounded shadow-lg z-50 px-2 py-2" >
+            <div className="absolute right-64 mt-32 w-auto bg-white rounded shadow-lg z-50 px-3 py-2" >
               <ul className="m-0 p-1"> {/* Remove default margin and padding */}
                 <li className="flex items-center py-2 hover:bg-gray-100">
                   <img src={englishFlag} alt="English Flag" className="w-6 h-4 mr-2" />
@@ -145,7 +145,7 @@ const Header = () => {
             </button>
             {/* Mobile Language Dropdown Menu */}
             {isLanguageOpen && (
-              <div className="absolute mt-32 w-32 bg-white rounded-lg shadow-md z-50 right-0">
+              <div className="absolute mt-32 w-36 px-2 bg-white rounded-lg shadow-md z-50 right-0">
                 <ul className="m-0 px-2 py-2"> {/* Remove default margin and padding */}
                   <li className="flex items-center py-2 text-gray-800 hover:bg-gray-100 transition duration-200 rounded-t-lg">
                     <img src={englishFlag} alt="English Flag" className="w-6 h-4 mr-2" />
