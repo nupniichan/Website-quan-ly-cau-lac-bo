@@ -211,9 +211,8 @@ export function Home() {
     const StudentDashboard = () => (
         <div className="mt-12">
             {/* Statistics Cards - Thêm hover và shadow effects */}
-            <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-4">
+            <div className="grid mb-12 gap-y-10 gap-x-6 md:grid-cols-4">
                 <StatisticsCard
-                    className="hover:scale-105 transition-transform duration-300"
                     title={'CLB đang quản lý'}
                     value={userData?.managedClubs[0]?.ten}
                     icon={<UserGroupIcon className="w-6 h-6 text-blue-500" />}
@@ -236,10 +235,10 @@ export function Home() {
             </div>
 
             {/* Charts - Improved styling */}
-            <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2">
-                <Card className="hover:shadow-lg transition-shadow duration-300">
-                    <CardHeader className={`${cardHeaderStyles} p-4`}>
-                        <Typography variant="h6" color="blue-gray" className="mb-2 font-bold text-xl">
+            <div className="grid grid-cols-1 mb-6 gap-y-12 gap-x-6 md:grid-cols-2">
+                <Card className="transition-shadow duration-300 hover:shadow-lg">
+                    <CardHeader className={`relative bg-clip-border mx-4 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-blue-500/40 shadow-lg -mt-6 p-6 mb-8`}>
+                        <Typography variant="h6" color="blue-gray" className="text-xl font-semibold text-white">
                             Hoạt Động/Sự Kiện
                         </Typography>
                     </CardHeader>
@@ -249,9 +248,9 @@ export function Home() {
                         </div>
                     </CardBody>
                 </Card>
-                <Card className="hover:shadow-lg transition-shadow duration-300">
-                    <CardHeader className={`${cardHeaderStyles} p-4`}>
-                        <Typography variant="h6" color="blue-gray" className="mb-2 font-bold text-xl">
+                <Card className="transition-shadow duration-300 hover:shadow-lg">
+                    <CardHeader className={`relative bg-clip-border mx-4 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-blue-500/40 shadow-lg -mt-6 p-6 mb-8`}>
+                        <Typography variant="h6" color="blue-gray" className="text-xl font-semibold text-white">
                             Giải Thưởng
                         </Typography>
                     </CardHeader>
@@ -264,9 +263,9 @@ export function Home() {
             </div>
 
             {/* Recent Members Table - Enhanced styling */}
-            <Card className="hover:shadow-lg transition-shadow duration-300">
-                <CardHeader className={`${cardHeaderStyles} p-4`}>
-                    <Typography variant="h6" color="blue-gray" className="mb-2 font-bold text-xl">
+            <Card className="hover:shadow-lg transition-shadow duration-300 mt-[3.2rem]">
+                <CardHeader className={`relative bg-clip-border mx-4 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-blue-500/40 shadow-lg -mt-6 p-6 mb-8`}>
+                    <Typography variant="h6" color="blue-gray" className="text-xl font-semibold text-white">
                         Thành Viên Mới
                     </Typography>
                 </CardHeader>
@@ -275,22 +274,22 @@ export function Home() {
                         <table className="w-full min-w-[640px] table-auto">
                             <thead>
                                 <tr className="bg-blue-gray-50">
-                                    <th className="border-b border-blue-gray-50 py-3 px-4 text-left">
+                                    <th className="px-4 py-3 text-left border-b border-blue-gray-50">
                                         <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                                             Họ Tên
                                         </Typography>
                                     </th>
-                                    <th className="border-b border-blue-gray-50 py-3 px-4 text-left">
+                                    <th className="px-4 py-3 text-left border-b border-blue-gray-50">
                                         <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                                             MSHS
                                         </Typography>
                                     </th>
-                                    <th className="border-b border-blue-gray-50 py-3 px-4 text-left">
+                                    <th className="px-4 py-3 text-left border-b border-blue-gray-50">
                                         <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                                             Lớp
                                         </Typography>
                                     </th>
-                                    <th className="border-b border-blue-gray-50 py-3 px-4 text-left">
+                                    <th className="px-4 py-3 text-left border-b border-blue-gray-50">
                                         <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                                             Ngày Tham Gia
                                         </Typography>
@@ -302,22 +301,22 @@ export function Home() {
                                     <tr key={member._id} 
                                         className={`hover:bg-blue-gray-50/50 transition-colors duration-200
                                         ${index % 2 === 0 ? 'bg-blue-gray-50/30' : ''}`}>
-                                        <td className="py-3 px-4">
+                                        <td className="px-4 py-3">
                                             <Typography variant="small" className="text-xs font-semibold text-blue-gray-600">
                                                 {member.hoTen}
                                             </Typography>
                                         </td>
-                                        <td className="py-3 px-4">
+                                        <td className="px-4 py-3">
                                             <Typography variant="small" className="text-xs font-semibold text-blue-gray-600">
                                                 {member.maSoHocSinh}
                                             </Typography>
                                         </td>
-                                        <td className="py-3 px-4">
+                                        <td className="px-4 py-3">
                                             <Typography variant="small" className="text-xs font-semibold text-blue-gray-600">
                                                 {member.lop}
                                             </Typography>
                                         </td>
-                                        <td className="py-3 px-4">
+                                        <td className="px-4 py-3">
                                             <Typography variant="small" className="text-xs font-semibold text-blue-gray-600">
                                                 {formatDate(member.ngayThamGia)}
                                             </Typography>
@@ -336,7 +335,7 @@ export function Home() {
     const TeacherDashboard = () => (
         <div className="mt-12">
             {/* Statistics Cards */}
-            <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-4">
+            <div className="grid mb-12 gap-y-10 gap-x-6 md:grid-cols-4">
                 <StatisticsCard
                     title="Tổng Câu Lạc Bộ"
                     value={userData?.totalClubs || 0}
@@ -360,7 +359,7 @@ export function Home() {
             </div>
 
             {/* Charts */}
-            <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 mb-6 gap-y-12 gap-x-6 md:grid-cols-2">
                 <Card>
                     <CardHeader>
                         <Typography variant="h6">Thống Kê Sự Kiện</Typography>
@@ -380,14 +379,14 @@ export function Home() {
             </div>
 
             {/* Pending Events Table - Enhanced styling */}
-            <Card className="hover:shadow-lg transition-shadow duration-300">
+            <Card className="transition-shadow duration-300 hover:shadow-lg">
                 <CardHeader className={`${cardHeaderStyles} p-4 flex items-center justify-between`}>
                     <Typography variant="h6" color="blue-gray" className="font-semibold">
                         Sự Kiện Chờ Duyệt
                     </Typography>
                     <Link 
                         to="/dashboard/approve-events" 
-                        className="text-blue-500 hover:text-blue-700 font-medium transition-colors duration-300"
+                        className="font-medium text-blue-500 transition-colors duration-300 hover:text-blue-700"
                     >
                         Xem tất cả →
                     </Link>
@@ -397,17 +396,17 @@ export function Home() {
                         <table className="w-full min-w-[640px] table-auto">
                             <thead>
                                 <tr className="bg-blue-gray-50">
-                                    <th className="border-b border-blue-gray-50 py-3 px-4 text-left">
+                                    <th className="px-4 py-3 text-left border-b border-blue-gray-50">
                                         <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                                             Tên Sự Kiện
                                         </Typography>
                                     </th>
-                                    <th className="border-b border-blue-gray-50 py-3 px-4 text-left">
+                                    <th className="px-4 py-3 text-left border-b border-blue-gray-50">
                                         <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                                             CLB Tổ Chức
                                         </Typography>
                                     </th>
-                                    <th className="border-b border-blue-gray-50 py-3 px-4 text-left">
+                                    <th className="px-4 py-3 text-left border-b border-blue-gray-50">
                                         <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                                             Ngày Tổ Chức
                                         </Typography>
@@ -419,17 +418,17 @@ export function Home() {
                                     <tr key={event._id}
                                         className={`hover:bg-blue-gray-50/50 transition-colors duration-200
                                         ${index % 2 === 0 ? 'bg-blue-gray-50/30' : ''}`}>
-                                        <td className="py-3 px-4">
+                                        <td className="px-4 py-3">
                                             <Typography variant="small" className="text-xs font-semibold text-blue-gray-600">
                                                 {event.ten}
                                             </Typography>
                                         </td>
-                                        <td className="py-3 px-4">
+                                        <td className="px-4 py-3">
                                             <Typography variant="small" className="text-xs font-semibold text-blue-gray-600">
                                                 {event.club?.ten}
                                             </Typography>
                                         </td>
-                                        <td className="py-3 px-4">
+                                        <td className="px-4 py-3">
                                             <Typography variant="small" className="text-xs font-semibold text-blue-gray-600">
                                                 {formatDate(event.ngayToChuc)}
                                             </Typography>

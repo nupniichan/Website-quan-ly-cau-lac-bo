@@ -6,22 +6,22 @@ export function StatisticsCard({ title, value, icon }) {
         <Card className="shadow-lg">
             <CardBody className="p-4">
                 <div className="flex items-center gap-3">
-                    <div className="rounded-full bg-blue-500 p-2">
+                    <div className="p-2 transition-shadow duration-500 shadow-md ease hover:shadow-lg bg-clip-border rounded-xl bg-gradient-to-tr from-blue-600 to-blue-400 hover:shadow-blue-500/30 shadow-blue-500/20">
                         {React.cloneElement(icon, {
                             className: "w-4 h-4 text-white"
                         })}
                     </div>
                     
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col ">
                         <Typography 
                             variant="small" 
-                            className="font-bold text-gray-900 text-sm uppercase tracking-wider"
+                            className="text-base font-semibold tracking-normal text-gray-900"
                         >
                             {title}
                         </Typography>
                         <Typography 
                             variant="h6"
-                            className="text-gray-600 font-normal text-base" 
+                            className="text-xs font-normal text-gray-600" 
                         >
                             {value}
                         </Typography>
