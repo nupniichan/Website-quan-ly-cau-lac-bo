@@ -145,7 +145,7 @@ const Header = () => {
             </button>
             {/* Mobile Language Dropdown Menu */}
             {isLanguageOpen && (
-              <div className="absolute mt-32 w-36 px-2 bg-white rounded-lg shadow-md z-50 right-0">
+              <div className="absolute mt-32 w-36 px-2   bg-white rounded-lg shadow-md z-50 right-0">
                 <ul className="m-0 px-2 py-2"> {/* Remove default margin and padding */}
                   <li className="flex items-center py-2 text-gray-800 hover:bg-gray-100 transition duration-200 rounded-t-lg">
                     <img src={englishFlag} alt="English Flag" className="w-6 h-4 mr-2" />
