@@ -33,6 +33,7 @@ import ManagePrizes from "../pages/dashboard/ManagePrizes.jsx";
 import ActivityReports from "../pages/dashboard/ActivityReports.jsx";
 import Table from "../pages/dashboard/tables.jsx";
 import Profile from "../pages/dashboard/profile.jsx";
+import ManageClubMembersPR from "@/pages/dashboard/ManageClubMembersPR.jsx";
 
 export function Dashboard() {
     const [controller, dispatch] = useMaterialTailwindController();
@@ -74,6 +75,12 @@ export function Dashboard() {
             name: "Phân bổ ngân sách",
             path: "/dashboard/budget-allocation",
             element: <BudgetAllocation />,
+        },
+        {
+            icon: <UserGroupIcon />,
+            name: "Quản lý tài khoản",
+            path: "/dashboard/accounts-pr",
+            element: <ManageClubMembersPR />,
         },
         // {
         //     icon: <CurrencyDollarIcon />,
