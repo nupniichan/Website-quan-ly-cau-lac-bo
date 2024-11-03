@@ -33,7 +33,9 @@ const ManageClubMembersPR = () => {
     const [detailMember, setDetailMember] = useState(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editMember, setEditMember] = useState({});
-
+    const [validationErrors, setValidationErrors] = useState({});
+    const [editValidationErrors, setEditValidationErrors] = useState({});
+    const [allMembers, setAllMembers] = useState([]); // State to store all members
     // State for new member details
     const [newMember, setNewMember] = useState({
         maSoHocSinh: '',
@@ -48,11 +50,14 @@ const ManageClubMembersPR = () => {
 
     useEffect(() => {
         fetchClubs();
+        fetchAllMembers();
     }, []);
 
     useEffect(() => {
         if (selectedClubId) {
             fetchMembers(selectedClubId);
+        } else {
+            setMembers([]); // Clear members if no club is selected
         }
     }, [selectedClubId]);
 
@@ -66,31 +71,69 @@ const ManageClubMembersPR = () => {
             setIsLoading(false);
         }
     };
-
+    const fetchAllMembers = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/get-members`); // Use your existing endpoint
+            setAllMembers(response.data); // Store the fetched members in state
+        } catch (error) {
+            console.error("Error fetching all members:", error);
+        }
+    };
     const fetchMembers = async (clubId) => {
         setIsLoading(true);
         try {
             const response = await axios.get(`${API_URL}/get-members-by-club/${clubId}`);
             setMembers(response.data);
+            console.log("Fetched members:", response.data); // Log fetched members
         } catch (error) {
-            console.error("Error fetching members:", error);
+            if (error.response && error.response.status === 404) {
+                console.warn(`No members found for club ID: ${clubId}`); // Handle 404 specifically
+                setMembers([]); // Clear members if no members found
+            } else {
+                console.error("Error fetching members:", error);
+            }
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleAddMember = async () => {
-        if (!newMember.maSoHocSinh || !newMember.hoTen || !newMember.gioiTinh || !newMember.lop) {
-            alert("Please fill in all fields.");
-            return;
+        // Validation
+        const errors = {};
+        if (!newMember.maSoHocSinh) errors.maSoHocSinh = "Mã số học sinh is required.";
+        if (!newMember.hoTen) errors.hoTen = "Họ tên is required.";
+        if (!newMember.gioiTinh) errors.gioiTinh = "Giới tính is required.";
+        if (!newMember.lop) errors.lop = "Lớp is required.";
+        if (!newMember.toHopHocTap) errors.toHopHocTap = "Tổ hợp học tập is required.";
+        if (!newMember.thongTinLienLac) errors.thongTinLienLac = "Thông tin liên lạc is required.";
+        if (!newMember.vaiTro) errors.vaiTro = "Vai trò is required.";
+        if (!newMember.tinhTrang) errors.tinhTrang = "Tình trạng is required.";
+        // Check if the student already exists in another club
+        const studentInAnotherClub = allMembers.some(member => 
+            member.maSoHocSinh === newMember.maSoHocSinh && member.club !== selectedClubId
+        );
+    
+        if (studentInAnotherClub) {
+            errors.maSoHocSinh = "Học sinh này đã là thành viên của câu lạc bộ khác."; // "This student is already a member of another club."
         }
-
+    
+        const memberExists = members.some(
+            (member) => member.maSoHocSinh === newMember.maSoHocSinh
+        );
+        if (memberExists) errors.maSoHocSinh = "Học sinh đã tồn tại trong câu lạc bộ này."; // "Student already exists in this club."
+    
+        setValidationErrors(errors);
+    
+        if (Object.keys(errors).length > 0) {
+            return; // Don't proceed if there are validation errors
+        }
+    
         const memberToAdd = {
             ...newMember,
             club: selectedClubId,
             ngayThamGia: new Date().toISOString(),
         };
-
+    
         try {
             const response = await axios.post(`${API_URL}/add-member`, memberToAdd);
             setMembers((prev) => [...prev, response.data]);
@@ -100,6 +143,7 @@ const ManageClubMembersPR = () => {
             console.error("Error adding member:", error);
         }
     };
+    
 
     const handleDeleteMember = async (maSoHocSinh) => {
         if (window.confirm("Bạn có chắc chắn muốn xóa thành viên này khỏi câu lạc bộ?")) {
@@ -137,10 +181,33 @@ const ManageClubMembersPR = () => {
     };
 
     const handleEditMember = async () => {
+        const errors = {};
+        if (!editMember.maSoHocSinh) errors.maSoHocSinh = "Mã số học sinh is required.";
+        if (!editMember.hoTen) errors.hoTen = "Họ tên is required.";
+        if (!editMember.gioiTinh) errors.gioiTinh = "Giới tính is required.";
+        if (!editMember.lop) errors.lop = "Lớp is required.";
+        if (!editMember.toHopHocTap) errors.toHopHocTap = "Tổ hợp học tập is required.";
+        if (!editMember.thongTinLienLac) errors.thongTinLienLac = "Thông tin liên lạc is required.";
+        if (!editMember.vaiTro) errors.vaiTro = "Vai trò is required.";
+        if (!editMember.tinhTrang) errors.tinhTrang = "Tình trạng is required.";
+        const studentInAnotherClub = allMembers.some(member => 
+            member.maSoHocSinh === editMember.maSoHocSinh && member.club !== selectedClubId
+        );
+    
+        if (studentInAnotherClub) {
+            errors.maSoHocSinh = "Học sinh này đã là thành viên của câu lạc bộ khác."; // "This student is already a member of another club."
+        }
+        setEditValidationErrors(errors);
+
+        if (Object.keys(errors).length > 0) {
+            return;
+        }
+
         try {
             await axios.put(`${API_URL}/update-member/${editMember.maSoHocSinh}`, editMember);
             setMembers((prev) => prev.map(member => (member.maSoHocSinh === editMember.maSoHocSinh ? editMember : member)));
             setIsEditDialogOpen(false);
+            setEditValidationErrors({});
         } catch (error) {
             console.error("Error updating member:", error);
         }
@@ -271,132 +338,152 @@ const ManageClubMembersPR = () => {
             )}
 
             {/* Add Member Dialog */}
-            <Dialog open={isDialogOpen} handler={setIsDialogOpen}>
-                <DialogHeader>Add New Member</DialogHeader>
+            <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
+                <DialogHeader>Thêm thành viên mới</DialogHeader>
                 <DialogBody>
-                    <div className="flex flex-col space-y-4">
+                    <div className="space-y-4">
                         <Input
-                            label="Mã Số Học Sinh"
+                            label="Mã số học sinh"
                             value={newMember.maSoHocSinh}
                             onChange={(e) => setNewMember({ ...newMember, maSoHocSinh: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                        {validationErrors.maSoHocSinh && <Typography color="red">{validationErrors.maSoHocSinh}</Typography>}
+
                         <Input
-                            label="Họ Tên"
+                            label="Họ tên"
                             value={newMember.hoTen}
                             onChange={(e) => setNewMember({ ...newMember, hoTen: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
-                        <Input
-                            label="Giới Tính"
-                            value={newMember.gioiTinh}
-                            onChange={(e) => setNewMember({ ...newMember, gioiTinh: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
+                        {validationErrors.hoTen && <Typography color="red">{validationErrors.hoTen}</Typography>}
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Giới tính</label>
+                            <select
+                                className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                value={newMember.gioiTinh}
+                                onChange={(e) => setNewMember({ ...newMember, gioiTinh: e.target.value })}
+                            >
+                                <option value="">Chọn giới tính</option>
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                            </select>
+                            {validationErrors.gioiTinh && <Typography color="red">{validationErrors.gioiTinh}</Typography>}
+                        </div>
+
                         <Input
                             label="Lớp"
                             value={newMember.lop}
                             onChange={(e) => setNewMember({ ...newMember, lop: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                        {validationErrors.lop && <Typography color="red">{validationErrors.lop}</Typography>}
+
                         <Input
-                            label="Tổ Học Tập"
+                            label="Tổ hợp học tập"
                             value={newMember.toHopHocTap}
                             onChange={(e) => setNewMember({ ...newMember, toHopHocTap: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                        {validationErrors.toHopHocTap && <Typography color="red">{validationErrors.toHopHocTap}</Typography>}
+
                         <Input
-                            label="Thông Tin Liên Lạc"
+                            label="Thông tin liên lạc"
                             value={newMember.thongTinLienLac}
                             onChange={(e) => setNewMember({ ...newMember, thongTinLienLac: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                        {validationErrors.thongTinLienLac && <Typography color="red">{validationErrors.thongTinLienLac}</Typography>}
+
                         <Input
-                            label="Vai Trò"
+                            label="Vai trò"
                             value={newMember.vaiTro}
                             onChange={(e) => setNewMember({ ...newMember, vaiTro: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                        {validationErrors.vaiTro && <Typography color="red">{validationErrors.vaiTro}</Typography>}
+
                         <Input
-                            label="Tình Trạng"
+                            label="Tình trạng"
                             value={newMember.tinhTrang}
                             onChange={(e) => setNewMember({ ...newMember, tinhTrang: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                        {validationErrors.tinhTrang && <Typography color="red">{validationErrors.tinhTrang}</Typography>}
                     </div>
                 </DialogBody>
                 <DialogFooter>
-                    <Button color="red" onClick={() => setIsDialogOpen(false)}>
-                        Hủy
-                    </Button>
-                    <Button color="green" onClick={handleAddMember}>
-                        Thêm
-                    </Button>
+                    <Button color="red" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
+                    <Button color="green" onClick={handleAddMember}>Thêm</Button>
                 </DialogFooter>
             </Dialog>
 
             {/* Edit Member Dialog */}
-            <Dialog open={isEditDialogOpen} handler={setIsEditDialogOpen}>
-                <DialogHeader>Edit Member</DialogHeader>
+            <Dialog open={isEditDialogOpen} onClose={() => setIsEditDialogOpen(false)}>
+                <DialogHeader>Chỉnh sửa thông tin thành viên</DialogHeader>
                 <DialogBody>
-                    <div className="flex flex-col space-y-4">
+                    <div className="space-y-4">
                         <Input
-                            label="Mã Số Học Sinh"
+                            label="Mã số học sinh"
                             value={editMember.maSoHocSinh}
-                            disabled // Disable editing for student ID
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none bg-gray-100"
+                            onChange={(e) => setEditMember({ ...editMember, maSoHocSinh: e.target.value })}
                         />
+                        {editValidationErrors.maSoHocSinh && <Typography color="red">{editValidationErrors.maSoHocSinh}</Typography>}
+
                         <Input
-                            label="Họ Tên"
+                            label="Họ tên"
                             value={editMember.hoTen}
                             onChange={(e) => setEditMember({ ...editMember, hoTen: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
-                        <Input
-                            label="Giới Tính"
-                            value={editMember.gioiTinh}
-                            onChange={(e) => setEditMember({ ...editMember, gioiTinh: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
+                        {editValidationErrors.hoTen && <Typography color="red">{editValidationErrors.hoTen}</Typography>}
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Giới tính</label>
+                            <select
+                                className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                value={editMember.gioiTinh}
+                                onChange={(e) => setEditMember({ ...editMember, gioiTinh: e.target.value })}
+                            >
+                                <option value="">Chọn giới tính</option>
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                            </select>
+                            {editValidationErrors.gioiTinh && <Typography color="red">{editValidationErrors.gioiTinh}</Typography>}
+                        </div>
+
                         <Input
                             label="Lớp"
                             value={editMember.lop}
                             onChange={(e) => setEditMember({ ...editMember, lop: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                        {editValidationErrors.lop && <Typography color="red">{editValidationErrors.lop}</Typography>}
+
                         <Input
-                            label="Tổ Học Tập"
+                            label="Tổ hợp học tập"
                             value={editMember.toHopHocTap}
                             onChange={(e) => setEditMember({ ...editMember, toHopHocTap: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                        {editValidationErrors.toHopHocTap && <Typography color="red">{editValidationErrors.toHopHocTap}</Typography>}
+
                         <Input
-                            label="Thông Tin Liên Lạc"
+                            label="Thông tin liên lạc"
                             value={editMember.thongTinLienLac}
                             onChange={(e) => setEditMember({ ...editMember, thongTinLienLac: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                        {editValidationErrors.thongTinLienLac && <Typography color="red">{editValidationErrors.thongTinLienLac}</Typography>}
+
                         <Input
-                            label="Vai Trò"
+                            label="Vai trò"
                             value={editMember.vaiTro}
                             onChange={(e) => setEditMember({ ...editMember, vaiTro: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                        {editValidationErrors.vaiTro && <Typography color="red">{editValidationErrors.vaiTro}</Typography>}
+
                         <Input
-                            label="Tình Trạng"
+                            label="Tình trạng"
                             value={editMember.tinhTrang}
                             onChange={(e) => setEditMember({ ...editMember, tinhTrang: e.target.value })}
-                            className="border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                        {editValidationErrors.tinhTrang && <Typography color="red">{editValidationErrors.tinhTrang}</Typography>}
                     </div>
                 </DialogBody>
                 <DialogFooter>
-                    <Button color="red" onClick={() => setIsEditDialogOpen(false)}>
-                        Hủy
-                    </Button>
-                    <Button color="green" onClick={handleEditMember}>
-                        Cập Nhật
-                    </Button>
+                    <Button color="red" onClick={() => setIsEditDialogOpen(false)}>Hủy</Button>
+                    <Button color="green" onClick={handleEditMember}>Lưu</Button>
                 </DialogFooter>
             </Dialog>
 
