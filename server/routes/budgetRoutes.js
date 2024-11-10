@@ -365,43 +365,4 @@ router.delete('/delete-budget-allocation/:id', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
-// Update account
-router.put('/update-account/:userId', async (req, res) => {
-    const { userId } = req.params;
-    const { email, password, role } = req.body;
-
-    try {
-        const updatedAccount = await Account.findOneAndUpdate(
-            { userId },
-            { email, password, role },
-            { new: true } // Return the updated document
-        );
-
-        if (!updatedAccount) {
-            return res.status(404).json({ message: "Account not found" });
-        }
-
-        res.json(updatedAccount);
-    } catch (error) {
-        console.error("Error updating account:", error);
-        res.status(500).json({ message: "Server error" });
-    }
-});
-// Delete account
-router.delete('/delete-account/:userId', async (req, res) => {
-    const { userId } = req.params;
-
-    try {
-        const deletedAccount = await Account.findOneAndDelete({ userId });
-
-        if (!deletedAccount) {
-            return res.status(404).json({ message: "Account not found" });
-        }
-
-        res.json({ message: "Account deleted successfully" });
-    } catch (error) {
-        console.error("Error deleting account:", error);
-        res.status(500).json({ message: "Server error" });
-    }
-});
 module.exports = router;
