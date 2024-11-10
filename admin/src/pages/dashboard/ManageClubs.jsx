@@ -22,6 +22,38 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
 const API_URL = "http://localhost:5500/api";
 
+// Thêm hàm validate chung
+const validateClubData = (clubData) => {
+    // Kiểm tra các trường bắt buộc không được null hoặc rỗng
+    const requiredFields = [
+        { key: "ten", label: "Tên CLB" },
+        { key: "linhVucHoatDong", label: "Lĩnh vực hoạt động" },
+        { key: "ngayThanhLap", label: "Ngày thành lập" },
+        { key: "giaoVienPhuTrach", label: "Giáo viên phụ trách" },
+        { key: "truongBanCLB", label: "Trưởng ban CLB" },
+    ];
+
+    // Kiểm tra trường rỗng
+    const emptyFields = requiredFields.filter(
+        field => !clubData[field.key]?.trim()
+    );
+    
+    if (emptyFields.length > 0) {
+        throw new Error(
+            `Vui lòng điền đầy đủ thông tin: ${emptyFields.map(f => f.label).join(", ")}`
+        );
+    }
+
+    // Kiểm tra ngày thành lập không được là ngày tương lai
+    const ngayThanhLap = new Date(clubData.ngayThanhLap);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time để so sánh chỉ theo ngày
+
+    if (ngayThanhLap > today) {
+        throw new Error("Ngày thành lập không được là ngày tương lai");
+    }
+};
+
 const ManageClubs = () => {
     const [clubs, setClubs] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -61,23 +93,9 @@ const ManageClubs = () => {
     };
 
     const handleAddClub = async () => {
-        const requiredFields = [
-            "ten",
-            "linhVucHoatDong",
-            "ngayThanhLap",
-            "giaoVienPhuTrach",
-            "truongBanCLB",
-        ];
-        const missingFields = requiredFields.filter((field) => !newClub[field]);
-
-        if (missingFields.length > 0) {
-            alert(
-                `Vui lòng điền đầy đủ thông tin: ${missingFields.join(", ")}`,
-            );
-            return;
-        }
-
         try {
+            validateClubData(newClub);
+
             const formData = new FormData();
             Object.keys(newClub).forEach((key) => {
                 if (key === "logo") {
@@ -95,12 +113,18 @@ const ManageClubs = () => {
             setIsDialogOpen(false);
             fetchClubs();
         } catch (error) {
+            // Xử lý lỗi validation
+            if (error.message) {
+                alert(error.message);
+                return;
+            }
+            // Xử lý lỗi API
             console.error("Error adding club:", error);
             if (error.response) {
                 alert(
                     `Lỗi khi thêm câu lạc bộ: ${
                         error.response.data.message || "Không xác định"
-                    }`,
+                    }`
                 );
             } else {
                 alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
@@ -110,6 +134,8 @@ const ManageClubs = () => {
 
     const handleUpdateClub = async () => {
         try {
+            validateClubData(newClub);
+
             const formData = new FormData();
             Object.keys(newClub).forEach((key) => {
                 if (key === "logo") {
@@ -126,18 +152,24 @@ const ManageClubs = () => {
                 formData,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
-                },
+                }
             );
             setIsDialogOpen(false);
             setEditingClubId(null);
             fetchClubs();
         } catch (error) {
+            // Xử lý lỗi validation
+            if (error.message) {
+                alert(error.message);
+                return;
+            }
+            // Xử lý lỗi API
             console.error("Error updating club:", error);
             if (error.response) {
                 alert(
                     `Lỗi khi cập nhật câu lạc bộ: ${
                         error.response.data.message || "Không xác định"
-                    }`,
+                    }`
                 );
             } else {
                 alert("Không thể kết nối đến server. Vui lòng thử lại sau.");

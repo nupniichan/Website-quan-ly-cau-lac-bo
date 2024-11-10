@@ -72,60 +72,115 @@ const BudgetAllocation = () => {
         }
     };
 
+    // Thêm hàm validate chung
+    const validateAllocationData = (allocationData) => {
+        // Kiểm tra các trường bắt buộc
+        const requiredFields = [
+            { key: "club", label: "Câu lạc bộ" },
+            { key: "amount", label: "Số tiền" },
+            { key: "purpose", label: "Mục đích" },
+            { key: "allocationDate", label: "Ngày phân bổ" },
+        ];
+
+        // Kiểm tra trường rỗng
+        const emptyFields = requiredFields.filter(
+            field => !allocationData[field.key]
+        );
+        
+        if (emptyFields.length > 0) {
+            throw new Error(
+                `Vui lòng điền đầy đủ thông tin: ${emptyFields.map(f => f.label).join(", ")}`
+            );
+        }
+
+        // Kiểm tra số tiền
+        const amount = Number(allocationData.amount);
+        if (amount <= 0) {
+            throw new Error("Số tiền phân bổ không được âm hoặc bằng 0");
+        }
+        if (amount > 50000000) {
+            throw new Error("Số tiền phân bổ không được vượt quá 50 triệu đồng");
+        }
+
+        // Kiểm tra ngày phân bổ phải là ngày hiện tại
+        const allocationDate = new Date(allocationData.allocationDate);
+        const today = new Date();
+        
+        // Reset time để so sánh chỉ theo ngày
+        allocationDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+
+        if (allocationDate.getTime() !== today.getTime()) {
+            throw new Error("Ngày phân bổ phải là ngày hiện tại");
+        }
+    };
+
     const handleAddAllocation = async () => {
         try {
-            if (!newAllocation.club) {
-                alert("Vui lòng chọn câu lạc bộ");
-                return;
-            }
+            validateAllocationData(newAllocation);
 
             const formattedData = {
-                club: newAllocation.club, // Đây là ObjectId
+                club: newAllocation.club,
                 amount: Number(newAllocation.amount),
                 purpose: newAllocation.purpose,
                 allocationDate: newAllocation.allocationDate,
             };
 
-            console.log("Data being sent:", formattedData);
-
             const response = await axios.post(
                 `${API_URL}/add-budget-allocation`,
-                formattedData,
+                formattedData
             );
 
-            console.log("Response:", response.data);
             setIsDialogOpen(false);
             fetchAllocations();
         } catch (error) {
+            // Xử lý lỗi validation
+            if (error.message) {
+                alert(error.message);
+                return;
+            }
+            // Xử lý lỗi API
             console.error("Error adding budget allocation:", error);
             if (error.response?.data) {
-                console.error("Error response data:", error.response.data);
+                alert(
+                    `Lỗi khi thêm phân bổ ngân sách: ${
+                        error.response.data.message || "Không xác định"
+                    }`
+                );
+            } else {
+                alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
             }
-            alert(
-                `Lỗi khi thêm phân bổ ngân sách: ${
-                    error.response?.data?.message || error.message ||
-                    "Không xác định"
-                }`,
-            );
         }
     };
 
     const handleUpdateAllocation = async () => {
         try {
+            validateAllocationData(newAllocation);
+
             const response = await axios.put(
                 `${API_URL}/update-budget-allocation/${editingAllocationId}`,
-                newAllocation,
+                newAllocation
             );
             setIsDialogOpen(false);
             setEditingAllocationId(null);
             fetchAllocations();
         } catch (error) {
+            // Xử lý lỗi validation
+            if (error.message) {
+                alert(error.message);
+                return;
+            }
+            // Xử lý lỗi API
             console.error("Error updating budget allocation:", error);
-            alert(
-                `Lỗi khi cập nhật phân bổ ngân sách: ${
-                    error.response?.data?.message || "Không xác định"
-                }`,
-            );
+            if (error.response?.data) {
+                alert(
+                    `Lỗi khi cập nhật phân bổ ngân sách: ${
+                        error.response.data.message || "Không xác định"
+                    }`
+                );
+            } else {
+                alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+            }
         }
     };
 
@@ -150,11 +205,12 @@ const BudgetAllocation = () => {
     };
 
     const openAddDialog = () => {
+        const today = new Date().toISOString().split("T")[0];
         setNewAllocation({
-            club: "", // Để trống, người dùng sẽ chọn
+            club: "",
             amount: 0,
             purpose: "",
-            allocationDate: new Date().toISOString().split("T")[0], // Set ngày hiện tại
+            allocationDate: today,
         });
         setEditingAllocationId(null);
         setIsDialogOpen(true);

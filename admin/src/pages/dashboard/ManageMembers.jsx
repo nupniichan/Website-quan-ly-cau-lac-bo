@@ -161,7 +161,13 @@ const ManageMembers = () => {
         }
     };
 
-    const handleDeleteMember = async (maSoHocSinh) => {
+    const handleDeleteMember = async (maSoHocSinh, tinhTrang) => {
+        // Kiểm tra tình trạng của thành viên
+        if (tinhTrang === "Đang hoạt động") {
+            alert("Không thể xóa thành viên đang hoạt động!");
+            return;
+        }
+
         if (window.confirm("Bạn có chắc chắn muốn xóa thành viên này?")) {
             try {
                 const response = await axios.delete(
@@ -500,6 +506,7 @@ const ManageMembers = () => {
                                                                         onClick={() =>
                                                                             handleDeleteMember(
                                                                                 maSoHocSinh,
+                                                                                members.find((m) => m.maSoHocSinh === maSoHocSinh)?.tinhTrang
                                                                             )}
                                                                     >
                                                                         <TrashIcon
@@ -747,7 +754,7 @@ const ManageMembers = () => {
                         variant="small" 
                         className={`
                             px-3 py-1 rounded-full font-bold uppercase
-                            ${detailMember?.tinhTrang === 'Đang hoạt động' 
+                            ${detailMember?.tinhTrang === 'Đang hoạt đ��ng' 
                                 ? 'bg-green-500 text-white' 
                                 : 'bg-red-500 text-white'}
                         `}
