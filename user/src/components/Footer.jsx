@@ -92,7 +92,7 @@ const Footer = () => {
       {/* Bottom Footer Section */}
 <div className="flex flex-col sm:flex-row w-full sm:h-16 relative overflow-hidden">
   {/* Yellow Section */}
-  <div className="w-full sm:w-[90%] h-16 sm:h-full bg-yellow-500 z-10 flex items-center justify-center sm:justify-between text-[#004D86]">
+  <div className="w-full sm:w-[90%] h-16 sm:h-full bg-yellow-500 z-10 flex items-center justify-center sm:justify-between text-[#004D86] pl-10">
     © Copyright 2024 - Trường trung học phổ thông
   </div>
 
