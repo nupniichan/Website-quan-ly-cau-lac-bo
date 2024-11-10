@@ -24,6 +24,27 @@ budgetAllocationSchema.pre('save', async function(next) {
             );
             this._id = counter.seq;
         }
+
+        // Cập nhật budget của club khi thêm phân bổ mới
+        if (this.isNew) {
+            await mongoose.model('Club').findByIdAndUpdate(
+                this.club,
+                { $inc: { budget: this.amount } }
+            );
+        }
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Thêm middleware pre-remove để cập nhật budget khi xóa phân bổ
+budgetAllocationSchema.pre('remove', async function(next) {
+    try {
+        await mongoose.model('Club').findByIdAndUpdate(
+            this.club,
+            { $inc: { budget: -this.amount } }
+        );
         next();
     } catch (error) {
         next(error);

@@ -17,6 +17,8 @@ import {
     CheckCircleIcon,
     EyeIcon,
     XCircleIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 
 const API_URL = "http://localhost:5500/api";
@@ -31,6 +33,8 @@ const ApproveEvents = () => {
     const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
     const [rejectReason, setRejectReason] = useState("");
     const [selectedEventId, setSelectedEventId] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         fetchEvents();
@@ -158,6 +162,17 @@ const ApproveEvents = () => {
         setIsRejectDialogOpen(true);
     };
 
+    // Tính toán events cho trang hiện tại
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentEvents = filteredEvents.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+
+    // Reset trang khi thay đổi bộ lọc
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filter]);
+
     return (
         <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
@@ -227,178 +242,215 @@ const ApproveEvents = () => {
                             </div>
                         )
                         : (
-                            <table className="w-full min-w-[640px] table-auto">
-                                <thead>
-                                    <tr>
-                                        {[
-                                            "Tên sự kiện",
-                                            "Ngày tổ chức",
-                                            "Thời gian",
-                                            "Địa điểm",
-                                            "Người phụ trách",
-                                            "CLB",
-                                            "Trạng thái",
-                                            "Thao tác",
-                                        ].map((el) => (
-                                            <th
-                                                key={el}
-                                                className="px-5 py-3 text-left border-b border-blue-gray-50"
-                                            >
-                                                <Typography
-                                                    variant="small"
-                                                    className="text-[11px] font-bold uppercase text-blue-gray-400"
+                            <>
+                                <table className="w-full min-w-[640px] table-auto">
+                                    <thead>
+                                        <tr>
+                                            {[
+                                                "Tên sự kiện",
+                                                "Ngày tổ chức",
+                                                "Thời gian",
+                                                "Địa điểm",
+                                                "Người phụ trách",
+                                                "CLB",
+                                                "Trạng thái",
+                                                "Thao tác",
+                                            ].map((el) => (
+                                                <th
+                                                    key={el}
+                                                    className="px-5 py-3 text-left border-b border-blue-gray-50"
                                                 >
-                                                    {el}
-                                                </Typography>
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredEvents.map(({
-                                        _id,
-                                        ten,
-                                        ngayToChuc,
-                                        thoiGianBatDau,
-                                        thoiGianKetThuc,
-                                        diaDiem,
-                                        nguoiPhuTrach,
-                                        club,
-                                        khachMoi,
-                                        trangThai,
-                                    }, index) => {
-                                        const className =
-                                            index === filteredEvents.length - 1
-                                                ? "p-4"
-                                                : "p-4 border-b border-blue-gray-50";
-
-                                        return (
-                                            <tr key={_id}>
-                                                <td className={className}>
                                                     <Typography
                                                         variant="small"
-                                                        color="blue-gray"
-                                                        className="font-semibold"
+                                                        className="text-[11px] font-bold uppercase text-blue-gray-400"
                                                     >
-                                                        {ten}
+                                                        {el}
                                                     </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                        {new Date(ngayToChuc)
-                                                            .toLocaleDateString()}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                        {`${thoiGianBatDau} - ${thoiGianKetThuc}`}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                        {diaDiem}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                        {nguoiPhuTrach}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                        {club &&
-                                                                typeof club ===
-                                                                    "object"
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {currentEvents.map(({
+                                            _id,
+                                            ten,
+                                            ngayToChuc,
+                                            thoiGianBatDau,
+                                            thoiGianKetThuc,
+                                            diaDiem,
+                                            nguoiPhuTrach,
+                                            club,
+                                            khachMoi,
+                                            trangThai,
+                                        }, index) => {
+                                            const className =
+                                                index === currentEvents.length - 1
+                                                    ? "p-4"
+                                                    : "p-4 border-b border-blue-gray-50";
+
+                                            return (
+                                                <tr key={_id}>
+                                                    <td className={className}>
+                                                        <Typography
+                                                            variant="small"
+                                                            color="blue-gray"
+                                                            className="font-semibold"
+                                                        >
+                                                            {ten}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {new Date(ngayToChuc)
+                                                                .toLocaleDateString()}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {`${thoiGianBatDau} - ${thoiGianKetThuc}`}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {diaDiem}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {nguoiPhuTrach}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {club &&
+                                                                    typeof club ===
+                                                                        "object"
                                                             ? club.ten
                                                             : typeof club ===
                                                                     "string"
                                                             ? club
                                                             : "Không xác định"}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography
-                                                        className="text-xs font-semibold"
-                                                        color={getStatusColor(
-                                                            trangThai,
-                                                        )}
-                                                    >
-                                                        {getStatusText(
-                                                            trangThai,
-                                                        )}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <div className="flex items-center gap-2">
-                                                        {trangThai ===
-                                                                "choDuyet" && (
-                                                            <>
-                                                                <Button
-                                                                    size="sm"
-                                                                    color="green"
-                                                                    className="flex items-center gap-2"
-                                                                    onClick={() =>
-                                                                        handleApproveEvent(
-                                                                            _id,
-                                                                        )}
-                                                                >
-                                                                    <CheckCircleIcon
-                                                                        strokeWidth={2}
-                                                                        className="w-4 h-4"
-                                                                    />
-                                                                </Button>
-                                                                <Button
-                                                                    size="sm"
-                                                                    color="red"
-                                                                    className="flex items-center gap-2"
-                                                                    onClick={() =>
-                                                                        openRejectDialog(
-                                                                            _id,
-                                                                        )}
-                                                                >
-                                                                    <XCircleIcon
-                                                                        strokeWidth={2}
-                                                                        className="w-4 h-4"
-                                                                    />
-                                                                </Button>
-                                                            </>
-                                                        )}
-                                                        <Tooltip
-                                                            content="Xem"
-                                                            animate={{
-                                                                mount: {
-                                                                    scale: 1,
-                                                                    y: 0,
-                                                                },
-                                                                unmount: {
-                                                                    scale: 0,
-                                                                    y: 25,
-                                                                },
-                                                            }}
-                                                            className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography
+                                                            className="text-xs font-semibold"
+                                                            color={getStatusColor(
+                                                                trangThai,
+                                                            )}
                                                         >
-                                                            <Button
-                                                                size="sm"
-                                                                color="blue"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    openDetailDialog(
-                                                                        _id,
-                                                                    )}
+                                                            {getStatusText(
+                                                                trangThai,
+                                                            )}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <div className="flex items-center gap-2">
+                                                            {trangThai ===
+                                                                    "choDuyet" && (
+                                                                <>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        color="green"
+                                                                        className="flex items-center gap-2"
+                                                                        onClick={() =>
+                                                                            handleApproveEvent(
+                                                                                _id,
+                                                                            )}
+                                                                    >
+                                                                        <CheckCircleIcon
+                                                                            strokeWidth={2}
+                                                                            className="w-4 h-4"
+                                                                        />
+                                                                    </Button>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        color="red"
+                                                                        className="flex items-center gap-2"
+                                                                        onClick={() =>
+                                                                            openRejectDialog(
+                                                                                _id,
+                                                                            )}
+                                                                    >
+                                                                        <XCircleIcon
+                                                                            strokeWidth={2}
+                                                                            className="w-4 h-4"
+                                                                        />
+                                                                    </Button>
+                                                                </>
+                                                            )}
+                                                            <Tooltip
+                                                                content="Xem"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale: 1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale: 0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
-                                                                <EyeIcon
-                                                                    strokeWidth={2}
-                                                                    className="w-4 h-4"
-                                                                />
-                                                            </Button>
-                                                        </Tooltip>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="blue"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openDetailDialog(
+                                                                            _id,
+                                                                        )}
+                                                                >
+                                                                    <EyeIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+
+                                {/* Thêm phân trang */}
+                                <div className="flex items-center gap-4 justify-center mt-6 mb-4">
+                                    <Button
+                                        variant="text"
+                                        className="flex items-center gap-2"
+                                        onClick={() => setCurrentPage(prev => prev - 1)}
+                                        disabled={currentPage === 1}
+                                    >
+                                        <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                                    </Button>
+
+                                    <div className="flex items-center gap-2">
+                                        {[...Array(totalPages)].map((_, index) => (
+                                            <Button
+                                                key={index + 1}
+                                                variant={currentPage === index + 1 ? "gradient" : "text"}
+                                                color="blue"
+                                                onClick={() => setCurrentPage(index + 1)}
+                                                className="w-10 h-10"
+                                            >
+                                                {index + 1}
+                                            </Button>
+                                        ))}
+                                    </div>
+
+                                    <Button
+                                        variant="text"
+                                        className="flex items-center gap-2"
+                                        onClick={() => setCurrentPage(prev => prev + 1)}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </>
                         )}
                 </CardBody>
             </Card>
@@ -407,83 +459,137 @@ const ApproveEvents = () => {
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
-                size="md"
+                size="lg"
+                className="min-w-[80%]"
             >
-                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
+                <DialogHeader className="text-2xl font-bold">
                     Chi tiết Sự kiện
                 </DialogHeader>
                 {detailEvent && (
-                    <DialogBody
-                        divider
-                        className="grid grid-cols-2 gap-4  overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]"
-                    >
-                        <Typography>Tên sự kiện: {detailEvent.ten}</Typography>
-                        <Typography>
-                            Ngày tổ chức: {new Date(detailEvent.ngayToChuc)
-                                .toLocaleDateString()}
-                        </Typography>
-                        <Typography>
-                            Thời gian:{" "}
-                            {`${detailEvent.thoiGianBatDau} - ${detailEvent.thoiGianKetThuc}`}
-                        </Typography>
-                        <Typography>Địa điểm: {detailEvent.diaDiem}</Typography>
-                        <Typography className="col-span-2">
-                            Nội dung: {detailEvent.noiDung}
-                        </Typography>
-                        <Typography>
-                            Ngân sách chi tiêu:{" "}
-                            {detailEvent.nganSachChiTieu.toLocaleString()} VND
-                        </Typography>
-                        <Typography>
-                            Người phụ trách: {detailEvent.nguoiPhuTrach}
-                        </Typography>
-                        <Typography className="col-span-2">
-                            Khách mời: {detailEvent.khachMoi.join(", ")}{" "}
-                            {/* Hiển thị danh sách khách mời */}
-                        </Typography>
-                        <Typography>
-                            Câu lạc bộ: {detailEvent.club &&
-                                    typeof detailEvent.club === "object"
-                                ? detailEvent.club.ten
-                                : typeof detailEvent.club === "string"
-                                ? detailEvent.club
-                                : "Không xác định"}
-                        </Typography>
-                        <Typography>
-                            Trạng thái:{" "}
-                            <span
-                                className={`text-${
-                                    getStatusColor(detailEvent.trangThai)
-                                }-500`}
-                            >
-                                {getStatusText(detailEvent.trangThai)}
-                            </span>
-                        </Typography>
-                        {detailEvent && detailEvent.trangThai === "tuChoi" &&
-                            detailEvent.lyDoTuChoi && (
-                            <div className="col-span-1 md:col-span-2">
-                                <Typography
-                                    variant="h6"
-                                    color="red"
-                                    className="mb-4"
-                                >
-                                    Lý do từ chối
-                                </Typography>
-                                <div className="p-4 rounded-lg bg-red-50">
-                                    <Typography className="text-red-600">
-                                        {detailEvent.lyDoTuChoi}
-                                    </Typography>
-                                </div>
-                            </div>
-                        )}
+                    <DialogBody divider className="h-[70vh] overflow-y-auto">
+                        <div className="grid gap-6">
+                            {/* Thông tin cơ bản */}
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th colSpan="4" className="bg-blue-50 p-3 text-left text-lg font-bold text-blue-900">
+                                            Thông tin cơ bản
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th className="border p-3 bg-gray-50 w-1/4">Tên sự kiện</th>
+                                        <td className="border p-3" colSpan="3">{detailEvent.ten}</td>
+                                    </tr>
+                                    <tr>
+                                        <th className="border p-3 bg-gray-50">Ngày tổ chức</th>
+                                        <td className="border p-3">
+                                            {new Date(detailEvent.ngayToChuc).toLocaleDateString()}
+                                        </td>
+                                        <th className="border p-3 bg-gray-50">Thời gian</th>
+                                        <td className="border p-3">
+                                            {`${detailEvent.thoiGianBatDau} - ${detailEvent.thoiGianKetThuc}`}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th className="border p-3 bg-gray-50">Địa điểm</th>
+                                        <td className="border p-3">{detailEvent.diaDiem}</td>
+                                        <th className="border p-3 bg-gray-50">Người phụ trách</th>
+                                        <td className="border p-3">{detailEvent.nguoiPhuTrach}</td>
+                                    </tr>
+                                    <tr>
+                                        <th className="border p-3 bg-gray-50">CLB tổ chức</th>
+                                        <td className="border p-3">
+                                            {detailEvent.club && typeof detailEvent.club === "object"
+                                                ? detailEvent.club.ten
+                                                : typeof detailEvent.club === "string"
+                                                ? detailEvent.club
+                                                : "Không xác định"}
+                                        </td>
+                                        <th className="border p-3 bg-gray-50">Trạng thái</th>
+                                        <td className="border p-3">
+                                            <Typography
+                                                className="font-semibold"
+                                                color={getStatusColor(detailEvent.trangThai)}
+                                            >
+                                                {getStatusText(detailEvent.trangThai)}
+                                            </Typography>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            {/* Nội dung sự kiện */}
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th className="bg-blue-50 p-3 text-left text-lg font-bold text-blue-900">
+                                            Nội dung sự kiện
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td className="border p-3 whitespace-pre-line">
+                                            {detailEvent.noiDung}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            {/* Thông tin khác */}
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th colSpan="2" className="bg-blue-50 p-3 text-left text-lg font-bold text-blue-900">
+                                            Thông tin khác
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th className="border p-3 bg-gray-50 w-1/4">Ngân sách chi tiêu</th>
+                                        <td className="border p-3 font-semibold text-blue-600">
+                                            {detailEvent.nganSachChiTieu.toLocaleString()} VND
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th className="border p-3 bg-gray-50">Khách mời</th>
+                                        <td className="border p-3">
+                                            {detailEvent.khachMoi.join(", ") || "Không có"}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            {/* Lý do từ chối (nếu có) */}
+                            {detailEvent.trangThai === "tuChoi" && detailEvent.lyDoTuChoi && (
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th className="bg-red-50 p-3 text-left text-lg font-bold text-red-900">
+                                                Lý do từ chối
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td className="border p-3 text-red-600">
+                                                {detailEvent.lyDoTuChoi}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
                     </DialogBody>
                 )}
                 <DialogFooter>
                     <Button
-                        variant="text"
-                        color="red"
+                        variant="gradient"
+                        color="blue"
                         onClick={() => setIsDetailDialogOpen(false)}
-                        className="mr-1"
                     >
                         Đóng
                     </Button>

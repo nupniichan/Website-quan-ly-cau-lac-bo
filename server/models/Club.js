@@ -12,7 +12,8 @@ const clubSchema = new mongoose.Schema({
     giaoVienPhuTrach: { type: String, required: true },
     mieuTa: { type: String, required: true },
     quyDinh: { type: String, required: true },
-    truongBanCLB: { type: String, required: true }
+    truongBanCLB: { type: String, required: true },
+    budget: { type: Number, default: 0 }
 });
 
 // Middleware để tự động tăng giá trị clubId

@@ -15,6 +15,7 @@ import {
 import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -40,6 +41,8 @@ const BudgetAllocation = () => {
     const [filterClub, setFilterClub] = useState("");
     const [detailAllocation, setDetailAllocation] = useState(null);
     const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         fetchAllocations();
@@ -194,6 +197,17 @@ const BudgetAllocation = () => {
         });
     }, [allocations, filters]);
 
+    // Tính toán allocations cho trang hiện tại
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentAllocations = filteredAllocations.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredAllocations.length / itemsPerPage);
+
+    // Reset trang khi thay đổi bộ lọc
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filters]);
+
     return (
         <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
@@ -335,19 +349,10 @@ const BudgetAllocation = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredAllocations.map(
-                                (
-                                    {
-                                        _id,
-                                        club,
-                                        amount,
-                                        purpose,
-                                        allocationDate,
-                                    },
-                                    key,
-                                ) => {
+                            {currentAllocations.map(
+                                ({ _id, club, amount, purpose, allocationDate }, key) => {
                                     const className = `py-3 px-5 ${
-                                        key === filteredAllocations.length - 1
+                                        key === currentAllocations.length - 1
                                             ? ""
                                             : "border-b border-blue-gray-50"
                                     }`;
@@ -479,6 +484,86 @@ const BudgetAllocation = () => {
                             )}
                         </tbody>
                     </table>
+
+                    {/* Thêm phân trang */}
+                    <div className="flex items-center gap-4 justify-center mt-6 mb-4">
+                        <Button
+                            variant="text"
+                            className="flex items-center gap-2"
+                            onClick={() => setCurrentPage(prev => prev - 1)}
+                            disabled={currentPage === 1}
+                        >
+                            <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                        </Button>
+
+                        <div className="flex items-center gap-2">
+                            {totalPages <= 5 ? (
+                                [...Array(totalPages)].map((_, index) => (
+                                    <Button
+                                        key={index + 1}
+                                        variant={currentPage === index + 1 ? "gradient" : "text"}
+                                        color="purple"
+                                        onClick={() => setCurrentPage(index + 1)}
+                                        className="w-10 h-10"
+                                    >
+                                        {index + 1}
+                                    </Button>
+                                ))
+                            ) : (
+                                <>
+                                    <Button
+                                        variant={currentPage === 1 ? "gradient" : "text"}
+                                        color="purple"
+                                        onClick={() => setCurrentPage(1)}
+                                        className="w-10 h-10"
+                                    >
+                                        1
+                                    </Button>
+
+                                    {currentPage > 3 && <span className="mx-2">...</span>}
+
+                                    {[...Array(3)].map((_, index) => {
+                                        const pageNumber = Math.min(
+                                            Math.max(currentPage - 1 + index, 2),
+                                            totalPages - 1
+                                        );
+                                        if (pageNumber <= 1 || pageNumber >= totalPages) return null;
+                                        return (
+                                            <Button
+                                                key={pageNumber}
+                                                variant={currentPage === pageNumber ? "gradient" : "text"}
+                                                color="purple"
+                                                onClick={() => setCurrentPage(pageNumber)}
+                                                className="w-10 h-10"
+                                            >
+                                                {pageNumber}
+                                            </Button>
+                                        );
+                                    })}
+
+                                    {currentPage < totalPages - 2 && <span className="mx-2">...</span>}
+
+                                    <Button
+                                        variant={currentPage === totalPages ? "gradient" : "text"}
+                                        color="purple"
+                                        onClick={() => setCurrentPage(totalPages)}
+                                        className="w-10 h-10"
+                                    >
+                                        {totalPages}
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+
+                        <Button
+                            variant="text"
+                            className="flex items-center gap-2"
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            disabled={currentPage === totalPages}
+                        >
+                            Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </CardBody>
             </Card>
 
@@ -486,68 +571,50 @@ const BudgetAllocation = () => {
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
-                size="md"
+                size="lg"
             >
-                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
+                <DialogHeader className="text-2xl font-bold">
                     Chi tiết Phân bổ Ngân sách
                 </DialogHeader>
-                <DialogBody divider>
-                    {detailAllocation && (
-                        <div className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[60vh] sm:max-h-[45vh]">
-                            <div>
-                                <Typography
-                                    variant="small"
-                                    className="font-bold"
-                                >
-                                    Câu lạc bộ:
-                                </Typography>
-                                <Typography>
-                                    {detailAllocation.club?.ten || "N/A"}
-                                </Typography>
-                            </div>
-                            <div>
-                                <Typography
-                                    variant="small"
-                                    className="font-bold"
-                                >
-                                    Số tiền:
-                                </Typography>
-                                <Typography>
-                                    {detailAllocation.amount.toLocaleString()}
-                                    {" "}
-                                    VND
-                                </Typography>
-                            </div>
-                            <div>
-                                <Typography
-                                    variant="small"
-                                    className="font-bold"
-                                >
-                                    Mục đích:
-                                </Typography>
-                                <Typography>
-                                    {detailAllocation.purpose}
-                                </Typography>
-                            </div>
-                            <div>
-                                <Typography
-                                    variant="small"
-                                    className="font-bold"
-                                >
-                                    Ngày phân bổ:
-                                </Typography>
-                                <Typography>
-                                    {new Date(detailAllocation.allocationDate)
-                                        .toLocaleDateString()}
-                                </Typography>
-                            </div>
-                        </div>
-                    )}
-                </DialogBody>
+                {detailAllocation && (
+                    <DialogBody divider className="overflow-y-auto">
+                        <table className="w-full border-collapse">
+                            <thead>
+                                <tr>
+                                    <th colSpan="2" className="bg-purple-50 p-3 text-left text-lg font-bold text-purple-900">
+                                        Thông tin phân bổ
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th className="border p-3 bg-gray-50 w-1/3">Câu lạc bộ</th>
+                                    <td className="border p-3">{detailAllocation.club?.ten || "N/A"}</td>
+                                </tr>
+                                <tr>
+                                    <th className="border p-3 bg-gray-50">Số tiền</th>
+                                    <td className="border p-3 font-semibold text-purple-600">
+                                        {detailAllocation.amount.toLocaleString()} VND
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th className="border p-3 bg-gray-50">Mục đích</th>
+                                    <td className="border p-3">{detailAllocation.purpose}</td>
+                                </tr>
+                                <tr>
+                                    <th className="border p-3 bg-gray-50">Ngày phân bổ</th>
+                                    <td className="border p-3">
+                                        {new Date(detailAllocation.allocationDate).toLocaleDateString()}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </DialogBody>
+                )}
                 <DialogFooter>
                     <Button
-                        variant="text"
-                        color="red"
+                        variant="gradient"
+                        color="purple"
                         onClick={() => setIsDetailDialogOpen(false)}
                     >
                         Đóng
