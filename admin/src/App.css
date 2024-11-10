@@ -1,0 +1,8 @@
+.react-time-picker__wrapper {
+    border-radius: 0.375rem; /* Match the desired roundness */
+    border: 1px solid #ccc; /* Add a border */
+    padding: 0.5rem; /* Adjust padding as necessary */
+}
+.textarea{
+    height:107.5px;
+}

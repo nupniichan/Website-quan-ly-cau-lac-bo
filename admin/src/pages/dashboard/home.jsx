@@ -361,18 +361,18 @@ export function Home() {
             {/* Charts */}
             <div className="grid grid-cols-1 mb-6 gap-y-12 gap-x-6 md:grid-cols-2">
                 <Card>
-                    <CardHeader>
+                    <CardHeader className="p-2">
                         <Typography variant="h6">Thống Kê Sự Kiện</Typography>
                     </CardHeader>
-                    <CardBody>
+                    <CardBody className="h-72">
                         <Line data={schoolEventsData} options={chartOptions} />
                     </CardBody>
                 </Card>
                 <Card>
-                    <CardHeader>
+                    <CardHeader className="p-2">
                         <Typography variant="h6">Thống Kê Giải Thưởng</Typography>
                     </CardHeader>
-                    <CardBody>
+                    <CardBody className="h-72">
                         <Line data={schoolAwardsData} options={chartOptions} />
                     </CardBody>
                 </Card>
