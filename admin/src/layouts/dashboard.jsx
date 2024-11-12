@@ -160,15 +160,17 @@ export function Dashboard() {
             <div className="p-4 xl:ml-80">
                 <DashboardNavbar />
                 <Configurator />
-                <IconButton
+                {/*<IconButton
                     size="lg"
                     color="white"
-                    className="fixed bottom-8 right-8 z-40 rounded-full shadow-blue-gray-900/10"
+                    className="fixed z-40 rounded-full bottom-8 right-8 shadow-blue-gray-900/10"
                     ripple={false}
                     onClick={() => setOpenConfigurator(dispatch, true)}
                 >
-                    <Cog6ToothIcon className="h-5 w-5" />
+                    <Cog6ToothIcon className="w-5 h-5" />
                 </IconButton>
+ */}
+                
                 <div className="mt-16">
                     {/* <h1>&nbsp;</h1> */}
                     <Routes>
