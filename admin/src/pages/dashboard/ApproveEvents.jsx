@@ -21,7 +21,7 @@ import {
     ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 
-const API_URL = "http://4.242.20.80:5000/api";
+const API_URL = "http://4.242.20.80:5500/api";
 
 const ApproveEvents = () => {
     const [events, setEvents] = useState([]);

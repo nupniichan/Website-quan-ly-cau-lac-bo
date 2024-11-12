@@ -4,7 +4,7 @@ import { FaGraduationCap, FaBookReader, FaBrain, FaGlobeAmericas, FaLaptop } fro
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 
-const API_URL = "http://4.242.20.80:5000/api";
+const API_URL = "http://4.242.20.80:5500/api";
 
 // Tạo một component wrapper cho animation khi scroll
 const ScrollReveal = ({ children, delay = 0 }) => {

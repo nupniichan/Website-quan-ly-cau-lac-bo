@@ -29,7 +29,7 @@ import { FaPlus } from "react-icons/fa6";
 import TimePicker from "react-time-picker";
 import "react-time-picker/dist/TimePicker.css";
 
-const API_URL = "http://4.242.20.80:5000/api";
+const API_URL = "http://4.242.20.80:5500/api";
 
 const ManageEvents = () => {
     const [events, setEvents] = useState([]);
