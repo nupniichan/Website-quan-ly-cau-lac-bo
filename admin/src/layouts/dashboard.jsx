@@ -33,6 +33,7 @@ import ManagePrizes from "../pages/dashboard/ManagePrizes.jsx";
 import ActivityReports from "../pages/dashboard/ActivityReports.jsx";
 import Table from "../pages/dashboard/tables.jsx";
 import Profile from "../pages/dashboard/profile.jsx";
+import ManageClubAccountsPR from "@/pages/dashboard/ManageClubAccountsPR.jsx";
 
 export function Dashboard() {
     const [controller, dispatch] = useMaterialTailwindController();
@@ -76,17 +77,23 @@ export function Dashboard() {
             element: <BudgetAllocation />,
         },
         {
-            icon: <CurrencyDollarIcon />,
-            name: "Table",
-            path: "/dashboard/table",
-            element: <Table />,
+            icon: <UserGroupIcon />,
+            name: "Quản lý tài khoản",
+            path: "/dashboard/accounts-pr",
+            element: <ManageClubAccountsPR />,
         },
-        {
-            icon: <CurrencyDollarIcon />,
-            name: "Profile",
-            path: "/dashboard/profile",
-            element: <Profile />,
-        },
+        // {
+        //     icon: <CurrencyDollarIcon />,
+        //     name: "Table",
+        //     path: "/dashboard/table",
+        //     element: <Table />,
+        // },
+        // {
+        //     icon: <CurrencyDollarIcon />,
+        //     name: "Profile",
+        //     path: "/dashboard/profile",
+        //     element: <Profile />,
+        // },
     ];
 
     const studentRoutes = [
@@ -126,18 +133,18 @@ export function Dashboard() {
             path: "/dashboard/activity-reports",
             element: <ActivityReports />,
         },
-        {
-            icon: <CurrencyDollarIcon />,
-            name: "Table",
-            path: "/dashboard/table",
-            element: <Table />,
-        },
-        {
-            icon: <CurrencyDollarIcon />,
-            name: "Profile",
-            path: "/dashboard/profile",
-            element: <Profile />,
-        },
+        // {
+        //     icon: <CurrencyDollarIcon />,
+        //     name: "Table",
+        //     path: "/dashboard/table",
+        //     element: <Table />,
+        // },
+        // {
+        //     icon: <CurrencyDollarIcon />,
+        //     name: "Profile",
+        //     path: "/dashboard/profile",
+        //     element: <Profile />,
+        // },
     ];
 
     const currentRoutes = role === "manager" ? principalRoutes : studentRoutes;
@@ -153,17 +160,19 @@ export function Dashboard() {
             <div className="p-4 xl:ml-80">
                 <DashboardNavbar />
                 <Configurator />
-                <IconButton
+                {/*<IconButton
                     size="lg"
                     color="white"
-                    className="fixed bottom-8 right-8 z-40 rounded-full shadow-blue-gray-900/10"
+                    className="fixed z-40 rounded-full bottom-8 right-8 shadow-blue-gray-900/10"
                     ripple={false}
                     onClick={() => setOpenConfigurator(dispatch, true)}
                 >
-                    <Cog6ToothIcon className="h-5 w-5" />
+                    <Cog6ToothIcon className="w-5 h-5" />
                 </IconButton>
-                <div className="mt-12">
-                    <h1>Dashboard Content</h1>
+ */}
+                
+                <div className="mt-16">
+                    {/* <h1>&nbsp;</h1> */}
                     <Routes>
                         <Route index element={<Home />} />
                         {currentRoutes.map(({ path, element }) => (

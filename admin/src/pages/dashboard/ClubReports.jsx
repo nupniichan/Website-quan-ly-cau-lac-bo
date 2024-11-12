@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import {
     Button,
@@ -14,6 +14,7 @@ import {
     Select,
     Spinner,
     Textarea,
+    Tooltip,
     Typography,
 } from "@material-tailwind/react";
 import {
@@ -21,6 +22,9 @@ import {
     PencilIcon,
     PlusIcon,
     TrashIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    XMarkIcon,
 } from "@heroicons/react/24/solid";
 
 const API_URL = "http://localhost:5500/api";
@@ -44,7 +48,39 @@ const ClubReports = () => {
     });
     const [detailReport, setDetailReport] = useState(null);
     const [editingReportId, setEditingReportId] = useState(null);
-    const [filterClub, setFilterClub] = useState(""); // Thêm state cho bộ lọc
+    const [filterClub, setFilterClub] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [dateFilter, setDateFilter] = useState({
+        startDate: "",
+        endDate: ""
+    });
+
+    const filteredReports = useMemo(() => {
+        return reports.filter(report => {
+            const matchesSearch = report.tenBaoCao
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase());
+
+            const matchesClub = !filterClub || report.club === filterClub;
+
+            const reportDate = new Date(report.ngayBaoCao);
+            const matchesDateRange = (!dateFilter.startDate || new Date(dateFilter.startDate) <= reportDate) &&
+                (!dateFilter.endDate || new Date(dateFilter.endDate) >= reportDate);
+
+            return matchesSearch && matchesClub && matchesDateRange;
+        });
+    }, [reports, searchTerm, filterClub, dateFilter]);
+
+    const ITEMS_PER_PAGE = 10;
+
+    const totalPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE);
+
+    const currentReports = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        return filteredReports.slice(startIndex, endIndex);
+    }, [filteredReports, currentPage]);
 
     const fetchClubs = async () => {
         try {
@@ -144,134 +180,265 @@ const ClubReports = () => {
         setIsDetailDialogOpen(true);
     };
 
-    // Thêm hàm lọc báo cáo
-    const filteredReports = reports.filter(report => 
-        !filterClub || report.club === filterClub
-    );
+    const handleEventSelection = (value) => {
+        const eventIds = Array.isArray(value) ? value : [value];
+        setNewReport({
+            ...newReport,
+            danhSachSuKien: eventIds,
+        });
+    };
 
     return (
-        <div className="mt-12 mb-8 flex flex-col gap-12">
+        <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
                 <CardHeader
                     variant="gradient"
                     color="blue"
-                    className="mb-8 p-6"
+                    className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
                         Báo cáo Câu lạc bộ
                     </Typography>
                 </CardHeader>
-                <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-                    {/* Chỉ giữ lại phần bộ lọc và hiển thị tên câu lạc bộ đã chọn */}
-                    <div className="px-6 mb-4">
-                        <div className="w-72">
-                            <Select
-                                label="Lọc theo câu lạc bộ"
-                                value={filterClub}
-                                onChange={(value) => setFilterClub(value)}
-                            >
-                                <Option value="">Tất cả câu lạc bộ</Option>
-                                {clubs.map((club) => (
-                                    <Option key={club._id} value={club._id}>
-                                        {club.ten}
-                                    </Option>
-                                ))}
-                            </Select>
+
+                <CardBody className="px-0 pt-4 pb-2 overflow-auto">
+                    <div className="flex flex-wrap items-center justify-between gap-4 p-4 px-6">
+                        {/* Cột trái - Tìm kiếm và các bộ lọc */}
+                        <div className="flex flex-wrap items-center gap-4">
+                            {/* Thanh tìm kiếm */}
+                            <div className="w-72">
+                                <Input
+                                    label="Tìm kiếm theo tên báo cáo"
+                                    icon={<i className="fas fa-search" />}
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Select box câu lạc bộ */}
+                            <div className="w-48">
+                                <Select
+                                    label="Câu lạc bộ"
+                                    value={filterClub}
+                                    onChange={(value) => setFilterClub(value)}
+                                >
+                                    <Option value="">Tất cả CLB</Option>
+                                    {clubs.map((club) => (
+                                        <Option key={club._id} value={club._id}>
+                                            {club.ten}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </div>
+
+                            {/* Bộ lọc ngày */}
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Input
+                                        type="date"
+                                        label="Từ ngày"
+                                        value={dateFilter.startDate}
+                                        onChange={(e) => 
+                                            setDateFilter(prev => ({
+                                                ...prev,
+                                                startDate: e.target.value
+                                            }))
+                                        }
+                                    />
+                                </div>
+                                <div>
+                                    <Input
+                                        type="date"
+                                        label="Đến ngày"
+                                        value={dateFilter.endDate}
+                                        onChange={(e) => 
+                                            setDateFilter(prev => ({
+                                                ...prev,
+                                                endDate: e.target.value
+                                            }))
+                                        }
+                                    />
+                                </div>
+
+                                {/* Nút reset tất cả bộ lọc */}
+                                {(dateFilter.startDate || dateFilter.endDate || filterClub || searchTerm) && (
+                                    <Button
+                                        variant="text"
+                                        color="red"
+                                        className="p-2"
+                                        onClick={() => {
+                                            setDateFilter({ startDate: "", endDate: "" });
+                                            setFilterClub("");
+                                            setSearchTerm("");
+                                        }}
+                                    >
+                                        <XMarkIcon className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
                         </div>
-                        {filterClub && (
-                            <Typography
-                                variant="small"
-                                color="blue-gray"
-                                className="mt-2 font-normal"
-                            >
-                                Đang xem báo cáo của: {clubs.find(c => c._id === filterClub)?.ten}
-                            </Typography>
-                        )}
                     </div>
 
+                    {/* Hiển thị kết quả tìm kiếm và lọc */}
+                    {(searchTerm || dateFilter.startDate || dateFilter.endDate || filterClub) && (
+                        <div className="px-6 mb-4">
+                            <Typography variant="small" color="blue-gray">
+                                Tìm thấy {filteredReports.length} kết quả
+                                {searchTerm && ` cho "${searchTerm}"`}
+                                {filterClub && ` tại "${clubs.find(c => c._id === filterClub)?.ten}"`}
+                                {dateFilter.startDate && ` từ ${new Date(dateFilter.startDate).toLocaleDateString('vi-VN')}`}
+                                {dateFilter.endDate && ` đến ${new Date(dateFilter.endDate).toLocaleDateString('vi-VN')}`}
+                            </Typography>
+                        </div>
+                    )}
+
                     {isLoading ? (
-                        <div className="flex justify-center items-center h-64">
-                            <Spinner className="h-16 w-16 text-blue-500/10" />
+                        <div className="flex items-center justify-center h-64 mt-14">
+                            <Spinner className="w-16 h-16 text-blue-500/10" />
                         </div>
                     ) : (
-                        <table className="w-full min-w-[640px] table-auto">
-                            <thead>
-                                <tr>
-                                    {[
-                                        "Tên báo cáo",
-                                        "Ngày báo cáo",
-                                        "Nhân sự phụ trách",
-                                        "Câu lạc bộ",
-                                        "Hành động",
-                                    ].map((el) => (
-                                        <th key={el} className="border-b border-blue-gray-50 py-3 px-5 text-left">
-                                            <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
-                                                {el}
-                                            </Typography>
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredReports.map(
-                                    ({
-                                        _id,
-                                        tenBaoCao,
-                                        ngayBaoCao,
-                                        nhanSuPhuTrach,
-                                        danhSachSuKien,
-                                        danhSachGiai,
-                                        tongNganSachChiTieu,
-                                        tongThu,
-                                        ketQuaDatDuoc,
-                                        club,
-                                    }, key) => {
-                                        const className = `py-3 px-5 ${
-                                            key === filteredReports.length - 1
-                                                ? ""
-                                                : "border-b border-blue-gray-50"
-                                        }`;
+                        <>
+                            <table className="w-full min-w-[640px] table-auto mt-14">
+                                <thead>
+                                    <tr>
+                                        {[
+                                            "Tên báo cáo",
+                                            "Ngày báo cáo",
+                                            "Nhân sự phụ trách",
+                                            "Câu lạc bộ",
+                                            "Hành động",
+                                        ].map((el) => (
+                                            <th
+                                                key={el}
+                                                className="px-5 py-3 text-left border-b border-blue-gray-50"
+                                            >
+                                                <Typography
+                                                    variant="small"
+                                                    className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                                >
+                                                    {el}
+                                                </Typography>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {currentReports.map(
+                                        ({ _id, tenBaoCao, ngayBaoCao, nhanSuPhuTrach, club }, key) => {
+                                            const className = `py-3 px-5 ${
+                                                key === currentReports.length - 1 ? "" : "border-b border-blue-gray-50"
+                                            }`;
 
-                                        return (
-                                            <tr key={_id}>
-                                                <td className={className}>
-                                                    <Typography variant="small" color="blue-gray" className="font-semibold">
-                                                        {tenBaoCao}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {new Date(ngayBaoCao).toLocaleDateString()}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {nhanSuPhuTrach}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {clubs.find(c => c._id === club)?.ten || "N/A"}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <div className="flex items-center gap-2">
-                                                        <Button
-                                                            size="sm"
-                                                            color="green"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() => openDetailDialog(_id)}
+                                            return (
+                                                <tr key={_id}>
+                                                    <td className={className}>
+                                                        <Typography
+                                                            variant="small"
+                                                            color="blue-gray"
+                                                            className="font-semibold"
                                                         >
-                                                            <EyeIcon strokeWidth={2} className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    },
-                                )}
-                            </tbody>
-                        </table>
+                                                            {tenBaoCao}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography
+                                                            variant="small"
+                                                            color="blue-gray"
+                                                            className="font-normal"
+                                                        >
+                                                            {new Date(ngayBaoCao).toLocaleDateString()}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography
+                                                            variant="small"
+                                                            color="blue-gray"
+                                                            className="font-normal"
+                                                        >
+                                                            {nhanSuPhuTrach}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography
+                                                            variant="small"
+                                                            color="blue-gray"
+                                                            className="font-normal"
+                                                        >
+                                                            {clubs.find((c) => c._id === club)?.ten || "N/A"}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <div className="flex items-center gap-2">
+                                                            <Tooltip
+                                                                content="Xem"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale: 1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale: 0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                            >
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="blue"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() => openDetailDialog(_id)}
+                                                                >
+                                                                    <EyeIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        }
+                                    )}
+                                </tbody>
+                            </table>
+
+                            {/* Thêm phân trang */}
+                            <div className="flex items-center gap-4 justify-center mt-6 mb-4">
+                                <Button
+                                    variant="text"
+                                    className="flex items-center gap-2"
+                                    onClick={() => setCurrentPage(prev => prev - 1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                                </Button>
+
+                                <div className="flex items-center gap-2">
+                                    {[...Array(totalPages)].map((_, index) => (
+                                        <Button
+                                            key={index + 1}
+                                            variant={currentPage === index + 1 ? "gradient" : "text"}
+                                            color="blue"
+                                            onClick={() => setCurrentPage(index + 1)}
+                                            className="w-10 h-10"
+                                        >
+                                            {index + 1}
+                                        </Button>
+                                    ))}
+                                </div>
+
+                                <Button
+                                    variant="text"
+                                    className="flex items-center gap-2"
+                                    onClick={() => setCurrentPage(prev => prev + 1)}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </>
                     )}
                 </CardBody>
             </Card>
@@ -289,39 +456,32 @@ const ClubReports = () => {
                     <Input
                         label="Tên báo cáo"
                         value={newReport.tenBaoCao}
-                        onChange={(e) =>
-                            setNewReport({
-                                ...newReport,
-                                tenBaoCao: e.target.value,
-                            })}
+                        onChange={(e) => setNewReport({
+                            ...newReport,
+                            tenBaoCao: e.target.value,
+                        })}
                     />
                     <Input
                         type="date"
                         label="Ngày báo cáo"
                         value={newReport.ngayBaoCao}
-                        onChange={(e) =>
-                            setNewReport({
-                                ...newReport,
-                                ngayBaoCao: e.target.value,
-                            })}
+                        onChange={(e) => setNewReport({
+                            ...newReport,
+                            ngayBaoCao: e.target.value,
+                        })}
                     />
                     <Input
                         label="Nhân sự phụ trách"
                         value={newReport.nhanSuPhuTrach}
-                        onChange={(e) =>
-                            setNewReport({
-                                ...newReport,
-                                nhanSuPhuTrach: e.target.value,
-                            })}
+                        onChange={(e) => setNewReport({
+                            ...newReport,
+                            nhanSuPhuTrach: e.target.value,
+                        })}
                     />
                     <Select
                         label="Danh sách sự kiện"
-                        value={newReport.danhSachSuKien}
-                        onChange={(value) =>
-                            setNewReport({
-                                ...newReport,
-                                danhSachSuKien: value,
-                            })}
+                        value={newReport.danhSachSuKien[0] || ''}
+                        onChange={handleEventSelection}
                         multiple
                     >
                         {events.map((event) => (
@@ -401,116 +561,152 @@ const ClubReports = () => {
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
-                size="xl"
+                size="lg"
+                className="min-w-[80%]"
             >
-                <DialogHeader>Chi tiết Báo cáo</DialogHeader>
+                <DialogHeader className="text-2xl font-bold">
+                    Chi tiết Báo cáo
+                </DialogHeader>
                 {detailReport && (
-                    <DialogBody divider className="grid gap-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
-                                ID: <span className="font-normal">{detailReport._id}</span>
-                            </Typography>
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
-                                Tên báo cáo: <span className="font-normal">{detailReport.tenBaoCao}</span>
-                            </Typography>
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
-                                Ngày báo cáo:{" "}
-                                <span className="font-normal">
-                                    {new Date(detailReport.ngayBaoCao).toLocaleDateString()}
-                                </span>
-                            </Typography>
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
-                                Nhân sự phụ trách:{" "}
-                                <span className="font-normal">{detailReport.nhanSuPhuTrach}</span>
-                            </Typography>
-                        </div>
+                    <DialogBody divider className="h-[70vh] overflow-y-auto">
+                        <div className="grid gap-6">
+                            {/* Thông tin cơ bản */}
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th colSpan="4" className="bg-blue-50 p-2 text-left text-lg font-bold text-blue-900">
+                                            Thông tin cơ bản
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th className="border p-2 bg-gray-50 w-1/4">Tên báo cáo</th>
+                                        <td className="border p-2">{detailReport.tenBaoCao}</td>
+                                        <th className="border p-2 bg-gray-50 w-1/4">Ngày báo cáo</th>
+                                        <td className="border p-2">
+                                            {new Date(detailReport.ngayBaoCao).toLocaleDateString()}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th className="border p-2 bg-gray-50">Nhân sự phụ trách</th>
+                                        <td className="border p-2">{detailReport.nhanSuPhuTrach}</td>
+                                        <th className="border p-2 bg-gray-50">Câu lạc bộ</th>
+                                        <td className="border p-2">
+                                            {clubs.find(c => c._id === detailReport.club)?.ten || "N/A"}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
 
-                        <div className="border-t pt-4">
-                            <Typography variant="small" color="blue-gray" className="font-semibold mb-2">
-                                Danh sách sự kiện:
-                            </Typography>
-                            <ul className="list-disc pl-5">
-                                {detailReport.danhSachSuKien.map((event) => (
-                                    <li key={event._id} className="mb-2">
-                                        <div className="grid gap-1">
-                                            <Typography variant="small" className="font-semibold">
-                                                {event.tenSuKien}
-                                            </Typography>
-                                            <Typography variant="small" className="font-normal">
-                                                Người phụ trách: {event.nguoiPhuTrach}
-                                            </Typography>
-                                            <Typography variant="small" className="font-normal">
-                                                Ngày tổ chức: {new Date(event.ngayToChuc).toLocaleDateString()}
-                                            </Typography>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                            {/* Danh sách sự kiện */}
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th colSpan="4" className="bg-blue-50 p-2 text-left text-lg font-bold text-blue-900">
+                                            Danh sách sự kiện
+                                        </th>
+                                    </tr>
+                                    <tr className="bg-gray-50">
+                                        <th className="border p-2">Tên sự kiện</th>
+                                        <th className="border p-2">Người phụ trách</th>
+                                        <th className="border p-2">Ngày tổ chức</th>
+                                        <th className="border p-2">Địa điểm</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {detailReport.danhSachSuKien.map((event) => (
+                                        <tr key={event._id}>
+                                            <td className="border p-2">{event.tenSuKien}</td>
+                                            <td className="border p-2">{event.nguoiPhuTrach}</td>
+                                            <td className="border p-2">
+                                                {new Date(event.ngayToChuc).toLocaleDateString()}
+                                            </td>
+                                            <td className="border p-2">{event.diaDiem}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
 
-                        <div className="border-t pt-4">
-                            <Typography variant="small" color="blue-gray" className="font-semibold mb-2">
-                                Danh sách giải thưởng:
-                            </Typography>
-                            <ul className="list-disc pl-5">
-                                {detailReport.danhSachGiai.map((giai) => (
-                                    <li key={giai._id} className="mb-2">
-                                        <div className="grid gap-1">
-                                            <Typography variant="small" className="font-semibold">
-                                                {giai.tenGiai}
-                                            </Typography>
-                                            <Typography variant="small" className="font-normal">
-                                                Người nhận giải: {giai.nguoiNhanGiai}
-                                            </Typography>
-                                            <Typography variant="small" className="font-normal">
-                                                Ngày nhận giải: {new Date(giai.ngayNhanGiai).toLocaleDateString()}
-                                            </Typography>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                            {/* Danh sách giải thưởng */}
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th colSpan="4" className="bg-blue-50 p-2 text-left text-lg font-bold text-blue-900">
+                                            Danh sách giải thưởng
+                                        </th>
+                                    </tr>
+                                    <tr className="bg-gray-50">
+                                        <th className="border p-2">Tên giải thưởng</th>
+                                        <th className="border p-2">Loi giải</th>
+                                        <th className="border p-2">Ngày đạt giải</th>
+                                        <th className="border p-2">Thành vi��n đạt giải</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {detailReport.danhSachGiaiThuong?.map((prize) => (
+                                        <tr key={prize._id}>
+                                            <td className="border p-2">{prize.tenGiaiThuong}</td>
+                                            <td className="border p-2">{prize.loaiGiai}</td>
+                                            <td className="border p-2">
+                                                {new Date(prize.ngayDatGiai).toLocaleDateString()}
+                                            </td>
+                                            <td className="border p-2">{prize.thanhVienDatGiai}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
 
-                        <div className="grid grid-cols-2 gap-4 border-t pt-4">
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
-                                Tổng ngân sách chi tiêu:{" "}
-                                <span className="font-normal">
-                                    {detailReport.tongNganSachChiTieu.toLocaleString()} VND
-                                </span>
-                            </Typography>
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
-                                Tổng thu:{" "}
-                                <span className="font-normal">
-                                    {detailReport.tongThu.toLocaleString()} VND
-                                </span>
-                            </Typography>
-                        </div>
+                            {/* Thông tin tài chính */}
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th colSpan="2" className="bg-green-50 p-2 text-left text-lg font-bold text-green-900">
+                                            Thông tin tài chính
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th className="border p-2 bg-gray-50 w-1/2">Tổng ngân sách chi tiêu</th>
+                                        <td className="border p-2">
+                                            {detailReport.tongNganSachChiTieu.toLocaleString()} VND
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th className="border p-2 bg-gray-50">Tổng thu</th>
+                                        <td className="border p-2">
+                                            {detailReport.tongThu.toLocaleString()} VND
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
 
-                        <div className="border-t pt-4">
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
-                                Câu lạc bộ:{" "}
-                                <span className="font-normal">
-                                    {clubs.find((c) => c._id === detailReport.club)?.ten || "N/A"}
-                                </span>
-                            </Typography>
-                        </div>
-
-                        <div className="border-t pt-4">
-                            <Typography variant="small" color="blue-gray" className="font-semibold">
-                                Kết quả đạt được:
-                            </Typography>
-                            <Typography variant="small" className="font-normal mt-1">
-                                {detailReport.ketQuaDatDuoc}
-                            </Typography>
+                            {/* Kết quả đạt được */}
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th className="bg-yellow-50 p-2 text-left text-lg font-bold text-yellow-900">
+                                            Kết quả đạt được
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td className="border p-2 whitespace-pre-line">
+                                            {detailReport.ketQuaDatDuoc}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </DialogBody>
                 )}
                 <DialogFooter>
                     <Button
-                        variant="text"
-                        color="red"
+                        variant="gradient"
+                        color="blue"
                         onClick={() => setIsDetailDialogOpen(false)}
-                        className="mr-1"
                     >
                         Đóng
                     </Button>

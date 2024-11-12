@@ -13,12 +13,12 @@ const AboutSchool = () => {
       {/* School Introduction Section */}
       <div className="flex flex-col md:block">
         {/* Background image for all devices */}
-        <div 
-          className="relative bg-cover bg-center h-[200px] sm:h-[300px] md:h-[25rem] w-full" 
+        <div
+          className="relative bg-cover bg-center h-[200px] sm:h-[300px] md:h-[25rem] w-full"
           style={{backgroundImage: "url('/public/imgs/310241947-586932963121590-3034296582378048999-n-16802426955401349567464.jpg')"}}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-black to-transparent opacity-70"></div>
-          
+
           {/* Text overlay for medium and larger screens */}
           <div className="hidden md:flex items-end h-full">
             <div className="max-w-6xl mx-auto relative z-10 w-full pb-[7rem] px-4 md:px-2">
@@ -36,7 +36,7 @@ const AboutSchool = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Text content for mobile and tablet */}
         <div className="md:hidden px-4 py-6 sm:py-8 bg-[#F5F5F5]">
           <div className="max-w-6xl mx-auto">
@@ -73,9 +73,9 @@ const AboutSchool = () => {
               </div>
             </div>
             <div className="lg:w-1/2 mt-6 lg:mt-0 lg:-ml-24 z-10">
-              <img 
-                src="/public/imgs/ay8a6925.jpg" 
-                alt="Hoạt động ngoại khoá" 
+              <img
+                src="/public/imgs/ay8a6925.jpg"
+                alt="Hoạt động ngoại khoá"
                 className="w-full h-auto object-cover rounded-lg border-4 border-white shadow-lg"
               />
             </div>
@@ -99,14 +99,14 @@ const AboutSchool = () => {
               </div>
             </div>
             <div className="lg:w-1/2 mt-6 lg:mt-0 lg:-mr-24 z-10 space-y-4">
-              <img 
-                src="/public/imgs/csvc1.jpg" 
-                alt="Cơ sở vật chất 1" 
+              <img
+                src="/public/imgs/csvc1.jpg"
+                alt="Cơ sở vật chất 1"
                 className="w-full h-auto object-cover rounded-lg border-4 border-white shadow-lg"
               />
-              <img 
-                src="/public/imgs/csvc2.jpg" 
-                alt="Cơ sở vật chất 2" 
+              <img
+                src="/public/imgs/csvc2.jpg"
+                alt="Cơ sở vật chất 2"
                 className="w-full h-auto object-cover rounded-lg border-4 border-white shadow-lg"
               />
             </div>
@@ -139,7 +139,7 @@ const AboutSchool = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex flex-col md:flex-row gap-4">
               <div className="w-full md:w-1/2 flex items-center">
                 <div>

@@ -93,19 +93,31 @@ router.post('/add-event', async (req, res) => {
             return res.status(404).json({ message: 'Club not found' });
         }
 
+        // Kiểm tra ngân sách hiện có
+        if (clubDoc.budget < eventData.nganSachChiTieu) {
+            return res.status(400).json({ 
+                message: 'Ngân sách không đủ để tổ chức sự kiện' 
+            });
+        }
+
         const newEvent = new Event({
             ...eventData,
             khachMoi: Array.isArray(khachMoi) ? khachMoi : [khachMoi],
             club: clubDoc._id,
-            trangThai: 'choDuyet' // Set default status to 'choDuyet'
+            trangThai: 'choDuyet'
         });
 
         await newEvent.save();
 
-        // Update the club's suKien array
-        await Club.findByIdAndUpdate(clubDoc._id, {
-            $push: { suKien: newEvent._id }
-        });
+        // Cập nhật ngân sách của CLB khi sự kiện được duyệt
+        if (newEvent.trangThai === 'daDuyet') {
+            await Club.findByIdAndUpdate(clubDoc._id, {
+                $inc: { 
+                    budget: -eventData.nganSachChiTieu,
+                    suKien: newEvent._id 
+                }
+            });
+        }
 
         res.status(201).json(newEvent);
     } catch (error) {
@@ -272,7 +284,7 @@ router.put('/update-event/:id', async (req, res) => {
  * @swagger
  * /api/delete-event/{id}:
  *   delete:
- *     summary: Xoá s�� kiện
+ *     summary: Xoá sự kiện
  *     parameters:
  *       - in: path
  *         name: id
@@ -312,7 +324,13 @@ router.delete('/delete-event/:id', async (req, res) => {
 // Lấy danh sách sự kiện chờ duyệt
 router.get('/get-pending-events', async (req, res) => {
     try {
-        const pendingEvents = await Event.find({ trangThai: 'choDuyet' });
+        const pendingEvents = await Event.find({ trangThai: 'choDuyet' })
+            .populate({
+                path: 'club',
+                select: 'ten'  // Chỉ lấy trường 'ten' của club
+            })
+            .sort({ ngayToChuc: -1 })
+            .limit(10);
         res.status(200).json(pendingEvents);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -322,10 +340,31 @@ router.get('/get-pending-events', async (req, res) => {
 // Phê duyệt sự kiện
 router.put('/approve-event/:id', async (req, res) => {
     try {
-        const updatedEvent = await Event.findByIdAndUpdate(req.params.id, { trangThai: 'daDuyet' }, { new: true });
-        if (!updatedEvent) {
+        const event = await Event.findById(req.params.id);
+        if (!event) {
             return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
         }
+
+        // Kiểm tra và cập nhật ngân sách CLB
+        const club = await Club.findById(event.club);
+        if (club.budget < event.nganSachChiTieu) {
+            return res.status(400).json({ 
+                message: 'Ngân sách CLB không đủ để tổ chức sự kiện' 
+            });
+        }
+
+        // Cập nhật trạng thái sự kiện và trừ ngân sách
+        const updatedEvent = await Event.findByIdAndUpdate(
+            req.params.id, 
+            { trangThai: 'daDuyet' }, 
+            { new: true }
+        );
+
+        // Trừ ngân sách của CLB
+        await Club.findByIdAndUpdate(event.club, {
+            $inc: { budget: -event.nganSachChiTieu }
+        });
+
         res.status(200).json(updatedEvent);
     } catch (error) {
         res.status(500).json({ message: error.message });

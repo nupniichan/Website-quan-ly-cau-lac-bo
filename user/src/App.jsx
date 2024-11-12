@@ -3,7 +3,6 @@ import Footer from './components/Footer.jsx';
 import Header from './components/Header.jsx';
 import Navbar from './components/Navbar.jsx';
 import './App.css';
-import logoImage from '../public/imgs/logo.png';
 import Homepage from './Homepage.jsx';
 import AboutSchool from './AboutSchool.jsx';
 import ClubList from './ClubList.jsx';
@@ -19,16 +18,12 @@ function App() {
   return (
     <Router>
       <div className="app relative">
-        <div className="header">
+        <div className="header z-50">
           <Header />
         </div>
 
-        {/* Image positioned on top of the header and navbar */}
-        <div className="image-container">
-          <img src={logoImage} alt="Logo" className="logo"/> {/* Logo Image */}
-        </div>
 
-        <div className="navbar">
+        <div className="">
           <Navbar />
         </div>
         
