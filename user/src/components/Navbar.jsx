@@ -3,10 +3,26 @@ import { Link } from 'react-router-dom';
 import { Menu } from 'lucide-react'; // Import the Menu icon
 
 const Navbar = () => {
+<<<<<<< HEAD
+    return (
+      <nav className="relative flex justify-between items-center h-12 bg-white border-b border-gray-300 w-full">
+        {/* Navigation Links */}
+        <ul className="flex space-x-6 z-20 ml-[25%] font-bold">
+        <Link to="/" className="text-black no-underline"><li className="text-black no-underline">Trang chủ</li></Link>
+        <Link to="/about" className="text-black no-underline"><li className="text-black no-underline">Về trường</li></Link>
+          <Link to="/clubs" className="text-black no-underline"><li className="text-black no-underline">Chương trình học</li></Link>
+          <Link to="/curriculum" className="text-black no-underline"><li className="text-black no-underline">Khoa học - Công nghệ</li></Link>
+          <Link to="/international-cooperation" className="text-black no-underline"><li className="text-black no-underline">Hợp tác</li></Link>
+          <Link to="/admission" className="text-black no-underline"><li className="text-black no-underline">Tuyển sinh lớp 10</li></Link>
+        </ul>
+      </nav>
+    );
+=======
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen((prev) => !prev);
+>>>>>>> 23d7bb75261c12e106af89be1a6d371714633fc6
   };
 
   return (
