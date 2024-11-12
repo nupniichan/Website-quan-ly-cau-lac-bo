@@ -375,59 +375,10 @@ const Homepage = () => {
           <h2 className="text-xl sm:text-2xl font-bold text-[#004D86] mb-6 sm:mb-8">
             Tin tức & sự kiện
           </h2>
-<<<<<<< HEAD
           <div className="pb-6">
             <div className="flex flex-wrap justify-center gap-4">
               {/* Center items */}
               {newsItems.slice(0, newsToShow).map((news, index) => (
-=======
-          <div className="overflow-x-auto pb-6 select-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflow: 'hidden' }}
-               onMouseDown={handleMouseDown}
-               onMouseLeave={handleMouseLeave}
-               onMouseUp={handleMouseUp}
-               onMouseMove={handleMouseMove}
-               ref={scrollContainerRef}>
-            <div className="flex space-x-4 sm:space-x-6 min-w-max">
-              {[
-                {
-                  title:
-                    "Học sinh hào hứng trải nghiệm sự 'thay da đổi thịt' của trường",
-                  image: "../public/imgs/news1.jpg",
-                  date: "3/10/2024",
-                  description:
-                    "Chiều ngày 3/10/2024 tại Đà Nẵng, Trung tâm ngoại ngữ Đại học RMIT tại Đà Nẵng đã tổ chức lễ ra mắt chương trình Luyện thi IELTS mới,...",
-                },
-                {
-                  title: "Nhiều trường và phụ huynh ủng hộ đi học lại sau Tết",
-                  image: "../public/imgs/news2.jpg",
-                  date: "3/10/2024",
-                  description:
-                    "Khi nhóm chat của phụ huynh xuất hiện câu hỏi \"Nếu trường mở cửa sau Tết, có cho con đi học không?\", chị Diệu Linh, 42 tuổi, nhanh chóng chn \"Có\".",
-                },
-                {
-                  title: "Tích hợp tiếng Anh giúp người học gặt hái thành công",
-                  image: "../public/imgs/news3.jpg",
-                  date: "3/10/2024",
-                  description:
-                    "Chủ trương đưa tiếng Anh ngôn ngữ thứ hai gần đây là một bước tiến lớn nhằm tiếp tục giúp người học thành công trong cuộc sống và công việc.",
-                },
-                {
-                  title: "Hồi sinh di sản văn hóa với công nghệ 3D tiên tiến",
-                  image: "../public/imgs/news4.jpg",
-                  date: "7/10/2024",
-                  description:
-                    "Adobe tổ chức tập huấn cho các bảo tàng và trung tâm lưu trữ trong nước nhằm tìm hiểu về vai trò của công nghệ 3D bảo tồn văn hóa di sản bản địa..",
-                },
-                {
-                  title: "Đưa bền vững vào giảng dạy truyền thông và thiết kế",
-                  image: "../public/imgs/news5.jpg",
-                  date: "5/10/2024",
-                  description:
-                    "Phù hợp với các Mục tiêu phát triển bền vững và 95,7% trong số đó được tích hợp tính bền vững vào tài liệu giảng dạy và học tập.",
-                },
-                // Add more news items here if needed
-              ].map((news, index) => (
->>>>>>> 23d7bb75261c12e106af89be1a6d371714633fc6
                 <div
                   key={index}
                   className="w-[300px] bg-white rounded-lg shadow-md overflow-hidden flex flex-col cursor-pointer"

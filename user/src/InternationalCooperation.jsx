@@ -3,15 +3,19 @@ import { useState } from 'react'; // Import useState for state management
 import { Link } from 'react-router-dom'; // Import Link for navigation
 
 const CooperationItem = ({ title, date, content, imageUrl, id }) => (
-  <Link to={`/international-cooperation/${id}`} className="flex mb-8 pb-8 border-b border-gray-200 no-underline">
-    <img src={imageUrl} alt={title} className="w-[15rem] h-42 object-cover mr-6" />
-    <div className="flex-1 space-y-4">
-      <h3 className="text-[#000000] text-xl font-semibold mt-0">{title}</h3>
+  <Link to={`/international-cooperation/${id}`} className="flex flex-col md:flex-row mb-8 pb-8 border-b border-gray-200 no-underline">
+    <img 
+      src={imageUrl} 
+      alt={title} 
+      className="w-full md:w-[15rem] h-48 md:h-42 object-cover mb-4 md:mb-0 md:mr-6" 
+    />
+    <div className="flex-1 space-y-2 md:space-y-4">
+      <h3 className="text-[#000000] text-lg md:text-xl font-semibold mt-0">{title}</h3>
       <p className="text-gray-600 text-sm mb-2 flex items-center">
-        <span className="mr-1" aria-hidden="true">&#128337;</span> {/* Clock emoji */}
+        <span className="mr-1" aria-hidden="true">&#128337;</span>
         {date}
       </p>
-      <p className="text-gray-800">{content}</p>
+      <p className="text-gray-800 text-sm md:text-base line-clamp-3 md:line-clamp-4">{content}</p>
     </div>
   </Link>
 );
@@ -26,7 +30,7 @@ CooperationItem.propTypes = {
 };
 
 const InternationalCooperation = () => {
-  const initialCooperationItems = [
+  const allCooperationItems = [
     // Existing articles with ids
     {
       id: '1',
@@ -102,25 +106,32 @@ const InternationalCooperation = () => {
 
   const [showMore, setShowMore] = useState(false);
 
+  const initialItems = allCooperationItems.slice(0, 5);
+  const additionalItems = allCooperationItems.slice(5);
+
   const toggleShowMore = () => {
     setShowMore((prev) => !prev);
   };
 
   return (
-    <div className="font-sans max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-[#004D86] text-center mb-8">HỢP TÁC QUỐC TẾ</h1>
-      {initialCooperationItems.map((item, index) => (
+    <div className="font-sans max-w-6xl mx-auto p-4 md:p-6">
+      <h1 className="text-2xl md:text-3xl font-bold text-[#004D86] text-center mb-6 md:mb-8">
+        HỢP TÁC QUỐC TẾ
+      </h1>
+      {initialItems.map((item, index) => (
         <CooperationItem key={index} {...item} />
       ))}
-      {showMore && additionalCooperationItems.map((item, index) => (
-        <CooperationItem key={index + initialCooperationItems.length} {...item} />
+      {showMore && additionalItems.map((item, index) => (
+        <CooperationItem key={`additional-${index}`} {...item} />
       ))}
-      <button 
-        className="bg-yellow-400 text-black py-2 px-6 rounded text-lg font-semibold block mx-auto hover:bg-yellow-500 transition duration-300"
-        onClick={toggleShowMore}
-      >
-        {showMore ? 'Ẩn bớt' : 'Xem thêm'}
-      </button>
+      {additionalItems.length > 0 && (
+        <button 
+          className="bg-yellow-400 text-black py-2 px-4 md:px-6 rounded text-base md:text-lg font-semibold block mx-auto hover:bg-yellow-500 transition duration-300 w-full md:w-auto"
+          onClick={toggleShowMore}
+        >
+          {showMore ? 'Ẩn bớt' : 'Xem thêm'}
+        </button>
+      )}
     </div>
   );
 };

@@ -5,7 +5,7 @@ const Footer = () => {
   return (
     <footer className="w-full border-t-[1px] border-black mt-4">
       {/* Main Content Section */}
-      <div className="flex flex-col sm:flex-row justify-between px-4 sm:px-16 py-6 sm:py-10 bg-gray-100 space-y-6 sm:space-y-0 ">
+      <div className="flex flex-col sm:flex-row justify-between px-4 sm:px-16 py-6 sm:py-10 bg-[#F2F2F2F2] space-y-6 sm:space-y-0 ">
       <div className="space-y-2 lg:ml-32">
         <h3 className="font-bold relative inline-block pb-2 after:content-[''] after:block after:w-16 after:border-b-2 after:border-gray-300 after:mt-2">
           Môn học giảng dạy
