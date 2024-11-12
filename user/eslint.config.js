@@ -37,6 +37,7 @@ export default [
       'react/jsx-key': 'off',  
       'react/prop-types': 'off', 
       'react/no-unescaped-entities': 'off',
+      'no-undef': 'off',
     },
   },
 ]

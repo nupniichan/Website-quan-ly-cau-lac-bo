@@ -156,16 +156,16 @@ const ICDetails = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-6 font-sans">
-      <h1 className="text-4xl font-bold text-[#004D86] mb-4">{article.title}</h1>
-      <p className="text-gray-600 mb-4 text-lg">
-        <span className="mr-1" aria-hidden="true">&#128337;</span> {/* Clock emoji */}
-        {article.date}
-      </p>
+      <h1 className="text-4xl font-bold text-[#004D86] mb-4 text-center">{article.title}</h1>
       <img 
         src={article.imageUrl} 
         alt={article.title} 
-        className="w-full md:w-2/3 h-auto mb-4 object-cover mx-auto" // Adjusted size
+        className="w-full md:w-2/3 h-auto mb-4 object-cover mx-auto"
       />
+      <p className="text-gray-600 mb-4 text-lg text-start">
+        <span className="mr-1" aria-hidden="true">&#128337;</span>
+        {article.date}
+      </p>
       <p className="text-gray-800 mb-4 text-lg">{article.content}</p>
       <Link to="/international-cooperation" className="bg-yellow-400 text-black py-3 px-8 rounded text-lg font-semibold block mx-auto hover:bg-yellow-500 transition duration-300">
         Quay lại

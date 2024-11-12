@@ -1,8 +1,30 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaGraduationCap, FaBookReader, FaBrain, FaGlobeAmericas, FaLaptop } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { useInView } from 'framer-motion';
 
 const API_URL = "http://localhost:5500/api";
+
+// Tạo một component wrapper cho animation khi scroll
+const ScrollReveal = ({ children, delay = 0 }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, {
+    once: true,
+    margin: "0px 0px -100px 0px" // Trigger animation khi element cách bottom viewport 100px
+  });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+      transition={{ duration: 0.6, delay }}
+    >
+      {children}
+    </motion.div>
+  );
+};
 
 const Homepage = () => {
   const navigate = useNavigate();
@@ -134,10 +156,29 @@ const Homepage = () => {
     navigate('/news/' + index); 
   };
 
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6 }
+  };
+
+  const staggerChildren = {
+    animate: {
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
   return (
     <div>
 {/* Banner Section */}
-      <div className="relative">
+      <motion.div 
+        className="relative"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1 }}
+      >
         <img src="../public/imgs/banner.jpg" alt="Trường trung học phổ thông" className="w-full object-cover h-[300px] sm:h-[400px] md:h-[500px]"/>
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 p-4 sm:p-6 border-t-4 border-black w-11/12 sm:w-5/6 md:w-4/6"
              style={{
@@ -154,114 +195,135 @@ const Homepage = () => {
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Search Bar */}
-      <div className="max-w-3xl mx-auto mt-8 px-4">
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 text-[#004D86]">Tìm kiếm</h2>
-        <div className="flex flex-col items-center">
-          <div className="w-full bg-[#EFEFEF] p-2 rounded-lg">
-            <div className="w-full bg-white rounded-lg shadow-md overflow-hidden flex">
-              <input
-                type="text"
-                placeholder="Bạn cần tìm gì?"
-                className="flex-grow px-4 py-2 focus:outline-none"
-              />
-              <button className="bg-red-600 text-white px-6 hover:bg-red-700 transition duration-300">
-                Tìm kiếm
+      <ScrollReveal>
+        <div className="max-w-3xl mx-auto mt-8 px-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 text-[#004D86]">Tìm kiếm</h2>
+          <div className="flex flex-col items-center">
+            <div className="w-full bg-[#EFEFEF] p-2 rounded-lg">
+              <div className="w-full bg-white rounded-lg shadow-md overflow-hidden flex">
+                <input
+                  type="text"
+                  placeholder="Bạn cần tìm gì?"
+                  className="flex-grow px-4 py-2 focus:outline-none"
+                />
+                <button className="bg-red-600 text-white px-6 hover:bg-red-700 transition duration-300">
+                  Tìm kiếm
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-wrap justify-center mt-4 gap-2">
+              <button className="px-4 py-2 border border-[#004D86] rounded-full text-[#004D86] hover:bg-[#004D86] hover:text-white transition duration-300" onClick={() => navigate(`/clubs`)}>
+                Câu lạc bộ
+              </button>
+              <button className="px-4 py-2 border border-[#004D86] rounded-full text-[#004D86] hover:bg-[#004D86] hover:text-white transition duration-300" onClick={() => navigate(`/admissions`)}>
+                Điểm tuyển sinh
+              </button>
+              <button className="px-4 py-2 border border-[#004D86] rounded-full text-[#004D86] hover:bg-[#004D86] hover:text-white transition duration-300" onClick={() => navigate(`/curriculum`)}>
+                Chương trình học
               </button>
             </div>
           </div>
-          <div className="flex flex-wrap justify-center mt-4 gap-2">
-            <button className="px-4 py-2 border border-[#004D86] rounded-full text-[#004D86] hover:bg-[#004D86] hover:text-white transition duration-300">
-              Câu lạc bộ
-            </button>
-            <button className="px-4 py-2 border border-[#004D86] rounded-full text-[#004D86] hover:bg-[#004D86] hover:text-white transition duration-300">
-              Điểm tuyển sinh
-            </button>
-            <button className="px-4 py-2 border border-[#004D86] rounded-full text-[#004D86] hover:bg-[#004D86] hover:text-white transition duration-300">
-              Chương trình học
-            </button>
-          </div>
         </div>
-      </div>
+      </ScrollReveal>
 
       {/* Curriculum Info Section */}
-      <div className="bg-[#F5F5F5] py-8 sm:py-12 px-4 md:px-8 mt-12">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-xl sm:text-2xl font-bold text-[#004D86] mb-8 sm:mb-12 text-left">
-            Tìm hiểu về chương trình học tập tại trường
-          </h2>
+      <ScrollReveal>
+        <div className="bg-[#F5F5F5] py-8 sm:py-12 px-4 md:px-8 mt-12">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-xl sm:text-2xl font-bold text-[#004D86] mb-8 sm:mb-12 text-left">
+              Tìm hiểu về chương trình học tập tại trường
+            </h2>
 
-          {/* Desktop version */}
-          <div className='hidden lg:flex h-[25rem] pt-1'>
-            <div className='w-1/2 h-auto flex flex-col justify-center'>
-              <h3 className="text-2xl font-semibold mb-4">Chương trình giáo dục phổ thông</h3>
-              <button className="bg-[#004D86] text-white px-4 py-2 rounded-full hover:bg-red-600 transition duration-300"></button>
+            {/* Desktop version */}
+            <div className='hidden lg:flex h-[25rem] pt-1'>
+              <div className='w-1/2 h-auto flex flex-col justify-center'>
+                <h3 className="text-2xl font-semibold mb-4">Chương trình giáo dục phổ thông</h3>
+                <button className="bg-[#004D86] text-white px-4 py-2 rounded-full hover:bg-red-600 transition duration-300"></button>
+              </div>
+              <div className='w-1/2 h-auto relative'>
+        <img
+          src="../public/imgs/cachdaotao.jpg"
+          alt="Curriculum Infographic"
+          className="absolute top-0 left-0 w-2/4 h-full object-contain"
+        />              <div className="absolute top-0 left-0 w-full h-full">
+                  <p className="text-sm absolute top-[4%] left-[24%]">Chú trọng phát triển năng lực cá nhân, nhấn mạnh việc <b>rèn luyện kĩ năng  bồi đắp phẩm chất</b></p>
+                  <p className="text-sm absolute top-[25%] left-[36%]">Cách tiếp cận học tập chủ động thông qua <b>trải nghiệm, suy ngẫm</b></p>
+                  <p className="text-sm absolute top-[44%] left-[25%]">Tập trung <b>phát triển tư duy bậc cao</b> cho học sinh như phân tích, đánh giá, sáng tạo</p>
+                  <p className="text-sm absolute top-[63%] left-[36%]">Giúp học sinh vừa <b>hội nhập toàn cầu</b>, vừa <b>giữ gìn và phát huy bản sắc Việt Nam</b></p>
+                  <p className="text-sm absolute top-[85%] left-[24%]">Học sinh có thể <b>học mọi lúc mọi nơi</b>, kết hợp giữa việc tự học thông qua nền tảng công nghệ và học tập chuyên sâu tại lớp</p>
+                </div>
+              </div>
             </div>
-            <div className='w-1/2 h-auto relative'>
-      <img
-        src="../public/imgs/cachdaotao.jpg"
-        alt="Curriculum Infographic"
-        className="absolute top-0 left-0 w-2/4 h-full object-contain"
-      />              <div className="absolute top-0 left-0 w-full h-full">
-                <p className="text-sm absolute top-[4%] left-[24%]">Chú trọng phát triển năng lực cá nhân, nhấn mạnh việc <b>rèn luyện kĩ năng  bồi đắp phẩm chất</b></p>
-                <p className="text-sm absolute top-[25%] left-[36%]">Cách tiếp cận học tập chủ động thông qua <b>trải nghiệm, suy ngẫm</b></p>
-                <p className="text-sm absolute top-[44%] left-[25%]">Tập trung <b>phát triển tư duy bậc cao</b> cho học sinh như phân tích, đánh giá, sáng tạo</p>
-                <p className="text-sm absolute top-[63%] left-[36%]">Giúp học sinh vừa <b>hội nhập toàn cầu</b>, vừa <b>giữ gìn và phát huy bản sắc Việt Nam</b></p>
-                <p className="text-sm absolute top-[85%] left-[24%]">Học sinh có thể <b>học mọi lúc mọi nơi</b>, kết hợp giữa việc tự học thông qua nền tảng công nghệ và học tập chuyên sâu tại lớp</p>
+
+            {/* Mobile and Tablet version */}
+            <div className="lg:hidden space-y-4 sm:space-y-6">
+              <motion.div 
+                variants={fadeIn}
+                className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow"
+              >
+                <FaGraduationCap className="text-4xl text-[#004D86]" />
+                <p className="text-sm">Chú trọng phát triển năng lực cá nhân, nhấn mạnh việc rèn luyện kĩ năng – bồi đắp phẩm chất</p>
+              </motion.div>
+              <motion.div 
+                variants={fadeIn}
+                className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow"
+              >
+                <FaBookReader className="text-4xl text-[#004D86]" />
+                <p className="text-sm">Cách tiếp cận học tập chủ động thông qua trải nghiệm, suy ngẫm</p>
+              </motion.div>
+              <motion.div 
+                variants={fadeIn}
+                className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow"
+              >
+                <FaBrain className="text-4xl text-[#004D86]" />
+                <p className="text-sm">Tập trung phát triển tư duy bậc cao cho học sinh như phân tích, đánh giá, sáng tạo</p>
+              </motion.div>
+              <motion.div 
+                variants={fadeIn}
+                className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow"
+              >
+                <FaGlobeAmericas className="text-4xl text-[#004D86]" />
+                <p className="text-sm">Giúp học sinh vừa hội nhập toàn cầu, vừa giữ gìn và phát huy bản sắc Việt Nam</p>
+              </motion.div>
+              <motion.div 
+                variants={fadeIn}
+                className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow"
+              >
+                <FaLaptop className="text-4xl text-[#004D86]" />
+                <p className="text-sm">Học sinh có thể học mọi lúc mọi nơi, kết hợp giữa việc tự học thông qua nền tảng công nghệ và học tập chuyên sâu tại lớp</p>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* Achievements Section */}
+      <ScrollReveal>
+        <div className="bg-white py-12 px-4 md:px-8">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-2xl font-bold text-center text-[#004D86] mb-12">
+              Thành tựu nổi bật
+            </h2>
+            <div className="flex flex-col md:flex-row justify-between items-center space-y-8 md:space-y-0 md:space-x-4">
+              <div className="flex flex-col items-center text-center max-w-xs mt-6">
+                <img src="../public/imgs/icon-achievement-1.png" alt="Global Education" className="w-20 h-auto mb-4" />
+                <p className="text-sm text-gray-600">Trường học kết hợp phương pháp giảng dạy mới nhất mang lại kết quả tốt nht</p>
+              </div>
+              <div className="flex flex-col items-center text-center max-w-xs">
+                <img src="../public/imgs/icon-achievement-2.png" alt="30 Years Experience" className="w-20 h-25 mb-4" />
+                <p className="text-sm text-gray-600">Kinh nghiệm 30 năm giảng dạy chuyên ngành bằng ngoại ngữ</p>
+              </div>
+              <div className="flex flex-col items-center text-center max-w-xs">
+                <img src="../public/imgs/icon-achievement-3.png" alt="Education Quality" className="w-20 h-25 mb-4" />
+                <p className="text-sm text-gray-600">Đạt kiểm định chất lượng giáo dục về chương trình đào tạo và cơ sở giáo dục</p>
               </div>
             </div>
           </div>
-
-          {/* Mobile and Tablet version */}
-          <div className="lg:hidden space-y-4 sm:space-y-6">
-            <div className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow">
-              <FaGraduationCap className="text-4xl text-[#004D86]" />
-              <p className="text-sm">Chú trọng phát triển năng lực cá nhân, nhấn mạnh việc rèn luyện kĩ năng – bồi đắp phẩm chất</p>
-            </div>
-            <div className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow">
-              <FaBookReader className="text-4xl text-[#004D86]" />
-              <p className="text-sm">Cách tiếp cận học tập chủ động thông qua trải nghiệm, suy ngẫm</p>
-            </div>
-            <div className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow">
-              <FaBrain className="text-4xl text-[#004D86]" />
-              <p className="text-sm">Tập trung phát triển tư duy bậc cao cho học sinh như phân tích, đánh giá, sáng tạo</p>
-            </div>
-            <div className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow">
-              <FaGlobeAmericas className="text-4xl text-[#004D86]" />
-              <p className="text-sm">Giúp học sinh vừa hội nhập toàn cầu, vừa giữ gìn và phát huy bản sắc Việt Nam</p>
-            </div>
-            <div className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow">
-              <FaLaptop className="text-4xl text-[#004D86]" />
-              <p className="text-sm">Học sinh có thể học mọi lúc mọi nơi, kết hợp giữa việc tự học thông qua nền tảng công nghệ và học tập chuyên sâu tại lớp</p>
-            </div>
-          </div>
         </div>
-      </div>
-
-      {/* Achievements Section */}
-      <div className="bg-white py-12 px-4 md:px-8">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold text-center text-[#004D86] mb-12">
-            Thành tựu nổi bật
-          </h2>
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-8 md:space-y-0 md:space-x-4">
-            <div className="flex flex-col items-center text-center max-w-xs mt-6">
-              <img src="../public/imgs/icon-achievement-1.png" alt="Global Education" className="w-20 h-auto mb-4" />
-              <p className="text-sm text-gray-600">Trường học kết hợp phương pháp giảng dạy mới nhất mang lại kết quả tốt nht</p>
-            </div>
-            <div className="flex flex-col items-center text-center max-w-xs">
-              <img src="../public/imgs/icon-achievement-2.png" alt="30 Years Experience" className="w-20 h-25 mb-4" />
-              <p className="text-sm text-gray-600">Kinh nghiệm 30 năm giảng dạy chuyên ngành bằng ngoại ngữ</p>
-            </div>
-            <div className="flex flex-col items-center text-center max-w-xs">
-              <img src="../public/imgs/icon-achievement-3.png" alt="Education Quality" className="w-20 h-25 mb-4" />
-              <p className="text-sm text-gray-600">Đạt kiểm định chất lượng giáo dục về chương trình đào tạo và cơ sở giáo dục</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      </ScrollReveal>
 
       {/* Career Guidance and Admissions Section */}
       <div className="flex flex-col md:block">
@@ -375,95 +437,48 @@ const Homepage = () => {
           <h2 className="text-xl sm:text-2xl font-bold text-[#004D86] mb-6 sm:mb-8">
             Tin tức & sự kiện
           </h2>
-<<<<<<< HEAD
           <div className="pb-6">
             <div className="flex flex-wrap justify-center gap-4">
               {/* Center items */}
               {newsItems.slice(0, newsToShow).map((news, index) => (
-=======
-          <div className="overflow-x-auto pb-6 select-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflow: 'hidden' }}
-               onMouseDown={handleMouseDown}
-               onMouseLeave={handleMouseLeave}
-               onMouseUp={handleMouseUp}
-               onMouseMove={handleMouseMove}
-               ref={scrollContainerRef}>
-            <div className="flex space-x-4 sm:space-x-6 min-w-max">
-              {[
-                {
-                  title:
-                    "Học sinh hào hứng trải nghiệm sự 'thay da đổi thịt' của trường",
-                  image: "../public/imgs/news1.jpg",
-                  date: "3/10/2024",
-                  description:
-                    "Chiều ngày 3/10/2024 tại Đà Nẵng, Trung tâm ngoại ngữ Đại học RMIT tại Đà Nẵng đã tổ chức lễ ra mắt chương trình Luyện thi IELTS mới,...",
-                },
-                {
-                  title: "Nhiều trường và phụ huynh ủng hộ đi học lại sau Tết",
-                  image: "../public/imgs/news2.jpg",
-                  date: "3/10/2024",
-                  description:
-                    "Khi nhóm chat của phụ huynh xuất hiện câu hỏi \"Nếu trường mở cửa sau Tết, có cho con đi học không?\", chị Diệu Linh, 42 tuổi, nhanh chóng chn \"Có\".",
-                },
-                {
-                  title: "Tích hợp tiếng Anh giúp người học gặt hái thành công",
-                  image: "../public/imgs/news3.jpg",
-                  date: "3/10/2024",
-                  description:
-                    "Chủ trương đưa tiếng Anh ngôn ngữ thứ hai gần đây là một bước tiến lớn nhằm tiếp tục giúp người học thành công trong cuộc sống và công việc.",
-                },
-                {
-                  title: "Hồi sinh di sản văn hóa với công nghệ 3D tiên tiến",
-                  image: "../public/imgs/news4.jpg",
-                  date: "7/10/2024",
-                  description:
-                    "Adobe tổ chức tập huấn cho các bảo tàng và trung tâm lưu trữ trong nước nhằm tìm hiểu về vai trò của công nghệ 3D bảo tồn văn hóa di sản bản địa..",
-                },
-                {
-                  title: "Đưa bền vững vào giảng dạy truyền thông và thiết kế",
-                  image: "../public/imgs/news5.jpg",
-                  date: "5/10/2024",
-                  description:
-                    "Phù hợp với các Mục tiêu phát triển bền vững và 95,7% trong số đó được tích hợp tính bền vững vào tài liệu giảng dạy và học tập.",
-                },
-                // Add more news items here if needed
-              ].map((news, index) => (
->>>>>>> 23d7bb75261c12e106af89be1a6d371714633fc6
-                <div
-                  key={index}
-                  className="w-[300px] bg-white rounded-lg shadow-md overflow-hidden flex flex-col cursor-pointer"
-                  onClick={() => handleNewsClick(index)} // Add onClick handler
-                >
-                  <img
-                    src={news.image}
-                    alt={news.title}
-                    className="w-full h-40 object-cover"
-                  />
-                  <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="font-bold text-lg mb-2 line-clamp-2 text-[#004D86]">
-                      {news.title}
-                    </h3>
-                    <div className="flex items-center text-gray-500 text-sm mb-2">
-                      <svg
-                        className="w-4 h-4 mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        ></path>
-                      </svg>
-                      {news.date}
+                <ScrollReveal key={index} delay={index * 0.1}>
+                  <motion.div
+                    whileHover={{ scale: 1.03 }}
+                    className="w-[300px] bg-white rounded-lg shadow-md overflow-hidden flex flex-col cursor-pointer"
+                    onClick={() => handleNewsClick(index)} // Add onClick handler
+                  >
+                    <img
+                      src={news.image}
+                      alt={news.title}
+                      className="w-full h-40 object-cover"
+                    />
+                    <div className="p-4 flex flex-col flex-grow">
+                      <h3 className="font-bold text-lg mb-2 line-clamp-2 text-[#004D86]">
+                        {news.title}
+                      </h3>
+                      <div className="flex items-center text-gray-500 text-sm mb-2">
+                        <svg
+                          className="w-4 h-4 mr-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          ></path>
+                        </svg>
+                        {news.date}
+                      </div>
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                        {news.description}
+                      </p>
                     </div>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                      {news.description}
-                    </p>
-                  </div>
-                </div>
+                  </motion.div>
+                </ScrollReveal>
               ))}
             </div>
             {newsToShow < newsItems.length && (
