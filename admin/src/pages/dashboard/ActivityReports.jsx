@@ -18,10 +18,11 @@ import {
     Typography
 } from "@material-tailwind/react";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { FaPlus } from "react-icons/fa6";
 import * as XLSX from 'xlsx';
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -62,6 +63,11 @@ const ActivityReports = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [errors, setErrors] = useState({});
+    const [searchTerm, setSearchTerm] = useState("");
+    const [dateFilter, setDateFilter] = useState({
+        startDate: "",
+        endDate: ""
+    });
 
     useEffect(() => {
         const managedClubsString = localStorage.getItem("managedClubs");
@@ -395,11 +401,28 @@ const ActivityReports = () => {
         XLSX.writeFile(wb, fileName);
     };
 
+    // Thêm hàm lọc reports
+    const filteredReports = useMemo(() => {
+        return reports.filter(report => {
+            // Lọc theo tên báo cáo
+            const matchesSearch = report.tenBaoCao
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase());
+
+            // Lọc theo khoảng thời gian
+            const reportDate = new Date(report.ngayBaoCao);
+            const matchesDateRange = (!dateFilter.startDate || new Date(dateFilter.startDate) <= reportDate) &&
+                (!dateFilter.endDate || new Date(dateFilter.endDate) >= reportDate);
+
+            return matchesSearch && matchesDateRange;
+        });
+    }, [reports, searchTerm, dateFilter]);
+
     // Tính toán reports cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentReports = reports.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(reports.length / itemsPerPage);
+    const currentReports = filteredReports.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
 
     // Thêm hàm để xử lý chuyển trang
     const handlePageChange = (pageNumber) => {
@@ -452,6 +475,11 @@ const ActivityReports = () => {
         return Object.keys(newErrors).length === 0;
     };
 
+    // Reset trang khi thay đổi tìm kiếm hoặc bộ lọc
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, dateFilter]);
+
     return (
         <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
@@ -466,265 +494,330 @@ const ActivityReports = () => {
                 </CardHeader>
 
                 <CardBody className="px-0 pt-0 pb-2 overflow-auto">
-                    <div className="flex justify-end p-4 px-6 pr-10">
-                        <Tooltip
-                            content="Thêm"
-                            animate={{
-                                mount: { scale: 1, y: 0 },
-                                unmount: { scale: 0, y: 25 },
-                            }}
-                            className="bg-gradient-to-r from-black to-transparent opacity-70"
-                        >
-                            <Button
-                                className="flex items-center gap-3"
-                                color="cyan"
-                                size="sm"
-                                onClick={openAddDialog}
+                    <div className="flex flex-wrap items-center justify-between gap-4 p-4 px-6">
+                        {/* Cột trái - Tìm kiếm và bộ lọc */}
+                        <div className="flex flex-wrap items-center gap-4">
+                            {/* Thanh tìm kiếm */}
+                            <div className="w-72">
+                                <Input
+                                    label="Tìm kiếm theo tên báo cáo"
+                                    icon={<i className="fas fa-search" />}
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Bộ lọc ngày */}
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Input
+                                        type="date"
+                                        label="Từ ngày"
+                                        value={dateFilter.startDate}
+                                        onChange={(e) => 
+                                            setDateFilter(prev => ({
+                                                ...prev,
+                                                startDate: e.target.value
+                                            }))
+                                        }
+                                    />
+                                </div>
+                                <div>
+                                    <Input
+                                        type="date"
+                                        label="Đến ngày"
+                                        value={dateFilter.endDate}
+                                        onChange={(e) => 
+                                            setDateFilter(prev => ({
+                                                ...prev,
+                                                endDate: e.target.value
+                                            }))
+                                        }
+                                    />
+                                </div>
+                                {/* Nút reset bộ lọc */}
+                                {(dateFilter.startDate || dateFilter.endDate) && (
+                                    <Button
+                                        variant="text"
+                                        color="red"
+                                        className="p-2"
+                                        onClick={() => setDateFilter({ startDate: "", endDate: "" })}
+                                    >
+                                        <XMarkIcon className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Cột phải - Nút thêm */}
+                        <div>
+                            <Tooltip
+                                content="Thêm"
+                                animate={{
+                                    mount: { scale: 1, y: 0 },
+                                    unmount: { scale: 0, y: 25 },
+                                }}
+                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                             >
-                                <FaPlus className="w-4 h-4" strokeWidth={'2rem'} />
-                            </Button>
-                        </Tooltip>
+                                <Button
+                                    className="flex items-center gap-3"
+                                    color="blue"
+                                    size="sm"
+                                    onClick={openAddDialog}
+                                >
+                                    <FaPlus className="w-4 h-4" strokeWidth={"2rem"} />
+                                </Button>
+                            </Tooltip>
+                        </div>
                     </div>
 
-                    {isLoading
-                        ? <Spinner />
-                        : reports.length === 0
-                        ? (
-                            <Typography color="gray" className="mt-4 mb-8">
-                                Chưa có báo cáo nào.
+                    {/* Hiển thị kết quả tìm kiếm và lọc */}
+                    {(searchTerm || dateFilter.startDate || dateFilter.endDate) && (
+                        <div className="px-6 mb-4">
+                            <Typography variant="small" color="blue-gray">
+                                Tìm thấy {filteredReports.length} kết quả
+                                {searchTerm && ` cho "${searchTerm}"`}
+                                {dateFilter.startDate && ` từ ${new Date(dateFilter.startDate).toLocaleDateString('vi-VN')}`}
+                                {dateFilter.endDate && ` đến ${new Date(dateFilter.endDate).toLocaleDateString('vi-VN')}`}
                             </Typography>
-                        )
-                        : (
-                            <>
-                                <table className="w-full min-w-[640px] table-auto">
-                                    <thead>
-                                        <tr>
-                                            {[
-                                                "Tên báo cáo",
-                                                "Ngày báo cáo",
-                                                "Nhân sự phụ trách",
-                                                "Thao tác",
-                                            ].map((el) => (
-                                                <th
-                                                    key={el}
-                                                    className="px-5 py-3 text-left border-b border-blue-gray-50"
-                                                >
-                                                    <Typography
-                                                        variant="small"
-                                                        className="text-[11px] font-bold uppercase text-blue-gray-400"
-                                                    >
-                                                        {el}
-                                                    </Typography>
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {currentReports.map(
-                                            ({
-                                                _id,
-                                                tenBaoCao,
-                                                ngayBaoCao,
-                                                nhanSuPhuTrach,
-                                            }, key) => {
-                                                const className = `py-3 px-5 ${
-                                                    key === currentReports.length - 1
-                                                        ? ""
-                                                        : "border-b border-blue-gray-50"
-                                                }`;
+                        </div>
+                    )}
 
-                                                return (
-                                                    <tr key={_id}>
-                                                        <td className={className}>
-                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                {tenBaoCao}
-                                                            </Typography>
-                                                        </td>
-                                                        <td className={className}>
-                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                {formatDateForInput(
-                                                                    ngayBaoCao,
-                                                                )}{" "}
-                                                                {/* Ngày đã được chuyển đổi ở server */}
-                                                            </Typography>
-                                                        </td>
-                                                        <td className={className}>
-                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                {nhanSuPhuTrach}
-                                                            </Typography>
-                                                        </td>
-                                                        <td className={className}>
-                                                            <div className="flex items-center gap-2">
-                                                                <Tooltip
-                                                                    content="Xem"
-                                                                    animate={{
-                                                                        mount: { scale: 1, y: 0 },
-                                                                        unmount: { scale: 0, y: 25 },
-                                                                    }}
-                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
+                    {isLoading ? (
+                        <div className="flex items-center justify-center h-64">
+                            <Spinner className="w-16 h-16 text-blue-500/10" />
+                        </div>
+                    ) : (
+                        <>
+                            <table className="w-full min-w-[640px] table-auto">
+                                <thead>
+                                    <tr>
+                                        {[
+                                            "Tên báo cáo",
+                                            "Ngày báo cáo",
+                                            "Nhân sự phụ trách",
+                                            "Thao tác",
+                                        ].map((el) => (
+                                            <th
+                                                key={el}
+                                                className="px-5 py-3 text-left border-b border-blue-gray-50"
+                                            >
+                                                <Typography
+                                                    variant="small"
+                                                    className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                                >
+                                                    {el}
+                                                </Typography>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {currentReports.map(
+                                        ({
+                                            _id,
+                                            tenBaoCao,
+                                            ngayBaoCao,
+                                            nhanSuPhuTrach,
+                                        }, key) => {
+                                            const className = `py-3 px-5 ${
+                                                key === currentReports.length - 1
+                                                    ? ""
+                                                    : "border-b border-blue-gray-50"
+                                            }`;
+
+                                            return (
+                                                <tr key={_id}>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {tenBaoCao}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {formatDateForInput(
+                                                                ngayBaoCao,
+                                                            )}{" "}
+                                                            {/* Ngày đã được chuyển đổi ở server */}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {nhanSuPhuTrach}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <div className="flex items-center gap-2">
+                                                            <Tooltip
+                                                                content="Xem"
+                                                                animate={{
+                                                                    mount: { scale: 1, y: 0 },
+                                                                    unmount: { scale: 0, y: 25 },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                            >
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="blue"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openDetailDialog(
+                                                                            _id,
+                                                                        )}
                                                                 >
-                                                                    <Button
-                                                                        size="sm"
-                                                                        color="blue"
-                                                                        className="flex items-center gap-2"
-                                                                        onClick={() =>
-                                                                            openDetailDialog(
-                                                                                _id,
-                                                                            )}
-                                                                    >
-                                                                        <EyeIcon
-                                                                            strokeWidth={2}
-                                                                            className="w-4 h-4"
-                                                                        />
-                                                                    </Button>
-                                                                </Tooltip>
-                                                                <Tooltip
-                                                                    content="Sửa"
-                                                                    animate={{
-                                                                        mount: { scale: 1, y: 0 },
-                                                                        unmount: { scale: 0, y: 25 },
-                                                                    }}
-                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                                    <EyeIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content="Sửa"
+                                                                animate={{
+                                                                    mount: { scale: 1, y: 0 },
+                                                                    unmount: { scale: 0, y: 25 },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                            >
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="green"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openEditDialog(
+                                                                            _id,
+                                                                        )}
                                                                 >
-                                                                    <Button
-                                                                        size="sm"
-                                                                        color="green"
-                                                                        className="flex items-center gap-2"
-                                                                        onClick={() =>
-                                                                            openEditDialog(
-                                                                                _id,
-                                                                            )}
-                                                                    >
-                                                                        <PencilIcon
-                                                                            strokeWidth={2}
-                                                                            className="w-4 h-4"
-                                                                        />
-                                                                    </Button>
-                                                                </Tooltip>
-                                                                <Tooltip
-                                                                    content="Xóa"
-                                                                    animate={{
-                                                                        mount: { scale: 1, y: 0 },
-                                                                        unmount: { scale: 0, y: 25 },
-                                                                    }}
-                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                                    <PencilIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content="Xóa"
+                                                                animate={{
+                                                                    mount: { scale: 1, y: 0 },
+                                                                    unmount: { scale: 0, y: 25 },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                            >
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="red"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        handleDeleteReport(
+                                                                            _id,
+                                                                        )}
                                                                 >
-                                                                    <Button
-                                                                        size="sm"
-                                                                        color="red"
-                                                                        className="flex items-center gap-2"
-                                                                        onClick={() =>
-                                                                            handleDeleteReport(
-                                                                                _id,
-                                                                            )}
-                                                                    >
-                                                                        <TrashIcon
-                                                                            strokeWidth={2}
-                                                                            className="w-4 h-4"
-                                                                        />
-                                                                    </Button>
-                                                                </Tooltip>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
+                                                                    <TrashIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        },
+                                    )}
+                                </tbody>
+                            </table>
+
+                            {/* Thêm phân trang */}
+                            <div className="flex items-center gap-4 justify-center mt-6 mb-4">
+                                <Button
+                                    variant="text"
+                                    className="flex items-center gap-2"
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                                </Button>
+
+                                <div className="flex items-center gap-2">
+                                    {totalPages <= 5 ? (
+                                        // Hiển thị tất cả các trang nếu tổng số trang <= 5
+                                        [...Array(totalPages)].map((_, index) => (
+                                            <Button
+                                                key={index + 1}
+                                                variant={currentPage === index + 1 ? "gradient" : "text"}
+                                                color="blue"
+                                                onClick={() => handlePageChange(index + 1)}
+                                                className="w-10 h-10"
+                                            >
+                                                {index + 1}
+                                            </Button>
+                                        ))
+                                    ) : (
+                                        // Hiển thị phân trang với dấu ... nếu tổng số trang > 5
+                                        <>
+                                            {/* Trang đầu */}
+                                            <Button
+                                                variant={currentPage === 1 ? "gradient" : "text"}
+                                                color="blue"
+                                                onClick={() => handlePageChange(1)}
+                                                className="w-10 h-10"
+                                            >
+                                                1
+                                            </Button>
+
+                                            {/* Dấu ... bên trái */}
+                                            {currentPage > 3 && (
+                                                <span className="mx-2">...</span>
+                                            )}
+
+                                            {/* Các trang ở giữa */}
+                                            {[...Array(3)].map((_, index) => {
+                                                const pageNumber = Math.min(
+                                                    Math.max(currentPage - 1 + index, 2),
+                                                    totalPages - 1
                                                 );
-                                            },
-                                        )}
-                                    </tbody>
-                                </table>
+                                                if (pageNumber <= 1 || pageNumber >= totalPages) return null;
+                                                return (
+                                                    <Button
+                                                        key={pageNumber}
+                                                        variant={currentPage === pageNumber ? "gradient" : "text"}
+                                                        color="blue"
+                                                        onClick={() => handlePageChange(pageNumber)}
+                                                        className="w-10 h-10"
+                                                    >
+                                                        {pageNumber}
+                                                    </Button>
+                                                );
+                                            })}
 
-                                {/* Thêm phân trang */}
-                                <div className="flex items-center gap-4 justify-center mt-6 mb-4">
-                                    <Button
-                                        variant="text"
-                                        className="flex items-center gap-2"
-                                        onClick={() => handlePageChange(currentPage - 1)}
-                                        disabled={currentPage === 1}
-                                    >
-                                        <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
-                                    </Button>
+                                            {/* Dấu ... bên phải */}
+                                            {currentPage < totalPages - 2 && (
+                                                <span className="mx-2">...</span>
+                                            )}
 
-                                    <div className="flex items-center gap-2">
-                                        {totalPages <= 5 ? (
-                                            // Hiển thị tất cả các trang nếu tổng số trang <= 5
-                                            [...Array(totalPages)].map((_, index) => (
-                                                <Button
-                                                    key={index + 1}
-                                                    variant={currentPage === index + 1 ? "gradient" : "text"}
-                                                    color="blue"
-                                                    onClick={() => handlePageChange(index + 1)}
-                                                    className="w-10 h-10"
-                                                >
-                                                    {index + 1}
-                                                </Button>
-                                            ))
-                                        ) : (
-                                            // Hiển thị phân trang với dấu ... nếu tổng số trang > 5
-                                            <>
-                                                {/* Trang đầu */}
-                                                <Button
-                                                    variant={currentPage === 1 ? "gradient" : "text"}
-                                                    color="blue"
-                                                    onClick={() => handlePageChange(1)}
-                                                    className="w-10 h-10"
-                                                >
-                                                    1
-                                                </Button>
-
-                                                {/* Dấu ... bên trái */}
-                                                {currentPage > 3 && (
-                                                    <span className="mx-2">...</span>
-                                                )}
-
-                                                {/* Các trang ở giữa */}
-                                                {[...Array(3)].map((_, index) => {
-                                                    const pageNumber = Math.min(
-                                                        Math.max(currentPage - 1 + index, 2),
-                                                        totalPages - 1
-                                                    );
-                                                    if (pageNumber <= 1 || pageNumber >= totalPages) return null;
-                                                    return (
-                                                        <Button
-                                                            key={pageNumber}
-                                                            variant={currentPage === pageNumber ? "gradient" : "text"}
-                                                            color="blue"
-                                                            onClick={() => handlePageChange(pageNumber)}
-                                                            className="w-10 h-10"
-                                                        >
-                                                            {pageNumber}
-                                                        </Button>
-                                                    );
-                                                })}
-
-                                                {/* Dấu ... bên phải */}
-                                                {currentPage < totalPages - 2 && (
-                                                    <span className="mx-2">...</span>
-                                                )}
-
-                                                {/* Trang cuối */}
-                                                <Button
-                                                    variant={currentPage === totalPages ? "gradient" : "text"}
-                                                    color="blue"
-                                                    onClick={() => handlePageChange(totalPages)}
-                                                    className="w-10 h-10"
-                                                >
-                                                    {totalPages}
-                                                </Button>
-                                            </>
-                                        )}
-                                    </div>
-
-                                    <Button
-                                        variant="text"
-                                        className="flex items-center gap-2"
-                                        onClick={() => handlePageChange(currentPage + 1)}
-                                        disabled={currentPage === totalPages}
-                                    >
-                                        Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
-                                    </Button>
+                                            {/* Trang cuối */}
+                                            <Button
+                                                variant={currentPage === totalPages ? "gradient" : "text"}
+                                                color="blue"
+                                                onClick={() => handlePageChange(totalPages)}
+                                                className="w-10 h-10"
+                                            >
+                                                {totalPages}
+                                            </Button>
+                                        </>
+                                    )}
                                 </div>
-                            </>
-                        )}
+
+                                <Button
+                                    variant="text"
+                                    className="flex items-center gap-2"
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </>
+                    )}
                 </CardBody>
             </Card>
 

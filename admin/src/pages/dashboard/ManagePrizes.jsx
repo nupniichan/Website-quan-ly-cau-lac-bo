@@ -18,7 +18,7 @@ import {
     Typography,
 } from "@material-tailwind/react";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
@@ -48,6 +48,14 @@ const ManagePrizes = () => {
     const [errors, setErrors] = useState({});
     const [memberSearch, setMemberSearch] = useState("");
     const [filteredMembers, setFilteredMembers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState("");
+
+    const filteredPrizes = useMemo(() => {
+        return prizes.filter(prize => 
+            prize.tenGiaiThuong.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            members.find(m => m._id === prize.thanhVienDatGiai)?.hoTen.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [prizes, members, searchTerm]);
 
     useEffect(() => {
         const managedClubsString = localStorage.getItem("managedClubs");
@@ -75,6 +83,10 @@ const ManagePrizes = () => {
         }
         setIsLoading(false);
     }, []);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     const fetchPrizes = async (clubId) => {
         setIsLoading(true);
@@ -275,8 +287,8 @@ const ManagePrizes = () => {
     // Tính toán prizes cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentPrizes = prizes.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(prizes.length / itemsPerPage);
+    const currentPrizes = filteredPrizes.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredPrizes.length / itemsPerPage);
 
     // Thêm hàm để xử lý chuyển trang
     const handlePageChange = (pageNumber) => {
@@ -335,28 +347,45 @@ const ManagePrizes = () => {
                 </CardHeader>
 
                 <CardBody className="px-0 pt-0 pb-2 overflow-auto">
-                    <div className="flex justify-end p-4 px-6 pr-10">
-                        <Tooltip
-                            content="Thêm"
-                            animate={{
-                                mount: { scale: 1, y: 0 },
-                                unmount: { scale: 0, y: 25 },
-                            }}
-                            className="bg-gradient-to-r from-black to-transparent opacity-70"
-                        >
-                            <Button
-                                className="flex items-center gap-3"
-                                color="blue"
-                                size="sm"
-                                onClick={openAddDialog}
+                    <div className="flex justify-between items-center p-4 px-6">
+                        <div className="w-96">
+                            <Input
+                                label="Tìm kiếm theo tên giải hoặc người đạt giải"
+                                icon={<i className="fas fa-search" />}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="pr-4">
+                            <Tooltip
+                                content="Thêm"
+                                animate={{
+                                    mount: { scale: 1, y: 0 },
+                                    unmount: { scale: 0, y: 25 },
+                                }}
+                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                             >
-                                <FaPlus
-                                    className="w-4 h-4"
-                                    strokeWidth={"2rem"}
-                                />
-                            </Button>
-                        </Tooltip>
+                                <Button
+                                    className="flex items-center gap-3"
+                                    color="blue"
+                                    size="sm"
+                                    onClick={openAddDialog}
+                                >
+                                    <FaPlus className="w-4 h-4" strokeWidth={"2rem"} />
+                                </Button>
+                            </Tooltip>
+                        </div>
                     </div>
+
+                    {searchTerm && (
+                        <div className="px-6 mb-4">
+                            <Typography variant="small" color="blue-gray">
+                                Tìm thấy {filteredPrizes.length} kết quả cho "{searchTerm}"
+                            </Typography>
+                        </div>
+                    )}
+
                     {isLoading
                         ? (
                             <div className="flex items-center justify-center h-64">

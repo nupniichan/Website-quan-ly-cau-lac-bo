@@ -57,6 +57,7 @@ const ManageEvents = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [errors, setErrors] = useState({});
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         const managedClubsString = localStorage.getItem("managedClubs");
@@ -72,7 +73,7 @@ const ManageEvents = () => {
             } catch (error) {
                 console.error("Error parsing managed clubs data:", error);
                 alert(
-                    "Không thể tải thông tin câu lạc bộ. Vui lòng đăng nhập lại.",
+                    "Không thể tải thông tin câu lạc bộ. Vui lng đăng nhập lại.",
                 );
             }
         } else {
@@ -215,22 +216,11 @@ const ManageEvents = () => {
         }
     };
 
-    const openDetailDialog = async (id) => {
-        try {
-            const response = await axios.get(`${API_URL}/get-event/${id}`);
-            setDetailEvent(response.data);
+    const openDetailDialog = (id) => {
+        const eventDetail = events.find((event) => event._id === id);
+        if (eventDetail) {
+            setDetailEvent(eventDetail);
             setIsDetailDialogOpen(true);
-
-            if (clubs.length === 0) {
-                await fetchClubs();
-            }
-        } catch (error) {
-            console.error("Error fetching event details:", error);
-            alert(
-                `Lỗi khi lấy thông tin sự kiện: ${
-                    error.response?.data?.message || "Khng xác định"
-                }`,
-            );
         }
     };
 
@@ -276,9 +266,22 @@ const ManageEvents = () => {
     };
 
     const filteredEvents = useMemo(() => {
-        if (statusFilter === "all") return events;
-        return events.filter((event) => event.trangThai === statusFilter);
-    }, [events, statusFilter]);
+        let filtered = events;
+        
+        // Lọc theo trạng thái
+        if (statusFilter !== "all") {
+            filtered = filtered.filter((event) => event.trangThai === statusFilter);
+        }
+        
+        // Lọc theo tên sự kiện
+        if (searchTerm.trim()) {
+            filtered = filtered.filter((event) =>
+                event.ten.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+        
+        return filtered;
+    }, [events, statusFilter, searchTerm]);
 
     // Tính toán events cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -295,6 +298,11 @@ const ManageEvents = () => {
     useEffect(() => {
         setCurrentPage(1);
     }, [statusFilter]);
+
+    // Reset trang về 1 khi thay đổi tìm kiếm
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     const validateForm = () => {
         const newErrors = {};
@@ -330,7 +338,7 @@ const ManageEvents = () => {
             const endHour = parseInt(endTime[0]);
             const endMinute = parseInt(endTime[1]);
 
-            // Chuyển đổi thời gian sang phút để dễ so sánh
+            // Chuyển đổi thời gian sang phút đ dễ so sánh
             const startTotalMinutes = startHour * 60 + startMinute;
             const endTotalMinutes = endHour * 60 + endMinute;
             const timeDifference = endTotalMinutes - startTotalMinutes;
@@ -396,88 +404,99 @@ const ManageEvents = () => {
                 </CardHeader>
                 <CardBody className="px-0 pt-0 pb-2 overflow-auto">
                     <div className="flex items-center justify-between p-4">
-                        <div className="flex gap-3">
-                            <Button
-                                variant={statusFilter === "all"
-                                    ? "gradient"
-                                    : "outlined"}
-                                color="cyan"
-                                size="sm"
-                                onClick={() => setStatusFilter("all")}
-                            >
-                                Tất cả
-                            </Button>
+                        {/* Cột bên trái chứa tìm kiếm và các bộ lọc */}
+                        <div className="flex items-center gap-4">
+                            {/* Ô tìm kiếm */}
+                            <div className="w-72">
+                                <Input
+                                    label="Tìm kiếm sự kiện"
+                                    icon={<i className="fas fa-search" />}
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            
+                            {/* Các nút filter */}
+                            <div className="flex gap-2">
+                                <Button
+                                    variant={statusFilter === "all" ? "gradient" : "outlined"}
+                                    color="cyan"
+                                    size="sm"
+                                    onClick={() => setStatusFilter("all")}
+                                >
+                                    Tất cả
+                                </Button>
 
-                            <Button
-                                variant={statusFilter === "choDuyet"
-                                    ? "gradient"
-                                    : "outlined"}
-                                color="cyan"
-                                size="sm"
-                                onClick={() => setStatusFilter("choDuyet")}
-                            >
-                                Chờ duyệt
-                            </Button>
+                                <Button
+                                    variant={statusFilter === "choDuyet" ? "gradient" : "outlined"}
+                                    color="cyan"
+                                    size="sm"
+                                    onClick={() => setStatusFilter("choDuyet")}
+                                >
+                                    Chờ duyệt
+                                </Button>
 
-                            <Button
-                                variant={statusFilter === "daDuyet"
-                                    ? "gradient"
-                                    : "outlined"}
-                                color="cyan"
-                                size="sm"
-                                onClick={() => setStatusFilter("daDuyet")}
-                            >
-                                Đã duyệt
-                            </Button>
+                                <Button
+                                    variant={statusFilter === "daDuyet" ? "gradient" : "outlined"}
+                                    color="cyan"
+                                    size="sm"
+                                    onClick={() => setStatusFilter("daDuyet")}
+                                >
+                                    Đã duyệt
+                                </Button>
 
-                            <Button
-                                variant={statusFilter === "tuChoi"
-                                    ? "gradient"
-                                    : "outlined"}
-                                color="cyan"
-                                size="sm"
-                                onClick={() => setStatusFilter("tuChoi")}
-                            >
-                                Đã từ chối
-                            </Button>
+                                <Button
+                                    variant={statusFilter === "tuChoi" ? "gradient" : "outlined"}
+                                    color="cyan"
+                                    size="sm"
+                                    onClick={() => setStatusFilter("tuChoi")}
+                                >
+                                    Đã từ chối
+                                </Button>
+                            </div>
+
+                            {/* Hiển thị kết quả tìm kiếm nếu có */}
+                            {searchTerm && (
+                                <Typography variant="small" color="blue-gray">
+                                    Tìm thấy {filteredEvents.length} kết quả
+                                </Typography>
+                            )}
                         </div>
 
-                        <div className="pr-6 -translate-y-[0.05rem]">
-                        <Tooltip
-                            content="Thêm"
-                            animate={{
-                                mount: { scale: 1, y: 0 },
-                                unmount: { scale: 0, y: 25 },
-                            }}
-                            className="bg-gradient-to-r from-black to-transparent opacity-70"
-                        >
-                            <Button
-                                className="flex items-center gap-3"
-                                color="cyan"
-                                size="sm"
-                                onClick={() => {
-                                    setNewEvent({
-                                        ten: "",
-                                        ngayToChuc: "",
-                                        thoiGianBatDau: "00:00",
-                                        thoiGianKetThuc: "00:00",
-                                        diaDiem: "",
-                                        noiDung: "",
-                                        nganSachChiTieu: 0,
-                                        nguoiPhuTrach: "",
-                                        khachMoi: [],
-                                        club: "",
-                                    });
-                                    setEditingEventId(null);
-                                    setIsDialogOpen(true);
+                        {/* Nút thêm bên phải */}
+                        <div className="pr-6">
+                            <Tooltip
+                                content="Thêm"
+                                animate={{
+                                    mount: { scale: 1, y: 0 },
+                                    unmount: { scale: 0, y: 25 },
                                 }}
+                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                             >
-                                <FaPlus
-                                    className="w-4 h-4"
-                                    strokeWidth={"2rem"}
-                                />
-                            </Button>
-                        </Tooltip>
+                                <Button
+                                    className="flex items-center gap-3"
+                                    color="cyan"
+                                    size="sm"
+                                    onClick={() => {
+                                        setNewEvent({
+                                            ten: "",
+                                            ngayToChuc: "",
+                                            thoiGianBatDau: "00:00",
+                                            thoiGianKetThuc: "00:00",
+                                            diaDiem: "",
+                                            noiDung: "",
+                                            nganSachChiTieu: 0,
+                                            nguoiPhuTrach: "",
+                                            khachMoi: [],
+                                            club: "",
+                                        });
+                                        setEditingEventId(null);
+                                        setIsDialogOpen(true);
+                                    }}
+                                >
+                                    <FaPlus className="w-4 h-4" strokeWidth={"2rem"} />
+                                </Button>
+                            </Tooltip>
                         </div>
                     </div>
 
@@ -1048,113 +1067,104 @@ const ManageEvents = () => {
                     </Typography>
                 </DialogHeader>
 
-                {detailEvent ? (
+                {detailEvent && (
                     <DialogBody divider className="overflow-y-auto lg:max-h-[65vh] sm:max-h-[50vh] p-6">
-                        <div className="flex gap-6">
-                            {/* Cột trái - Thông tin cơ bản */}
-                            <div className="flex-1">
-                                <div className="bg-blue-gray-50 p-6 rounded-lg">
-                                    {/* Tên sự kiện */}
-                                    <div className="text-center mb-6">
-                                        <Typography variant="h4" color="blue" className="font-bold mb-2">
-                                            {detailEvent.ten}
-                                        </Typography>
-                                        <Typography 
-                                            variant="small" 
-                                            className="bg-white px-4 py-2 rounded-full text-blue-900 inline-block font-medium"
-                                        >
-                                            {clubs.find(c => c._id === detailEvent.club)?.ten}
-                                        </Typography>
-                                    </div>
-
-                                    {/* Thông tin thời gian */}
-                                    <div className="grid gap-4">
-                                        <div className="bg-white p-4 rounded-lg">
-                                            <Typography className="text-sm text-gray-600 mb-2">Thời gian tổ chức</Typography>
-                                            <div className="flex flex-col gap-1">
-                                                <Typography className="font-medium">
-                                                    {new Date(detailEvent.ngayToChuc).toLocaleDateString('vi-VN', {
-                                                        weekday: 'long',
-                                                        year: 'numeric',
-                                                        month: 'long',
-                                                        day: 'numeric'
-                                                    })}
-                                                </Typography>
-                                                <Typography className="text-blue-900">
-                                                    {detailEvent.thoiGianBatDau} - {detailEvent.thoiGianKetThuc}
-                                                </Typography>
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-white p-4 rounded-lg">
-                                            <Typography className="text-sm text-gray-600 mb-1">Địa điểm</Typography>
-                                            <Typography className="font-medium">{detailEvent.diaDiem}</Typography>
-                                        </div>
-
-                                        <div className="bg-white p-4 rounded-lg">
-                                            <Typography className="text-sm text-gray-600 mb-1">Người phụ trách</Typography>
-                                            <Typography className="font-medium">{detailEvent.nguoiPhuTrach}</Typography>
-                                        </div>
-                                    </div>
+                        <div className="grid gap-6">
+                            {/* Thông tin cơ bản */}
+                            <div className="bg-blue-gray-50 p-6 rounded-lg">
+                                {/* Tên sự kiện */}
+                                <div className="text-center mb-6">
+                                    <Typography variant="h4" color="blue" className="font-bold mb-2">
+                                        {detailEvent.ten}
+                                    </Typography>
+                                    <Typography 
+                                        variant="small" 
+                                        className="bg-white px-4 py-2 rounded-full text-blue-900 inline-block font-medium"
+                                    >
+                                        {clubs.find(c => c._id === detailEvent.club)?.ten}
+                                    </Typography>
                                 </div>
-                            </div>
 
-                            {/* Cột phải - Thông tin chi tiết */}
-                            <div className="flex-[1.5]">
+                                {/* Thông tin thời gian */}
                                 <div className="grid gap-4">
-                                    <div className="bg-blue-gray-50 p-4 rounded-lg">
-                                        <Typography className="text-sm text-gray-600 mb-2">Nội dung sự kiện</Typography>
-                                        <Typography className="font-medium whitespace-pre-line">
-                                            {detailEvent.noiDung}
-                                        </Typography>
-                                    </div>
-
-                                    <div className="bg-blue-gray-50 p-4 rounded-lg">
-                                        <Typography className="text-sm text-gray-600 mb-2">Ngân sách chi tiêu</Typography>
-                                        <Typography className="font-medium text-blue-900">
-                                            {detailEvent.nganSachChiTieu?.toLocaleString('vi-VN')} đồng
-                                        </Typography>
-                                    </div>
-
-                                    <div className="bg-blue-gray-50 p-4 rounded-lg">
-                                        <Typography className="text-sm text-gray-600 mb-2">Danh sách khách mời</Typography>
-                                        <div className="flex flex-wrap gap-2">
-                                            {detailEvent.khachMoi.map((guest, index) => (
-                                                <div 
-                                                    key={index}
-                                                    className="bg-white px-3 py-1 rounded-full text-sm font-medium"
-                                                >
-                                                    {guest}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {detailEvent.trangThai === 'tuChoi' && detailEvent.lyDoTuChoi && (
-                                        <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                                            <Typography className="text-sm text-red-800 font-medium mb-1">
-                                                Lý do từ chối
+                                    <div className="bg-white p-4 rounded-lg">
+                                        <Typography className="text-sm text-gray-600 mb-2">Thời gian tổ chức</Typography>
+                                        <div className="flex flex-col gap-1">
+                                            <Typography className="font-medium">
+                                                {new Date(detailEvent.ngayToChuc).toLocaleDateString('vi-VN', {
+                                                    weekday: 'long',
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                })}
                                             </Typography>
-                                            <Typography className="text-red-700">
-                                                {detailEvent.lyDoTuChoi}
+                                            <Typography className="text-blue-900">
+                                                {detailEvent.thoiGianBatDau} - {detailEvent.thoiGianKetThuc}
                                             </Typography>
                                         </div>
-                                    )}
+                                    </div>
+
+                                    <div className="bg-white p-4 rounded-lg">
+                                        <Typography className="text-sm text-gray-600 mb-1">Địa điểm</Typography>
+                                        <Typography className="font-medium">{detailEvent.diaDiem}</Typography>
+                                    </div>
+
+                                    <div className="bg-white p-4 rounded-lg">
+                                        <Typography className="text-sm text-gray-600 mb-1">Người phụ trách</Typography>
+                                        <Typography className="font-medium">{detailEvent.nguoiPhuTrach}</Typography>
+                                    </div>
                                 </div>
                             </div>
+
+                            {/* Nội dung sự kiện */}
+                            <div className="bg-blue-gray-50 p-4 rounded-lg">
+                                <Typography className="text-sm text-gray-600 mb-2">Nội dung sự kiện</Typography>
+                                <Typography className="font-medium whitespace-pre-line">
+                                    {detailEvent.noiDung}
+                                </Typography>
+                            </div>
+
+                            {/* Thông tin khác */}
+                            <div className="bg-blue-gray-50 p-4 rounded-lg">
+                                <Typography className="text-sm text-gray-600 mb-2">Ngân sách chi tiêu</Typography>
+                                <Typography className="font-medium text-blue-900">
+                                    {detailEvent.nganSachChiTieu?.toLocaleString('vi-VN')} đồng
+                                </Typography>
+                            </div>
+
+                            <div className="bg-blue-gray-50 p-4 rounded-lg">
+                                <Typography className="text-sm text-gray-600 mb-2">Danh sách khách mời</Typography>
+                                <div className="flex flex-wrap gap-2">
+                                    {detailEvent.khachMoi.map((guest, index) => (
+                                        <div 
+                                            key={index}
+                                            className="bg-white px-3 py-1 rounded-full text-sm font-medium"
+                                        >
+                                            {guest}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Lý do từ chối */}
+                            {detailEvent && detailEvent.trangThai === "tuChoi" && (
+                                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                                    <Typography className="text-sm text-red-800 font-medium mb-2">
+                                        Lý do từ chối
+                                    </Typography>
+                                    <Typography className="text-red-700">
+                                        {detailEvent.lyDoTuChoi}
+                                    </Typography>
+                                </div>
+                            )}
                         </div>
-                    </DialogBody>
-                ) : (
-                    <DialogBody className="flex justify-center items-center h-64">
-                        <Spinner className="h-12 w-12" color="blue" />
                     </DialogBody>
                 )}
                 <DialogFooter>
                     <Button
-                        variant="text"
-                        color="red"
+                        variant="gradient"
+                        color="blue"
                         onClick={() => setIsDetailDialogOpen(false)}
-                        className="mr-1"
                     >
                         Đóng
                     </Button>

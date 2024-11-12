@@ -52,6 +52,7 @@ const ManageMembers = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [errors, setErrors] = useState({});
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         const managedClubsString = localStorage.getItem("managedClubs");
@@ -246,13 +247,15 @@ const ManageMembers = () => {
         }
     };
 
-    // Tính toán members cho trang hiện tại
+    const filteredMembers = members.filter(member =>
+        member.hoTen.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentMembers = members.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(members.length / itemsPerPage);
+    const currentMembers = filteredMembers.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
 
-    // Thêm hàm để xử lý chuyển trang
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
@@ -311,7 +314,18 @@ const ManageMembers = () => {
                 </CardHeader>
 
                 <CardBody className="px-0 pt-0 pb-2 overflow-auto">
-                    <div className="flex justify-end p-4 px-6 pr-10">
+                    <div className="flex justify-between items-center p-4 px-6 pr-10">
+                        <div className="w-72">
+                            <Input
+                                label="Tìm kiếm theo tên"
+                                icon={<i className="fas fa-search" />}
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setCurrentPage(1); // Reset về trang 1 khi tìm kiếm
+                                }}
+                            />
+                        </div>
                         <Tooltip
                             content="Thêm"
                             animate={{
@@ -333,6 +347,15 @@ const ManageMembers = () => {
                             </Button>
                         </Tooltip>
                     </div>
+
+                    {searchTerm && (
+                        <div className="px-6 mb-4">
+                            <Typography variant="small" color="blue-gray">
+                                Tìm thấy {filteredMembers.length} kết quả cho "{searchTerm}"
+                            </Typography>
+                        </div>
+                    )}
+
                     {isLoading
                         ? (
                             <div className="flex items-center justify-center h-64">
@@ -355,7 +378,7 @@ const ManageMembers = () => {
                                                 "Họ tên",
                                                 "Giới tính",
                                                 "Lớp",
-                                                "Câu lạc bộ",
+                                                "Vai trò",
                                                 "Thao tác",
                                             ].map((el) => (
                                                 <th
@@ -380,7 +403,7 @@ const ManageMembers = () => {
                                                     hoTen,
                                                     gioiTinh,
                                                     lop,
-                                                    club,
+                                                    vaiTro,
                                                 },
                                                 key,
                                             ) => {
@@ -414,9 +437,7 @@ const ManageMembers = () => {
                                                         </td>
                                                         <td className={className}>
                                                             <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                {clubs.find((c) =>
-                                                                    c._id === club
-                                                                )?.ten || "N/A"}
+                                                                {vaiTro || "Chưa phân công"}
                                                             </Typography>
                                                         </td>
                                                         <td className={className}>
@@ -627,8 +648,8 @@ const ManageMembers = () => {
             >
                 <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
                     {editingMemberId
-                        ? "Chỉnh sửa Thành viên"
-                        : "Thêm Thành viên Mới"}
+                        ? "Chỉnh sửa thành viên"
+                        : "Thêm thành viên mới"}
                 </DialogHeader>
                 <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto max-h-[80vh] sm:max-h-[47vh]">
                     <Input
@@ -754,7 +775,7 @@ const ManageMembers = () => {
                         variant="small" 
                         className={`
                             px-3 py-1 rounded-full font-bold uppercase
-                            ${detailMember?.tinhTrang === 'Đang hoạt đ��ng' 
+                            ${detailMember?.tinhTrang === 'Đang hoạt động' 
                                 ? 'bg-green-500 text-white' 
                                 : 'bg-red-500 text-white'}
                         `}

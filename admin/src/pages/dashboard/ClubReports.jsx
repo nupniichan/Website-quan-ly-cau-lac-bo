@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import {
     Button,
@@ -24,6 +24,7 @@ import {
     TrashIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
+    XMarkIcon,
 } from "@heroicons/react/24/solid";
 
 const API_URL = "http://localhost:5500/api";
@@ -47,9 +48,39 @@ const ClubReports = () => {
     });
     const [detailReport, setDetailReport] = useState(null);
     const [editingReportId, setEditingReportId] = useState(null);
-    const [filterClub, setFilterClub] = useState(""); // Thêm state cho bộ lọc
+    const [filterClub, setFilterClub] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const [searchTerm, setSearchTerm] = useState("");
+    const [dateFilter, setDateFilter] = useState({
+        startDate: "",
+        endDate: ""
+    });
+
+    const filteredReports = useMemo(() => {
+        return reports.filter(report => {
+            const matchesSearch = report.tenBaoCao
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase());
+
+            const matchesClub = !filterClub || report.club === filterClub;
+
+            const reportDate = new Date(report.ngayBaoCao);
+            const matchesDateRange = (!dateFilter.startDate || new Date(dateFilter.startDate) <= reportDate) &&
+                (!dateFilter.endDate || new Date(dateFilter.endDate) >= reportDate);
+
+            return matchesSearch && matchesClub && matchesDateRange;
+        });
+    }, [reports, searchTerm, filterClub, dateFilter]);
+
+    const ITEMS_PER_PAGE = 10;
+
+    const totalPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE);
+
+    const currentReports = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        return filteredReports.slice(startIndex, endIndex);
+    }, [filteredReports, currentPage]);
 
     const fetchClubs = async () => {
         try {
@@ -149,21 +180,13 @@ const ClubReports = () => {
         setIsDetailDialogOpen(true);
     };
 
-    // Thêm hàm lọc báo cáo
-    const filteredReports = reports.filter((report) =>
-        !filterClub || report.club === filterClub
-    );
-
-    // Tính toán reports cho trang hiện tại
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentReports = filteredReports.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
-
-    // Reset trang khi thay đổi bộ lọc
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [filterClub]);
+    const handleEventSelection = (value) => {
+        const eventIds = Array.isArray(value) ? value : [value];
+        setNewReport({
+            ...newReport,
+            danhSachSuKien: eventIds,
+        });
+    };
 
     return (
         <div className="flex flex-col gap-12 mt-12 mb-8">
@@ -179,6 +202,96 @@ const ClubReports = () => {
                 </CardHeader>
 
                 <CardBody className="px-0 pt-4 pb-2 overflow-auto">
+                    <div className="flex flex-wrap items-center justify-between gap-4 p-4 px-6">
+                        {/* Cột trái - Tìm kiếm và các bộ lọc */}
+                        <div className="flex flex-wrap items-center gap-4">
+                            {/* Thanh tìm kiếm */}
+                            <div className="w-72">
+                                <Input
+                                    label="Tìm kiếm theo tên báo cáo"
+                                    icon={<i className="fas fa-search" />}
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Select box câu lạc bộ */}
+                            <div className="w-48">
+                                <Select
+                                    label="Câu lạc bộ"
+                                    value={filterClub}
+                                    onChange={(value) => setFilterClub(value)}
+                                >
+                                    <Option value="">Tất cả CLB</Option>
+                                    {clubs.map((club) => (
+                                        <Option key={club._id} value={club._id}>
+                                            {club.ten}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </div>
+
+                            {/* Bộ lọc ngày */}
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Input
+                                        type="date"
+                                        label="Từ ngày"
+                                        value={dateFilter.startDate}
+                                        onChange={(e) => 
+                                            setDateFilter(prev => ({
+                                                ...prev,
+                                                startDate: e.target.value
+                                            }))
+                                        }
+                                    />
+                                </div>
+                                <div>
+                                    <Input
+                                        type="date"
+                                        label="Đến ngày"
+                                        value={dateFilter.endDate}
+                                        onChange={(e) => 
+                                            setDateFilter(prev => ({
+                                                ...prev,
+                                                endDate: e.target.value
+                                            }))
+                                        }
+                                    />
+                                </div>
+
+                                {/* Nút reset tất cả bộ lọc */}
+                                {(dateFilter.startDate || dateFilter.endDate || filterClub || searchTerm) && (
+                                    <Button
+                                        variant="text"
+                                        color="red"
+                                        className="p-2"
+                                        onClick={() => {
+                                            setDateFilter({ startDate: "", endDate: "" });
+                                            setFilterClub("");
+                                            setSearchTerm("");
+                                        }}
+                                    >
+                                        <XMarkIcon className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Hiển thị kết quả tìm kiếm và lọc */}
+                    {(searchTerm || dateFilter.startDate || dateFilter.endDate || filterClub) && (
+                        <div className="px-6 mb-4">
+                            <Typography variant="small" color="blue-gray">
+                                Tìm thấy {filteredReports.length} kết quả
+                                {searchTerm && ` cho "${searchTerm}"`}
+                                {filterClub && ` tại "${clubs.find(c => c._id === filterClub)?.ten}"`}
+                                {dateFilter.startDate && ` từ ${new Date(dateFilter.startDate).toLocaleDateString('vi-VN')}`}
+                                {dateFilter.endDate && ` đến ${new Date(dateFilter.endDate).toLocaleDateString('vi-VN')}`}
+                            </Typography>
+                        </div>
+                    )}
+
                     {isLoading ? (
                         <div className="flex items-center justify-center h-64 mt-14">
                             <Spinner className="w-16 h-16 text-blue-500/10" />
@@ -367,12 +480,8 @@ const ClubReports = () => {
                     />
                     <Select
                         label="Danh sách sự kiện"
-                        value={newReport.danhSachSuKien}
-                        onChange={(value) =>
-                            setNewReport({
-                                ...newReport,
-                                danhSachSuKien: value,
-                            })}
+                        value={newReport.danhSachSuKien[0] || ''}
+                        onChange={handleEventSelection}
                         multiple
                     >
                         {events.map((event) => (
@@ -529,9 +638,9 @@ const ClubReports = () => {
                                     </tr>
                                     <tr className="bg-gray-50">
                                         <th className="border p-2">Tên giải thưởng</th>
-                                        <th className="border p-2">Loại giải</th>
+                                        <th className="border p-2">Loi giải</th>
                                         <th className="border p-2">Ngày đạt giải</th>
-                                        <th className="border p-2">Thành viên đạt giải</th>
+                                        <th className="border p-2">Thành vi��n đạt giải</th>
                                     </tr>
                                 </thead>
                                 <tbody>

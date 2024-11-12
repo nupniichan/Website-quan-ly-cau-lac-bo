@@ -16,9 +16,10 @@ import {
     Typography,
 } from "@material-tailwind/react";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -75,6 +76,11 @@ const ManageClubs = () => {
     const [previewLogo, setPreviewLogo] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [searchTerm, setSearchTerm] = useState("");
+    const [dateFilter, setDateFilter] = useState({
+        startDate: "",
+        endDate: ""
+    });
 
     useEffect(() => {
         fetchClubs();
@@ -275,11 +281,33 @@ const ManageClubs = () => {
         }
     };
 
-    // Tính toán clubs cho trang hiện tại
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentClubs = clubs.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(clubs.length / itemsPerPage);
+    // Thêm hàm lọc clubs
+    const filteredClubs = useMemo(() => {
+        return clubs.filter(club => {
+            // Lọc theo tên CLB hoặc lĩnh vực hoạt động hoặc giáo viên phụ trách hoặc trưởng ban CLB
+            const matchesSearch = 
+                club.ten.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                club.linhVucHoatDong.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                club.giaoVienPhuTrach.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                club.truongBanCLB.toLowerCase().includes(searchTerm.toLowerCase());
+
+            // Lọc theo khoảng thời gian thành lập
+            const clubDate = new Date(club.ngayThanhLap);
+            const matchesDateRange = (!dateFilter.startDate || new Date(dateFilter.startDate) <= clubDate) &&
+                (!dateFilter.endDate || new Date(dateFilter.endDate) >= clubDate);
+
+            return matchesSearch && matchesDateRange;
+        });
+    }, [clubs, searchTerm, dateFilter]);
+
+    // Reset trang khi thay đổi bộ lọc
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, dateFilter]);
+
+    // Cập nhật phân trang
+    const currentClubs = filteredClubs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const totalPages = Math.ceil(filteredClubs.length / itemsPerPage);
 
     return (
         <div className="flex flex-col gap-12 mt-12 mb-8">
@@ -294,28 +322,98 @@ const ManageClubs = () => {
                     </Typography>
                 </CardHeader>
                 <CardBody className="px-0 pt-0 pb-2">
-                    <div className="flex justify-end p-4 px-6 pr-10">
-                        <Tooltip
-                            content="Thêm"
-                            animate={{
-                                mount: { scale: 1, y: 0 },
-                                unmount: { scale: 0, y: 25 },
-                            }}
-                            className="bg-gradient-to-r from-black to-transparent opacity-70"
-                        >
-                            <Button
-                                className="flex items-center gap-3"
-                                color="brown"
-                                size="sm"
-                                onClick={openAddDialog}
-                            >
-                                <FaPlus
-                                    className="w-4 h-4"
-                                    strokeWidth={"2rem"}
+                    <div className="flex flex-wrap items-center justify-between gap-4 p-4 px-6">
+                        {/* Cột trái - Tìm kiếm và bộ lọc */}
+                        <div className="flex flex-wrap items-center gap-4">
+                            {/* Thanh tìm kiếm */}
+                            <div className="w-96">
+                                <Input
+                                    label="Tìm kiếm theo tên CLB, lĩnh vực, giáo viên, trưởng ban"
+                                    icon={<i className="fas fa-search" />}
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
                                 />
-                            </Button>
-                        </Tooltip>
+                            </div>
+
+                            {/* Bộ lọc ngày thành lập */}
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Input
+                                        type="date"
+                                        label="Từ ngày"
+                                        value={dateFilter.startDate}
+                                        onChange={(e) => 
+                                            setDateFilter(prev => ({
+                                                ...prev,
+                                                startDate: e.target.value
+                                            }))
+                                        }
+                                    />
+                                </div>
+                                <div>
+                                    <Input
+                                        type="date"
+                                        label="Đến ngày"
+                                        value={dateFilter.endDate}
+                                        onChange={(e) => 
+                                            setDateFilter(prev => ({
+                                                ...prev,
+                                                endDate: e.target.value
+                                            }))
+                                        }
+                                    />
+                                </div>
+
+                                {/* Nút reset bộ lọc */}
+                                {(dateFilter.startDate || dateFilter.endDate || searchTerm) && (
+                                    <Button
+                                        variant="text"
+                                        color="red"
+                                        className="p-2"
+                                        onClick={() => {
+                                            setDateFilter({ startDate: "", endDate: "" });
+                                            setSearchTerm("");
+                                        }}
+                                    >
+                                        <XMarkIcon className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Cột phải - Nút thêm */}
+                        <div>
+                            <Tooltip
+                                content="Thêm"
+                                animate={{
+                                    mount: { scale: 1, y: 0 },
+                                    unmount: { scale: 0, y: 25 },
+                                }}
+                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                            >
+                                <Button
+                                    className="flex items-center gap-3"
+                                    color="blue"
+                                    size="sm"
+                                    onClick={openAddDialog}
+                                >
+                                    <FaPlus className="w-4 h-4" strokeWidth={"2rem"} />
+                                </Button>
+                            </Tooltip>
+                        </div>
                     </div>
+
+                    {/* Hiển thị kết quả tìm kiếm và lọc */}
+                    {(searchTerm || dateFilter.startDate || dateFilter.endDate) && (
+                        <div className="px-6 mb-4">
+                            <Typography variant="small" color="blue-gray">
+                                Tìm thấy {filteredClubs.length} kết quả
+                                {searchTerm && ` cho "${searchTerm}"`}
+                                {dateFilter.startDate && ` từ ${new Date(dateFilter.startDate).toLocaleDateString('vi-VN')}`}
+                                {dateFilter.endDate && ` đến ${new Date(dateFilter.endDate).toLocaleDateString('vi-VN')}`}
+                            </Typography>
+                        </div>
+                    )}
 
                     <div className="overflow-auto lg:max-h-[56vh] md:max-h-[75vh] sm:max-h-[85vh]">
                         {isLoading
