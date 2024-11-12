@@ -17,7 +17,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
-const API_URL = "http://localhost:5500/api";
+const API_URL = "http://4.242.20.80:5000/api";
 
 const BudgetAllocation = () => {
     const [allocations, setAllocations] = useState([]);

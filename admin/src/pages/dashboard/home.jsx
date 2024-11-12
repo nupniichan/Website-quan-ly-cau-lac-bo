@@ -40,7 +40,7 @@ ChartJS.register(
 );
 
 // Thêm baseURL cho axios
-const baseURL = 'http://localhost:5500'; // Port của server backend
+const baseURL = 'http://4.242.20.80:5000'; // Port của server backend
 axios.defaults.baseURL = baseURL;
 
 // Tạo hàm format date
