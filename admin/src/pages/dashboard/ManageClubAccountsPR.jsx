@@ -39,7 +39,7 @@ const ManageClubAccountsPR = () => {
     const [validationErrors, setValidationErrors] = useState({});
     const [editValidationErrors, setEditValidationErrors] = useState({});
     const [detailAccount, setDetailAccount] = useState(null);
-
+    
     useEffect(() => {
         fetchAccounts();
     }, []);

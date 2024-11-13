@@ -10,7 +10,7 @@ const budgetAllocationSchema = new mongoose.Schema({
     },
     amount: { type: Number, required: true },
     purpose: { type: String, required: true },
-    allocationDate: { type: Date, required: true }
+    allocationDate: { type: Date, required: true } 
 });
 
 // Sửa lại middleware pre-save
