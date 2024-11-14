@@ -641,33 +641,44 @@ const ApproveEvents = () => {
                                 eventContent={(eventInfo) => (
                                     <Tooltip
                                         content={
-                                            <div className="p-2">
-                                                <div className="font-bold text-lg mb-2">{eventInfo.event.title}</div>
-                                                <div className="space-y-1 text-sm">
+                                            <div className="p-2 bg-white rounded-lg shadow-lg">
+                                                <div className="font-bold text-lg mb-2 text-gray-800">
+                                                    {eventInfo.event.title}
+                                                </div>
+                                                <div className="space-y-2 text-sm text-gray-600">
+                                                    <p className="flex items-center gap-2">
+                                                        <i className="fas fa-clock"></i>
+                                                        {eventInfo.timeText}
+                                                    </p>
                                                     <p className="flex items-center gap-2">
                                                         <i className="fas fa-map-marker-alt"></i>
                                                         {eventInfo.event.extendedProps.location}
                                                     </p>
                                                     <p className="flex items-center gap-2">
-                                                        <i className="fas fa-users"></i>
-                                                        {eventInfo.event.extendedProps.club}
-                                                    </p>
-                                                    <p className="flex items-center gap-2">
                                                         <i className="fas fa-user"></i>
                                                         {eventInfo.event.extendedProps.nguoiPhuTrach}
+                                                    </p>
+                                                    <p className="flex items-center gap-2">
+                                                        <i className="fas fa-info-circle"></i>
+                                                        Trạng thái: {getStatusText(eventInfo.event.extendedProps.trangThai)}
                                                     </p>
                                                 </div>
                                             </div>
                                         }
-                                        className="bg-white shadow-xl rounded-lg"
+                                        animate={{
+                                            mount: { scale: 1, y: 0 },
+                                            unmount: { scale: 0, y: 25 },
+                                        }}
+                                        placement="top"
+                                        className="bg-white p-2 rounded-lg shadow-xl"
                                     >
-                                        <div className="p-1 overflow-hidden">
-                                            <p className="font-semibold text-sm truncate">
+                                        <div className="p-1 overflow-hidden cursor-pointer">
+                                            <div className="font-semibold text-sm truncate">
                                                 {eventInfo.event.title}
-                                            </p>
-                                            <p className="text-xs truncate text-gray-600">
-                                                {eventInfo.event.extendedProps.location}
-                                            </p>
+                                            </div>
+                                            <div className="text-xs truncate">
+                                                {eventInfo.timeText}
+                                            </div>
                                         </div>
                                     </Tooltip>
                                 )}

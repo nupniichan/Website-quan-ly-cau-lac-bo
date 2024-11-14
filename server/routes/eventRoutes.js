@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Event = require('../models/Event');
 const Club = require('../models/Club');
+const Reports = require('../models/Report');
 
 /**
  * @swagger
@@ -405,6 +406,28 @@ router.get('/search-events/:clubId', async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+});
+
+router.get('/check-event-in-reports/:id', async (req, res) => {
+    try {
+        const eventId = req.params.id;
+        
+        // Tìm sự kiện trong collection Report
+        const reportWithEvent = await Reports.findOne({ 
+            'danhSachSuKien': eventId 
+        });
+
+        // Trả về true nếu sự kiện có trong báo cáo, false nếu không
+        res.status(200).json({
+            exists: !!reportWithEvent
+        });
+
+    } catch (error) {
+        console.error('Error checking event in reports:', error);
+        res.status(500).json({ 
+            message: error.message 
+        });
+    }
 });
 
 module.exports = router;

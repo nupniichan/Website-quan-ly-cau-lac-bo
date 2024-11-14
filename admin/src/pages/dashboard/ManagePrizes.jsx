@@ -214,9 +214,9 @@ const ManagePrizes = () => {
     };
 
     const handleDeletePrize = async (prizeId) => {
-        if (window.confirm("Bạn có chắc chắn muốn xóa giải thư��ng này?")) {
+        if (window.confirm("Bạn có chắc chắn muốn xóa giải thưởng này?")) {
             try {
-                // Kiểm tra xem gi thưởng có trong báo cáo nào không
+                // Kiểm tra xem giải thưởng có trong báo cáo không
                 const checkResponse = await axios.get(`${API_URL}/check-prize-in-reports/${prizeId}`);
                 
                 if (checkResponse.data.exists) {

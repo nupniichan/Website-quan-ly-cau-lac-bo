@@ -29,10 +29,42 @@ import { useEffect, useMemo, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 import TimePicker from "react-time-picker";
 import "react-time-picker/dist/TimePicker.css";
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
 
 const API_URL = "http://localhost:5500/api";
 
 const ManageEvents = () => {
+    // Định nghĩa các hàm helper trước các state
+    const getStatusText = (status) => {
+        switch (status) {
+            case "daDuyet":
+                return "Đã duyệt";
+            case "tuChoi":
+                return "Đã từ chối";
+            case "choDuyet":
+                return "Chờ duyệt";
+            default:
+                return "Không xác định";
+        }
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case "daDuyet":
+                return "green";
+            case "tuChoi":
+                return "red";
+            case "choDuyet":
+                return "orange";
+            default:
+                return "gray";
+        }
+    };
+
+    // Các state declarations
     const [events, setEvents] = useState([]);
     const [clubs, setClubs] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -65,6 +97,25 @@ const ManageEvents = () => {
     const [dateFilter, setDateFilter] = useState({
         from: "",
         to: ""
+    });
+    const [activeTab, setActiveTab] = useState('list');
+    const [calendarCustomStyles, setCalendarCustomStyles] = useState({
+        '.fc': 'bg-white rounded-lg shadow-md',
+        '.fc .fc-toolbar': 'p-4',
+        '.fc .fc-toolbar-title': 'text-xl font-bold text-gray-800',
+        '.fc .fc-button': 'bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200',
+        '.fc .fc-button-primary:not(:disabled):active': 'bg-blue-700',
+        '.fc .fc-button-primary:disabled': 'bg-blue-300',
+        '.fc .fc-daygrid-day': 'hover:bg-blue-50 cursor-pointer',
+        '.fc .fc-event': 'bg-blue-500 border-none hover:opacity-90 cursor-pointer',
+        '.fc .fc-event-time': 'font-semibold',
+        '.fc .fc-event-title': 'font-medium',
+        '.fc .fc-header-toolbar': 'mb-4 flex flex-wrap justify-between items-center gap-4',
+        '.fc .fc-view-harness': 'bg-white rounded-lg shadow-sm',
+        '.fc .fc-scrollgrid': 'border-none',
+        '.fc .fc-scrollgrid td': 'border-color-gray-200',
+        '.fc th': 'p-3 font-semibold text-gray-600 border-gray-200',
+        '.fc td': 'border-gray-200',
     });
 
     useEffect(() => {
@@ -187,7 +238,7 @@ const ManageEvents = () => {
 
         if (window.confirm("Bạn có chắc chắn muốn xóa sự kiện này?")) {
             try {
-                // Kiểm tra xem sự kiện có trong báo cáo nào không
+                // Kiểm tra xem sự kiện có trong báo cáo không
                 const checkResponse = await axios.get(`${API_URL}/check-event-in-reports/${eventId}`);
                 
                 if (checkResponse.data.exists) {
@@ -491,6 +542,33 @@ const ManageEvents = () => {
         };
     }, []);
 
+    const getCalendarEvents = useMemo(() => {
+        return events.map(event => ({
+            id: event._id,
+            title: event.ten,
+            start: `${event.ngayToChuc.split('T')[0]}T${event.thoiGianBatDau}`,
+            end: `${event.ngayToChuc.split('T')[0]}T${event.thoiGianKetThuc}`,
+            location: event.diaDiem,
+            className: `${
+                event.trangThai === 'daDuyet' 
+                    ? 'bg-green-500' 
+                    : event.trangThai === 'choDuyet'
+                    ? 'bg-orange-500'
+                    : 'bg-red-500'
+            } text-white rounded-md p-1`,
+            extendedProps: {
+                trangThai: event.trangThai,
+                nguoiPhuTrach: event.nguoiPhuTrach,
+                location: event.diaDiem
+            }
+        }));
+    }, [events]);
+
+    const handleEventClick = (clickInfo) => {
+        const eventId = clickInfo.event.id;
+        openDetailDialog(eventId);
+    };
+
     return (
         <div className="flex flex-col gap-6 md:gap-12 mt-6 md:mt-12 mb-8">
             <Card>
@@ -628,280 +706,386 @@ const ManageEvents = () => {
                         )}
                     </div>
 
-                    <div className="w-full overflow-x-auto">
-                        <table className="w-full min-w-[640px] table-auto">
-                            <thead>
-                                <tr>
-                                    {[
-                                        "STT",
-                                        "Tên sự kiện",
-                                        "Ngày tổ chức",
-                                        "Địa điểm",
-                                        "Người phụ trách",
-                                        "Trạng thái",
-                                        "Thao tác",
-                                    ].map((el) => (
-                                        <th
-                                            key={el}
-                                            className="px-5 py-3 text-left border-b border-blue-gray-50"
-                                        >
-                                            <Typography
-                                                variant="small"
-                                                className="text-[11px] font-bold uppercase text-blue-gray-400"
-                                            >
-                                                {el}
-                                            </Typography>
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {currentEvents.map(({
-                                    _id,
-                                    ten,
-                                    ngayToChuc,
-                                    thoiGianBatDau,
-                                    thoiGianKetThuc,
-                                    diaDiem,
-                                    nguoiPhuTrach,
-                                    trangThai,
-                                }, index) => {
-                                    const className = index === currentEvents.length - 1
-                                        ? "p-4"
-                                        : "p-4 border-b border-blue-gray-50";
+                    <div className="flex justify-end px-4 mb-4">
+                        <div className="flex gap-2">
+                            <Button
+                                variant={activeTab === 'list' ? "gradient" : "outlined"}
+                                color="cyan"
+                                size="sm"
+                                onClick={() => setActiveTab('list')}
+                                className="flex items-center gap-2"
+                            >
+                                <i className="fas fa-list text-sm"></i>
+                                Danh sách
+                            </Button>
+                            <Button
+                                variant={activeTab === 'calendar' ? "gradient" : "outlined"}
+                                color="cyan"
+                                size="sm"
+                                onClick={() => setActiveTab('calendar')}
+                                className="flex items-center gap-2"
+                            >
+                                <i className="fas fa-calendar text-sm"></i>
+                                Lịch
+                            </Button>
+                        </div>
+                    </div>
 
-                                    return (
-                                        <tr key={_id}>
-                                            <td className={`${className} px-2 md:px-4`}>
-                                                <Typography
-                                                    className="text-xs font-semibold text-blue-gray-600"
-                                                >
-                                                    {(currentPage - 1) * itemsPerPage + index + 1}
-                                                </Typography>
-                                            </td>
-                                            <td className={`${className} px-2 md:px-4`}>
-                                                <Tooltip
-                                                    content={ten}
-                                                    animate={{
-                                                        mount: { scale: 1, y: 0 },
-                                                        unmount: { scale: 0, y: 25 },
-                                                    }}
-                                                    className="bg-black bg-opacity-80"
+                    {activeTab === 'list' ? (
+                        <div className="px-4">
+                            <div className="w-full overflow-x-auto">
+                                <table className="w-full min-w-[640px] table-auto">
+                                    <thead>
+                                        <tr>
+                                            {[
+                                                "STT",
+                                                "Tên sự kiện",
+                                                "Ngày tổ chức",
+                                                "Địa điểm",
+                                                "Người phụ trách",
+                                                "Trạng thái",
+                                                "Thao tác",
+                                            ].map((el) => (
+                                                <th
+                                                    key={el}
+                                                    className="px-5 py-3 text-left border-b border-blue-gray-50"
                                                 >
                                                     <Typography
-                                                        className="text-xs font-semibold text-blue-gray-600 truncate max-w-[200px]"
+                                                        variant="small"
+                                                        className="text-[11px] font-bold uppercase text-blue-gray-400"
                                                     >
-                                                        {ten.length > 30 ? `${ten.substring(0, 30)}...` : ten}
+                                                        {el}
                                                     </Typography>
-                                                </Tooltip>
-                                            </td>
-                                            <td className={`${className} px-2 md:px-4`}>
-                                                <div className="flex flex-col">
-                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                        {new Date(ngayToChuc).toLocaleDateString("vi-VN")}
-                                                    </Typography>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <div className="w-1 h-1 rounded-full bg-blue-gray-300"></div>
-                                                        <Typography className="text-xs text-blue-gray-500">
-                                                            {thoiGianBatDau} - {thoiGianKetThuc}
-                                                        </Typography>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className={`${className} px-2 md:px-4`}>
-                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                    {diaDiem}
-                                                </Typography>
-                                            </td>
-                                            <td className={`${className} px-2 md:px-4`}>
-                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                    {nguoiPhuTrach}
-                                                </Typography>
-                                            </td>
-                                            <td className={`${className} px-2 md:px-4`}>
-                                                <div className={`px-2 py-1 rounded-full text-center text-xs font-semibold ${
-                                                    trangThai === "daDuyet" 
-                                                        ? "bg-green-100 text-green-800" 
-                                                        : trangThai === "choDuyet"
-                                                        ? "bg-orange-100 text-orange-800"
-                                                        : "bg-red-100 text-red-800"
-                                                }`}>
-                                                    {trangThai === "daDuyet" && "Đã duyệt"}
-                                                    {trangThai === "choDuyet" && "Chờ duyệt"}
-                                                    {trangThai === "tuChoi" && "Đã từ chối"}
-                                                </div>
-                                            </td>
-                                            <td className={`${className} px-2 md:px-4`}>
-                                                <div className="flex items-center gap-2">
-                                                    <Tooltip
-                                                        content="Xem"
-                                                        animate={{
-                                                            mount: {
-                                                                scale: 1,
-                                                                y: 0,
-                                                            },
-                                                            unmount: {
-                                                                scale: 0,
-                                                                y: 25,
-                                                            },
-                                                        }}
-                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                    >
-                                                        <Button
-                                                            size="sm"
-                                                            color="blue"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() =>
-                                                                openDetailDialog(
-                                                                    _id,
-                                                                )}
-                                                        >
-                                                            <EyeIcon
-                                                                strokeWidth={2}
-                                                                className="w-4 h-4"
-                                                            />
-                                                        </Button>
-                                                    </Tooltip>
-                                                    <Tooltip
-                                                        content={trangThai === "daDuyet" ? "Không thể sửa sự kiện đã duyệt" : "Sửa"}
-                                                        animate={{
-                                                            mount: { scale: 1, y: 0 },
-                                                            unmount: { scale: 0, y: 25 },
-                                                        }}
-                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                    >
-                                                        <Button
-                                                            size="sm"
-                                                            color="green"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() =>
-                                                                openEditDialog(
-                                                                    _id,
-                                                                )}
-                                                            disabled={trangThai === "daDuyet"}
-                                                        >
-                                                            <PencilIcon
-                                                                strokeWidth={2}
-                                                                className="w-4 h-4"
-                                                            />
-                                                        </Button>
-                                                    </Tooltip>
-                                                    <Tooltip
-                                                        content={trangThai === "daDuyet" ? "Không thể xóa sự kiện đã duyệt" : "Xóa"}
-                                                        animate={{
-                                                            mount: { scale: 1, y: 0 },
-                                                            unmount: { scale: 0, y: 25 },
-                                                        }}
-                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                    >
-                                                        <Button
-                                                            size="sm"
-                                                            color="red"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() =>
-                                                                handleDeleteEvent(
-                                                                    _id,
-                                                                    trangThai
-                                                                )}
-                                                            disabled={trangThai === "daDuyet"}
-                                                        >
-                                                            <TrashIcon
-                                                                strokeWidth={2}
-                                                                className="w-4 h-4"
-                                                            />
-                                                        </Button>
-                                                    </Tooltip>
-                                                </div>
-                                            </td>
+                                                </th>
+                                            ))}
                                         </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                                    </thead>
+                                    <tbody>
+                                        {currentEvents.map(({
+                                            _id,
+                                            ten,
+                                            ngayToChuc,
+                                            thoiGianBatDau,
+                                            thoiGianKetThuc,
+                                            diaDiem,
+                                            nguoiPhuTrach,
+                                            trangThai,
+                                        }, index) => {
+                                            const className = index === currentEvents.length - 1
+                                                ? "p-4"
+                                                : "p-4 border-b border-blue-gray-50";
 
-                    <div className="flex flex-col md:flex-row items-center gap-4 justify-center mt-6 mb-4 px-4">
-                        <Button
-                            variant="text"
-                            className="flex items-center gap-2"
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                        >
-                            <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
-                        </Button>
+                                            return (
+                                                <tr key={_id}>
+                                                    <td className={`${className} px-2 md:px-4`}>
+                                                        <Typography
+                                                            className="text-xs font-semibold text-blue-gray-600"
+                                                        >
+                                                            {(currentPage - 1) * itemsPerPage + index + 1}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={`${className} px-2 md:px-4`}>
+                                                        <Tooltip
+                                                            content={ten}
+                                                            animate={{
+                                                                mount: { scale: 1, y: 0 },
+                                                                unmount: { scale: 0, y: 25 },
+                                                            }}
+                                                            className="bg-black bg-opacity-80"
+                                                        >
+                                                            <Typography
+                                                                className="text-xs font-semibold text-blue-gray-600 truncate max-w-[200px]"
+                                                            >
+                                                                {ten.length > 30 ? `${ten.substring(0, 30)}...` : ten}
+                                                            </Typography>
+                                                        </Tooltip>
+                                                    </td>
+                                                    <td className={`${className} px-2 md:px-4`}>
+                                                        <div className="flex flex-col">
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {new Date(ngayToChuc).toLocaleDateString("vi-VN")}
+                                                            </Typography>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <div className="w-1 h-1 rounded-full bg-blue-gray-300"></div>
+                                                                <Typography className="text-xs text-blue-gray-500">
+                                                                    {thoiGianBatDau} - {thoiGianKetThuc}
+                                                                </Typography>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className={`${className} px-2 md:px-4`}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {diaDiem}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={`${className} px-2 md:px-4`}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {nguoiPhuTrach}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={`${className} px-2 md:px-4`}>
+                                                        <div className={`px-2 py-1 rounded-full text-center text-xs font-semibold ${
+                                                            trangThai === "daDuyet" 
+                                                                ? "bg-green-100 text-green-800" 
+                                                                : trangThai === "choDuyet"
+                                                                ? "bg-orange-100 text-orange-800"
+                                                                : "bg-red-100 text-red-800"
+                                                        }`}>
+                                                            {trangThai === "daDuyet" && "Đã duyệt"}
+                                                            {trangThai === "choDuyet" && "Chờ duyệt"}
+                                                            {trangThai === "tuChoi" && "Đã từ chối"}
+                                                        </div>
+                                                    </td>
+                                                    <td className={`${className} px-2 md:px-4`}>
+                                                        <div className="flex items-center gap-2">
+                                                            <Tooltip
+                                                                content="Xem"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale: 1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale: 0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                            >
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="blue"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openDetailDialog(
+                                                                            _id,
+                                                                        )}
+                                                                >
+                                                                    <EyeIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content={trangThai === "daDuyet" ? "Không thể sửa sự kiện đã duyệt" : "Sửa"}
+                                                                animate={{
+                                                                    mount: { scale: 1, y: 0 },
+                                                                    unmount: { scale: 0, y: 25 },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                            >
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="green"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openEditDialog(
+                                                                            _id,
+                                                                        )}
+                                                                    disabled={trangThai === "daDuyet"}
+                                                                >
+                                                                    <PencilIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content={trangThai === "daDuyet" ? "Không thể xóa sự kiện đã duyệt" : "Xóa"}
+                                                                animate={{
+                                                                    mount: { scale: 1, y: 0 },
+                                                                    unmount: { scale: 0, y: 25 },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                            >
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="red"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        handleDeleteEvent(
+                                                                            _id,
+                                                                            trangThai
+                                                                        )}
+                                                                    disabled={trangThai === "daDuyet"}
+                                                                >
+                                                                    <TrashIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
 
-                        <div className="flex items-center gap-2">
-                            {totalPages <= 5 ? (
-                                [...Array(totalPages)].map((_, index) => (
-                                    <Button
-                                        key={index + 1}
-                                        variant={currentPage === index + 1 ? "gradient" : "text"}
-                                        color="cyan"
-                                        onClick={() => handlePageChange(index + 1)}
-                                        className="w-10 h-10"
-                                    >
-                                        {index + 1}
-                                    </Button>
-                                ))
-                            ) : (
-                                <>
-                                    <Button
-                                        variant={currentPage === 1 ? "gradient" : "text"}
-                                        color="cyan"
-                                        onClick={() => handlePageChange(1)}
-                                        className="w-10 h-10"
-                                    >
-                                        1
-                                    </Button>
+                            <div className="flex flex-col md:flex-row items-center gap-4 justify-center mt-6 mb-4 px-4">
+                                <Button
+                                    variant="text"
+                                    className="flex items-center gap-2"
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                                </Button>
 
-                                    {currentPage > 3 && (
-                                        <span className="mx-2">...</span>
-                                    )}
-
-                                    {[...Array(3)].map((_, index) => {
-                                        const pageNumber = Math.min(
-                                            Math.max(currentPage - 1 + index, 2),
-                                            totalPages - 1
-                                        );
-                                        if (pageNumber <= 1 || pageNumber >= totalPages) return null;
-                                        return (
+                                <div className="flex items-center gap-2">
+                                    {totalPages <= 5 ? (
+                                        [...Array(totalPages)].map((_, index) => (
                                             <Button
-                                                key={pageNumber}
-                                                variant={currentPage === pageNumber ? "gradient" : "text"}
+                                                key={index + 1}
+                                                variant={currentPage === index + 1 ? "gradient" : "text"}
                                                 color="cyan"
-                                                onClick={() => handlePageChange(pageNumber)}
+                                                onClick={() => handlePageChange(index + 1)}
                                                 className="w-10 h-10"
                                             >
-                                                {pageNumber}
+                                                {index + 1}
                                             </Button>
-                                        );
-                                    })}
+                                        ))
+                                    ) : (
+                                        <>
+                                            <Button
+                                                variant={currentPage === 1 ? "gradient" : "text"}
+                                                color="cyan"
+                                                onClick={() => handlePageChange(1)}
+                                                className="w-10 h-10"
+                                            >
+                                                1
+                                            </Button>
 
-                                    {currentPage < totalPages - 2 && (
-                                        <span className="mx-2">...</span>
+                                            {currentPage > 3 && (
+                                                <span className="mx-2">...</span>
+                                            )}
+
+                                            {[...Array(3)].map((_, index) => {
+                                                const pageNumber = Math.min(
+                                                    Math.max(currentPage - 1 + index, 2),
+                                                    totalPages - 1
+                                                );
+                                                if (pageNumber <= 1 || pageNumber >= totalPages) return null;
+                                                return (
+                                                    <Button
+                                                        key={pageNumber}
+                                                        variant={currentPage === pageNumber ? "gradient" : "text"}
+                                                        color="cyan"
+                                                        onClick={() => handlePageChange(pageNumber)}
+                                                        className="w-10 h-10"
+                                                    >
+                                                        {pageNumber}
+                                                    </Button>
+                                                );
+                                            })}
+
+                                            {currentPage < totalPages - 2 && (
+                                                <span className="mx-2">...</span>
+                                            )}
+
+                                            <Button
+                                                variant={currentPage === totalPages ? "gradient" : "text"}
+                                                color="cyan"
+                                                onClick={() => handlePageChange(totalPages)}
+                                                className="w-10 h-10"
+                                            >
+                                                {totalPages}
+                                            </Button>
+                                        </>
                                     )}
+                                </div>
 
-                                    <Button
-                                        variant={currentPage === totalPages ? "gradient" : "text"}
-                                        color="cyan"
-                                        onClick={() => handlePageChange(totalPages)}
-                                        className="w-10 h-10"
-                                    >
-                                        {totalPages}
-                                    </Button>
-                                </>
-                            )}
+                                <Button
+                                    variant="text"
+                                    className="flex items-center gap-2"
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
-
-                        <Button
-                            variant="text"
-                            className="flex items-center gap-2"
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                        >
-                            Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
-                        </Button>
-                    </div>
+                    ) : (
+                        <div className="p-4 min-h-[800px]">
+                            <style>
+                                {Object.entries(calendarCustomStyles)
+                                    .map(([selector, styles]) => `${selector} { ${styles.split(' ').map(c => `@apply ${c};`).join(' ')} }`)
+                                    .join('\n')}
+                            </style>
+                            <FullCalendar
+                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                initialView="dayGridMonth"
+                                headerToolbar={{
+                                    left: 'prev,next today',
+                                    center: 'title',
+                                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                                }}
+                                events={getCalendarEvents}
+                                eventClick={handleEventClick}
+                                eventTimeFormat={{
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false
+                                }}
+                                locale="vi"
+                                buttonText={{
+                                    today: 'Hôm nay',
+                                    month: 'Tháng',
+                                    week: 'Tuần',
+                                    day: 'Ngày'
+                                }}
+                                eventContent={(eventInfo) => (
+                                    <Tooltip
+                                        content={
+                                            <div className="p-2 bg-white rounded-lg shadow-lg">
+                                                <div className="font-bold text-lg mb-2 text-gray-800">
+                                                    {eventInfo.event.title}
+                                                </div>
+                                                <div className="space-y-2 text-sm text-gray-600">
+                                                    <p className="flex items-center gap-2">
+                                                        <i className="fas fa-clock"></i>
+                                                        {eventInfo.timeText}
+                                                    </p>
+                                                    <p className="flex items-center gap-2">
+                                                        <i className="fas fa-map-marker-alt"></i>
+                                                        {eventInfo.event.extendedProps.location}
+                                                    </p>
+                                                    <p className="flex items-center gap-2">
+                                                        <i className="fas fa-user"></i>
+                                                        {eventInfo.event.extendedProps.nguoiPhuTrach}
+                                                    </p>
+                                                    <p className="flex items-center gap-2">
+                                                        <i className="fas fa-info-circle"></i>
+                                                        Tr���ng thái: {getStatusText(eventInfo.event.extendedProps.trangThai)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        }
+                                        animate={{
+                                            mount: { scale: 1, y: 0 },
+                                            unmount: { scale: 0, y: 25 },
+                                        }}
+                                        placement="top"
+                                        className="bg-white p-2 rounded-lg shadow-xl"
+                                    >
+                                        <div className="p-1 overflow-hidden cursor-pointer">
+                                            <div
+                                                className="font-semibold text-sm truncate"
+                                            >
+                                                {eventInfo.event.title}
+                                            </div>
+                                            <div className="text-xs truncate">
+                                                {eventInfo.timeText}
+                                            </div>
+                                        </div>
+                                    </Tooltip>
+                                )}
+                            />
+                        </div>
+                    )}
                 </CardBody>
             </Card>
 
