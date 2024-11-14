@@ -27,7 +27,7 @@ import {
     XMarkIcon,
 } from "@heroicons/react/24/solid";
 
-const API_URL = "http://4.242.20.80:5500/api";
+const API_URL = "http://localhost:5500/api";
 
 const ClubReports = () => {
     const [reports, setReports] = useState([]);
@@ -57,19 +57,21 @@ const ClubReports = () => {
     });
 
     const filteredReports = useMemo(() => {
-        return reports.filter(report => {
-            const matchesSearch = report.tenBaoCao
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase());
+        return reports
+            .filter(report => {
+                const matchesSearch = report.tenBaoCao
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase());
 
-            const matchesClub = !filterClub || report.club === filterClub;
+                const matchesClub = !filterClub || report.club === filterClub;
 
-            const reportDate = new Date(report.ngayBaoCao);
-            const matchesDateRange = (!dateFilter.startDate || new Date(dateFilter.startDate) <= reportDate) &&
-                (!dateFilter.endDate || new Date(dateFilter.endDate) >= reportDate);
+                const reportDate = new Date(report.ngayBaoCao);
+                const matchesDateRange = (!dateFilter.startDate || new Date(dateFilter.startDate) <= reportDate) &&
+                    (!dateFilter.endDate || new Date(dateFilter.endDate) >= reportDate);
 
-            return matchesSearch && matchesClub && matchesDateRange;
-        });
+                return matchesSearch && matchesClub && matchesDateRange;
+            })
+            .sort((a, b) => new Date(b.ngayBaoCao) - new Date(a.ngayBaoCao));
     }, [reports, searchTerm, filterClub, dateFilter]);
 
     const ITEMS_PER_PAGE = 10;
@@ -188,6 +190,16 @@ const ClubReports = () => {
         });
     };
 
+    // Thêm hàm helper để format ngày
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
+
     return (
         <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
@@ -298,10 +310,11 @@ const ClubReports = () => {
                         </div>
                     ) : (
                         <>
-                            <table className="w-full min-w-[640px] table-auto mt-14">
+                            <table className="w-full min-w-[640px] table-auto mt-5">
                                 <thead>
                                     <tr>
                                         {[
+                                            "STT",
                                             "Tên báo cáo",
                                             "Ngày báo cáo",
                                             "Nhân sự phụ trách",
@@ -333,36 +346,35 @@ const ClubReports = () => {
                                                 <tr key={_id}>
                                                     <td className={className}>
                                                         <Typography
-                                                            variant="small"
-                                                            color="blue-gray"
-                                                            className="font-semibold"
+                                                            className="text-xs font-semibold text-blue-gray-600"
+                                                        >
+                                                            {(currentPage - 1) * ITEMS_PER_PAGE + key + 1}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography
+                                                            className="text-xs font-semibold text-blue-gray-600"
                                                         >
                                                             {tenBaoCao}
                                                         </Typography>
                                                     </td>
                                                     <td className={className}>
                                                         <Typography
-                                                            variant="small"
-                                                            color="blue-gray"
-                                                            className="font-normal"
+                                                            className="text-xs font-semibold text-blue-gray-600"
                                                         >
-                                                            {new Date(ngayBaoCao).toLocaleDateString()}
+                                                            {formatDate(ngayBaoCao)}
                                                         </Typography>
                                                     </td>
                                                     <td className={className}>
                                                         <Typography
-                                                            variant="small"
-                                                            color="blue-gray"
-                                                            className="font-normal"
+                                                            className="text-xs font-semibold text-blue-gray-600"
                                                         >
                                                             {nhanSuPhuTrach}
                                                         </Typography>
                                                     </td>
                                                     <td className={className}>
                                                         <Typography
-                                                            variant="small"
-                                                            color="blue-gray"
-                                                            className="font-normal"
+                                                            className="text-xs font-semibold text-blue-gray-600"
                                                         >
                                                             {clubs.find((c) => c._id === club)?.ten || "N/A"}
                                                         </Typography>
@@ -574,25 +586,25 @@ const ClubReports = () => {
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr>
-                                        <th colSpan="4" className="bg-blue-50 p-2 text-left text-lg font-bold text-blue-900">
+                                        <th colSpan="4" className="bg-blue-50 p-3 text-left text-lg font-bold text-blue-900">
                                             Thông tin cơ bản
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <th className="border p-2 bg-gray-50 w-1/4">Tên báo cáo</th>
-                                        <td className="border p-2">{detailReport.tenBaoCao}</td>
-                                        <th className="border p-2 bg-gray-50 w-1/4">Ngày báo cáo</th>
-                                        <td className="border p-2">
-                                            {new Date(detailReport.ngayBaoCao).toLocaleDateString()}
+                                        <th className="border p-3">Tên báo cáo</th>
+                                        <td className="border p-3">{detailReport.tenBaoCao}</td>
+                                        <th className="border p-3">Ngày báo cáo</th>
+                                        <td className="border p-3">
+                                            {formatDate(detailReport.ngayBaoCao)}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <th className="border p-2 bg-gray-50">Nhân sự phụ trách</th>
-                                        <td className="border p-2">{detailReport.nhanSuPhuTrach}</td>
-                                        <th className="border p-2 bg-gray-50">Câu lạc bộ</th>
-                                        <td className="border p-2">
+                                        <th className="border p-3">Nhân sự phụ trách</th>
+                                        <td className="border p-3">{detailReport.nhanSuPhuTrach}</td>
+                                        <th className="border p-3">Câu lạc bộ</th>
+                                        <td className="border p-3">
                                             {clubs.find(c => c._id === detailReport.club)?.ten || "N/A"}
                                         </td>
                                     </tr>
@@ -620,7 +632,7 @@ const ClubReports = () => {
                                             <td className="border p-2">{event.tenSuKien}</td>
                                             <td className="border p-2">{event.nguoiPhuTrach}</td>
                                             <td className="border p-2">
-                                                {new Date(event.ngayToChuc).toLocaleDateString()}
+                                                {formatDate(event.ngayToChuc)}
                                             </td>
                                             <td className="border p-2">{event.diaDiem}</td>
                                         </tr>
@@ -640,7 +652,7 @@ const ClubReports = () => {
                                         <th className="border p-2">Tên giải thưởng</th>
                                         <th className="border p-2">Loi giải</th>
                                         <th className="border p-2">Ngày đạt giải</th>
-                                        <th className="border p-2">Thành vi��n đạt giải</th>
+                                        <th className="border p-2">Thành viên đạt giải</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -649,7 +661,7 @@ const ClubReports = () => {
                                             <td className="border p-2">{prize.tenGiaiThuong}</td>
                                             <td className="border p-2">{prize.loaiGiai}</td>
                                             <td className="border p-2">
-                                                {new Date(prize.ngayDatGiai).toLocaleDateString()}
+                                                {formatDate(prize.ngayDatGiai)}
                                             </td>
                                             <td className="border p-2">{prize.thanhVienDatGiai}</td>
                                         </tr>

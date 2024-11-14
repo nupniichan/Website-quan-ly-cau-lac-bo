@@ -12,6 +12,10 @@ import {
     Spinner,
     Tooltip,
     Typography,
+    IconButton,
+    Input,
+    Select,
+    Option,
 } from "@material-tailwind/react";
 import {
     CheckCircleIcon,
@@ -19,9 +23,14 @@ import {
     XCircleIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
+    XMarkIcon,
 } from "@heroicons/react/24/solid";
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
 
-const API_URL = "http://4.242.20.80:5500/api";
+const API_URL = "http://localhost:5500/api";
 
 const ApproveEvents = () => {
     const [events, setEvents] = useState([]);
@@ -35,22 +44,27 @@ const ApproveEvents = () => {
     const [selectedEventId, setSelectedEventId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [activeTab, setActiveTab] = useState('list');
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedClub, setSelectedClub] = useState("");
+    const [dateRange, setDateRange] = useState({
+        from: "",
+        to: "",
+    });
+    const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+    const [conflictingEvents, setConflictingEvents] = useState([]);
+    const [eventToApprove, setEventToApprove] = useState(null);
 
     useEffect(() => {
         fetchEvents();
+        fetchClubs();
     }, []);
 
     const fetchEvents = async () => {
         setIsLoading(true);
         try {
-            console.log("Đang gọi API...");
             const response = await axios.get(`${API_URL}/get-events`);
-            console.log("Dữ liệu nhận được:", response.data);
-            console.log(
-                "Chi tiết club của event đầu tiên:",
-                response.data[0]?.club,
-            );
-            const sortedEvents = response.data.sort((a, b) =>
+            const sortedEvents = response.data.sort((a, b) => 
                 new Date(b.ngayToChuc) - new Date(a.ngayToChuc)
             );
             setEvents(sortedEvents);
@@ -64,6 +78,7 @@ const ApproveEvents = () => {
     const fetchClubs = async () => {
         try {
             const response = await axios.get(`${API_URL}/get-clubs`);
+            console.log("Clubs data:", response.data);
             setClubs(response.data);
         } catch (error) {
             console.error("Error fetching clubs:", error);
@@ -71,10 +86,25 @@ const ApproveEvents = () => {
     };
 
     const handleApproveEvent = async (id) => {
+        const eventToCheck = events.find(event => event._id === id);
+        const conflicts = checkEventConflicts(eventToCheck);
+
+        if (conflicts.length > 0) {
+            setConflictingEvents(conflicts);
+            setEventToApprove(eventToCheck);
+            setIsConfirmDialogOpen(true);
+        } else {
+            await approveEvent(id);
+        }
+    };
+
+    const approveEvent = async (id) => {
         try {
             await axios.put(`${API_URL}/approve-event/${id}`);
-            // Fetch lại dữ liệu sau khi approve
-            fetchEvents(); // Thay vì fetchPendingEvents()
+            fetchEvents();
+            setIsConfirmDialogOpen(false);
+            setConflictingEvents([]);
+            setEventToApprove(null);
         } catch (error) {
             console.error("Error approving event:", error);
             alert(
@@ -139,9 +169,24 @@ const ApproveEvents = () => {
 
     // Đảm bảo filteredEvents trả về tất cả events khi filter là 'all'
     const filteredEvents = useMemo(() => {
-        if (filter === "all") return events;
-        return events.filter((event) => event.trangThai === filter);
-    }, [events, filter]);
+        return events
+            .filter(event => {
+                // Lọc theo trạng thái
+                if (filter !== "all" && event.trangThai !== filter) return false;
+                
+                // Lọc theo tên
+                if (searchTerm && !event.ten.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+                
+                // Lọc theo câu lạc bộ
+                if (selectedClub && event.club?.ten !== selectedClub) return false;
+                
+                // Lọc theo ngày
+                if (dateRange.from && new Date(event.ngayToChuc) < new Date(dateRange.from)) return false;
+                if (dateRange.to && new Date(event.ngayToChuc) > new Date(dateRange.to)) return false;
+                
+                return true;
+            });
+    }, [events, filter, searchTerm, selectedClub, dateRange]);
 
     const fetchPendingEvents = async () => {
         setIsLoading(true);
@@ -173,285 +218,463 @@ const ApproveEvents = () => {
         setCurrentPage(1);
     }, [filter]);
 
+    // Thêm custom styles cho calendar
+    const calendarCustomStyles = {
+        '.fc': 'bg-white rounded-lg shadow-md',
+        '.fc .fc-toolbar': 'p-4',
+        '.fc .fc-toolbar-title': 'text-xl font-bold text-gray-800',
+        '.fc .fc-button': 'bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200',
+        '.fc .fc-button-primary:not(:disabled):active': 'bg-blue-700',
+        '.fc .fc-button-primary:disabled': 'bg-blue-300',
+        '.fc .fc-daygrid-day': 'hover:bg-blue-50 cursor-pointer',
+        '.fc .fc-event': 'bg-blue-500 border-none hover:opacity-90 cursor-pointer',
+        '.fc .fc-event-time': 'font-semibold',
+        '.fc .fc-event-title': 'font-medium',
+        '.fc .fc-header-toolbar': 'mb-4 flex flex-wrap justify-between items-center gap-4',
+        '.fc .fc-view-harness': 'bg-white rounded-lg shadow-sm',
+        '.fc .fc-scrollgrid': 'border-none',
+        '.fc .fc-scrollgrid td': 'border-color-gray-200',
+        '.fc th': 'p-3 font-semibold text-gray-600 border-gray-200',
+        '.fc td': 'border-gray-200',
+    };
+
+    const getCalendarEvents = useMemo(() => {
+        return events
+            .filter(event => event.trangThai === 'daDuyet')
+            .map(event => ({
+                id: event._id,
+                title: event.ten,
+                start: `${event.ngayToChuc.split('T')[0]}T${event.thoiGianBatDau}`,
+                end: `${event.ngayToChuc.split('T')[0]}T${event.thoiGianKetThuc}`,
+                location: event.diaDiem,
+                className: 'bg-blue-500 text-white rounded-md p-1',
+                extendedProps: {
+                    club: event.club?.ten || event.club,
+                    nguoiPhuTrach: event.nguoiPhuTrach
+                }
+            }));
+    }, [events]);
+
+    const handleEventClick = (clickInfo) => {
+        const eventId = clickInfo.event.id;
+        openDetailDialog(eventId);
+    };
+
+    const truncateWords = (str, numWords) => {
+        const words = str.split(' ');
+        if (words.length > numWords) {
+            return words.slice(0, numWords).join(' ') + '...';
+        }
+        return str;
+    };
+
+    // Hàm kiểm tra xem có sự kiện nào trùng lịch không
+    const checkEventConflicts = (eventToCheck) => {
+        return events.filter(event => {
+            if (event._id === eventToCheck._id || event.trangThai !== 'daDuyet') return false;
+
+            const sameDate = event.ngayToChuc.split('T')[0] === eventToCheck.ngayToChuc.split('T')[0];
+            if (!sameDate) return false;
+
+            // Chuyển đổi thời gian sang minutes để dễ so sánh
+            const convertTimeToMinutes = (time) => {
+                const [hours, minutes] = time.split(':').map(Number);
+                return hours * 60 + minutes;
+            };
+
+            const event1Start = convertTimeToMinutes(eventToCheck.thoiGianBatDau);
+            const event1End = convertTimeToMinutes(eventToCheck.thoiGianKetThuc);
+            const event2Start = convertTimeToMinutes(event.thoiGianBatDau);
+            const event2End = convertTimeToMinutes(event.thoiGianKetThuc);
+
+            // Kiểm tra xem có overlap về thời gian không
+            return (
+                (event1Start >= event2Start && event1Start < event2End) ||
+                (event1End > event2Start && event1End <= event2End) ||
+                (event1Start <= event2Start && event1End >= event2End)
+            );
+        });
+    };
+
     return (
         <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
-                <CardHeader
-                    variant="gradient"
-                    color="blue"
-                    className="p-6 mb-8"
-                >
+                <CardHeader variant="gradient" color="blue" className="p-6 mb-8">
                     <Typography variant="h6" color="white">
                         Danh sách sự kiện
                     </Typography>
                 </CardHeader>
-                <CardBody className="px-0 pt-0 pb-2 overflow-auto">
-                    <div className="flex gap-3 p-4">
+                <CardBody className="px-0 pt-4 pb-2 overflow-auto">
+                    {/* Thay thế phần search và filter cũ bằng giao diện mới */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 p-4 px-6">
+                        {/* Cột trái - Tìm kiếm và các bộ lọc */}
+                        <div className="flex flex-wrap items-center gap-4">
+                            {/* Thanh tìm kiếm */}
+                            <div className="w-72">
+                                <Input
+                                    label="Tìm kiếm theo tên sự kiện"
+                                    icon={<i className="fas fa-search" />}
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Select box câu lạc bộ */}
+                            <div className="w-48">
+                                <Select
+                                    label="Câu lạc bộ"
+                                    value={selectedClub}
+                                    onChange={(value) => setSelectedClub(value)}
+                                >
+                                    <Option value="">Tất cả CLB</Option>
+                                    {clubs.map((club) => (
+                                        <Option key={club._id} value={club.ten}>
+                                            {club.ten}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </div>
+
+                            {/* Bộ lọc ngày */}
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Input
+                                        type="date"
+                                        label="Từ ngày"
+                                        value={dateRange.from}
+                                        onChange={(e) => 
+                                            setDateRange(prev => ({
+                                                ...prev,
+                                                from: e.target.value
+                                            }))
+                                        }
+                                    />
+                                </div>
+                                <div>
+                                    <Input
+                                        type="date"
+                                        label="Đến ngày"
+                                        value={dateRange.to}
+                                        onChange={(e) => 
+                                            setDateRange(prev => ({
+                                                ...prev,
+                                                to: e.target.value
+                                            }))
+                                        }
+                                    />
+                                </div>
+
+                                {/* Nút reset tất cả bộ lọc */}
+                                {(dateRange.from || dateRange.to || selectedClub || searchTerm) && (
+                                    <Button
+                                        variant="text"
+                                        color="red"
+                                        className="p-2"
+                                        onClick={() => {
+                                            setDateRange({ from: "", to: "" });
+                                            setSelectedClub("");
+                                            setSearchTerm("");
+                                        }}
+                                    >
+                                        <XMarkIcon className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Hiển thị kết quả tìm kiếm và lọc */}
+                    {(searchTerm || dateRange.from || dateRange.to || selectedClub) && (
+                        <div className="px-6 mb-4">
+                            <Typography variant="small" color="blue-gray">
+                                Tìm thấy {filteredEvents.length} kết quả
+                                {searchTerm && ` cho "${searchTerm}"`}
+                                {selectedClub && ` tại "${selectedClub}"`}
+                                {dateRange.from && ` từ ${new Date(dateRange.from).toLocaleDateString('vi-VN')}`}
+                                {dateRange.to && ` đến ${new Date(dateRange.to).toLocaleDateString('vi-VN')}`}
+                            </Typography>
+                        </div>
+                    )}
+
+                    {/* Status Filter Buttons - Di chuyển xuống dưới phần tìm kiếm */}
+                    <div className="flex flex-wrap gap-2 px-6 mb-4">
                         <Button
-                            variant={filter === "all"
-                                    ? "gradient"
-                                    : "outlined"}
-                            // color={filter === "all" ? "blue" : "white"}
-                            color= "blue"
+                            variant={filter === "all" ? "gradient" : "outlined"}
+                            color="blue"
                             size="sm"
                             onClick={() => setFilter("all")}
+                            className="flex items-center gap-2"
                         >
+                            <i className="fas fa-list text-sm"></i>
                             Tất cả
                         </Button>
-
                         <Button
-                            variant={filter === "choDuyet"
-                                    ? "gradient"
-                                    : "outlined"}
-                            // color={filter === "choDuyet" ? "blue" : "blue-gray"}
-                            color= "blue"
+                            variant={filter === "choDuyet" ? "gradient" : "outlined"}
+                            color="orange"
                             size="sm"
                             onClick={() => setFilter("choDuyet")}
+                            className="flex items-center gap-2"
                         >
+                            <i className="fas fa-clock text-sm"></i>
                             Chờ duyệt
                         </Button>
-
                         <Button
-                            variant={filter === "daDuyet"
-                                    ? "gradient"
-                                    : "outlined"}
-                            // color={filter === "daDuyet" ? "blue" : "blue-gray"}
-                            color= "blue"
+                            variant={filter === "daDuyet" ? "gradient" : "outlined"}
+                            color="green"
                             size="sm"
                             onClick={() => setFilter("daDuyet")}
+                            className="flex items-center gap-2"
                         >
+                            <i className="fas fa-check text-sm"></i>
                             Đã duyệt
                         </Button>
-
                         <Button
-                            variant={filter === "tuChoi"
-                                    ? "gradient"
-                                    : "outlined"}
-                            // color={filter === "tuChoi" ? "blue" : "blue-gray"}
-                            color= "blue"
+                            variant={filter === "tuChoi" ? "gradient" : "outlined"}
+                            color="red"
                             size="sm"
                             onClick={() => setFilter("tuChoi")}
+                            className="flex items-center gap-2"
                         >
-                            Đã từ chối
+                            <i className="fas fa-times text-sm"></i>
+                            Từ chối
                         </Button>
                     </div>
-                    {isLoading
-                        ? (
-                            <div className="flex items-center justify-center h-64">
-                                <Spinner className="w-12 h-12" color="blue" />
-                            </div>
-                        )
-                        : (
-                            <>
-                                <table className="w-full min-w-[640px] table-auto">
-                                    <thead>
-                                        <tr>
-                                            {[
-                                                "Tên sự kiện",
-                                                "Ngày tổ chức",
-                                                "Thời gian",
-                                                "Địa điểm",
-                                                "Người phụ trách",
-                                                "CLB",
-                                                "Trạng thái",
-                                                "Thao tác",
-                                            ].map((el) => (
-                                                <th
-                                                    key={el}
-                                                    className="px-5 py-3 text-left border-b border-blue-gray-50"
-                                                >
-                                                    <Typography
-                                                        variant="small"
-                                                        className="text-[11px] font-bold uppercase text-blue-gray-400"
-                                                    >
-                                                        {el}
-                                                    </Typography>
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {currentEvents.map(({
-                                            _id,
-                                            ten,
-                                            ngayToChuc,
-                                            thoiGianBatDau,
-                                            thoiGianKetThuc,
-                                            diaDiem,
-                                            nguoiPhuTrach,
-                                            club,
-                                            khachMoi,
-                                            trangThai,
-                                        }, index) => {
-                                            const className =
-                                                index === currentEvents.length - 1
-                                                    ? "p-4"
-                                                    : "p-4 border-b border-blue-gray-50";
 
-                                            return (
-                                                <tr key={_id}>
-                                                    <td className={className}>
+                    {activeTab === 'list' ? (
+                        // List view
+                        <div className="px-4">
+                            {/* Events Table */}
+                            {isLoading ? (
+                                <div className="flex justify-center items-center p-8">
+                                    <Spinner className="h-12 w-12" />
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full min-w-[640px] table-auto">
+                                        <thead>
+                                            <tr>
+                                                {[
+                                                    "STT",
+                                                    "Tên sự kiện",
+                                                    "CLB tổ chức",
+                                                    "Ngày tổ chức",
+                                                    "Địa điểm",
+                                                    "Trạng thái",
+                                                    "Thao tác",
+                                                ].map((head) => (
+                                                    <th
+                                                        key={head}
+                                                        className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                                                    >
                                                         <Typography
                                                             variant="small"
-                                                            color="blue-gray"
-                                                            className="font-semibold"
+                                                            className="text-[11px] font-bold uppercase text-blue-gray-400"
                                                         >
-                                                            {ten}
+                                                            {head}
                                                         </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {new Date(ngayToChuc)
-                                                                .toLocaleDateString()}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {`${thoiGianBatDau} - ${thoiGianKetThuc}`}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {diaDiem}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {nguoiPhuTrach}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {club &&
-                                                                    typeof club ===
-                                                                        "object"
-                                                            ? club.ten
-                                                            : typeof club ===
-                                                                    "string"
-                                                            ? club
-                                                            : "Không xác định"}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography
-                                                            className="text-xs font-semibold"
-                                                            color={getStatusColor(
-                                                                trangThai,
-                                                            )}
-                                                        >
-                                                            {getStatusText(
-                                                                trangThai,
-                                                            )}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <div className="flex items-center gap-2">
-                                                            {trangThai ===
-                                                                    "choDuyet" && (
-                                                                <>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        color="green"
-                                                                        className="flex items-center gap-2"
-                                                                        onClick={() =>
-                                                                            handleApproveEvent(
-                                                                                _id,
-                                                                            )}
-                                                                    >
-                                                                        <CheckCircleIcon
-                                                                            strokeWidth={2}
-                                                                            className="w-4 h-4"
-                                                                        />
-                                                                    </Button>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        color="red"
-                                                                        className="flex items-center gap-2"
-                                                                        onClick={() =>
-                                                                            openRejectDialog(
-                                                                                _id,
-                                                                            )}
-                                                                    >
-                                                                        <XCircleIcon
-                                                                            strokeWidth={2}
-                                                                            className="w-4 h-4"
-                                                                        />
-                                                                    </Button>
-                                                                </>
-                                                            )}
-                                                            <Tooltip
-                                                                content="Xem"
-                                                                animate={{
-                                                                    mount: {
-                                                                        scale: 1,
-                                                                        y: 0,
-                                                                    },
-                                                                    unmount: {
-                                                                        scale: 0,
-                                                                        y: 25,
-                                                                    },
-                                                                }}
-                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                            >
-                                                                <Button
-                                                                    size="sm"
-                                                                    color="blue"
-                                                                    className="flex items-center gap-2"
-                                                                    onClick={() =>
-                                                                        openDetailDialog(
-                                                                            _id,
-                                                                        )}
-                                                                >
-                                                                    <EyeIcon
-                                                                        strokeWidth={2}
-                                                                        className="w-4 h-4"
-                                                                    />
-                                                                </Button>
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {currentEvents.map((event, index) => {
+                                                const isLast = event === currentEvents[currentEvents.length - 1];
+                                                const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
+
+                                                return (
+                                                    <tr key={event._id}>
+                                                        <td className="py-3 px-5">
+                                                            <Typography className="text-sm font-semibold text-blue-gray-600">
+                                                                {(currentPage - 1) * itemsPerPage + index + 1}
+                                                            </Typography>
+                                                        </td>
+                                                        <td className="py-3 px-5">
+                                                            <Tooltip content={event.ten}>
+                                                                <Typography className="text-sm font-semibold text-blue-gray-600">
+                                                                    {truncateWords(event.ten, 10)}
+                                                                </Typography>
                                                             </Tooltip>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-
-                                {/* Thêm phân trang */}
-                                <div className="flex items-center gap-4 justify-center mt-6 mb-4">
-                                    <Button
-                                        variant="text"
-                                        className="flex items-center gap-2"
-                                        onClick={() => setCurrentPage(prev => prev - 1)}
-                                        disabled={currentPage === 1}
-                                    >
-                                        <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
-                                    </Button>
-
-                                    <div className="flex items-center gap-2">
-                                        {[...Array(totalPages)].map((_, index) => (
-                                            <Button
-                                                key={index + 1}
-                                                variant={currentPage === index + 1 ? "gradient" : "text"}
-                                                color="blue"
-                                                onClick={() => setCurrentPage(index + 1)}
-                                                className="w-10 h-10"
-                                            >
-                                                {index + 1}
-                                            </Button>
-                                        ))}
-                                    </div>
-
-                                    <Button
-                                        variant="text"
-                                        className="flex items-center gap-2"
-                                        onClick={() => setCurrentPage(prev => prev + 1)}
-                                        disabled={currentPage === totalPages}
-                                    >
-                                        Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
-                                    </Button>
+                                                        </td>
+                                                        <td className="py-3 px-5">
+                                                            <Typography className="text-sm font-semibold text-blue-gray-600">
+                                                                {event.club && typeof event.club === "object"
+                                                                    ? event.club.ten
+                                                                    : event.club}
+                                                            </Typography>
+                                                        </td>
+                                                        <td className="py-3 px-5">
+                                                            <div className="flex flex-col">
+                                                                <Typography className="text-sm font-semibold text-blue-gray-600">
+                                                                    {new Date(event.ngayToChuc).toLocaleDateString("vi-VN")}
+                                                                </Typography>
+                                                                <div className="flex items-center gap-2 mt-1">
+                                                                    <div className="w-1 h-1 rounded-full bg-blue-gray-300"></div>
+                                                                    <Typography className="text-xs text-blue-gray-500">
+                                                                        {event.thoiGianBatDau} - {event.thoiGianKetThuc}
+                                                                    </Typography>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-3 px-5">
+                                                            <Typography className="text-sm font-semibold text-blue-gray-600">
+                                                                {event.diaDiem}
+                                                            </Typography>
+                                                        </td>
+                                                        <td className="py-3 px-5">
+                                                            <div className="w-max">
+                                                                <Typography
+                                                                    className="text-sm font-semibold"
+                                                                    color={getStatusColor(event.trangThai)}
+                                                                >
+                                                                    {getStatusText(event.trangThai)}
+                                                                </Typography>
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-3 px-5">
+                                                            <div className="flex gap-2">
+                                                                <Tooltip content="Xem chi tiết">
+                                                                    <IconButton
+                                                                        variant="text"
+                                                                        color="blue"
+                                                                        onClick={() => openDetailDialog(event._id)}
+                                                                    >
+                                                                        <EyeIcon className="h-4 w-4" />
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                                {event.trangThai === "choDuyet" && (
+                                                                    <>
+                                                                        <Tooltip content="Phê duyệt">
+                                                                            <IconButton
+                                                                                variant="text"
+                                                                                color="green"
+                                                                                onClick={() => handleApproveEvent(event._id)}
+                                                                            >
+                                                                                <CheckCircleIcon className="h-4 w-4" />
+                                                                            </IconButton>
+                                                                        </Tooltip>
+                                                                        <Tooltip content="Từ chối">
+                                                                            <IconButton
+                                                                                variant="text"
+                                                                                color="red"
+                                                                                onClick={() => openRejectDialog(event._id)}
+                                                                            >
+                                                                                <XCircleIcon className="h-4 w-4" />
+                                                                            </IconButton>
+                                                                        </Tooltip>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
                                 </div>
-                            </>
-                        )}
+                            )}
+
+                            {/* Pagination */}
+                            <div className="flex items-center gap-4 justify-center mt-4">
+                                <Button
+                                    variant="text"
+                                    className="flex items-center gap-2"
+                                    onClick={() => setCurrentPage(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                                </Button>
+                                
+                                <div className="flex items-center gap-2">
+                                    {[...Array(totalPages)].map((_, index) => (
+                                        <Button
+                                            key={index + 1}
+                                            variant={currentPage === index + 1 ? "gradient" : "text"}
+                                            color="blue"
+                                            onClick={() => setCurrentPage(index + 1)}
+                                            className="w-10 h-10"
+                                        >
+                                            {index + 1}
+                                        </Button>
+                                    ))}
+                                </div>
+
+                                <Button
+                                    variant="text"
+                                    className="flex items-center gap-2"
+                                    onClick={() => setCurrentPage(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        // Calendar view
+                        <div className="p-4 min-h-[800px]">
+                            <style>
+                                {Object.entries(calendarCustomStyles)
+                                    .map(([selector, styles]) => `${selector} { ${styles.split(' ').map(c => `@apply ${c};`).join(' ')} }`)
+                                    .join('\n')}
+                            </style>
+                            <FullCalendar
+                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                initialView="dayGridMonth"
+                                headerToolbar={{
+                                    left: 'prev,next today',
+                                    center: 'title',
+                                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                                }}
+                                events={getCalendarEvents}
+                                eventClick={handleEventClick}
+                                eventTimeFormat={{
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false
+                                }}
+                                locale="vi"
+                                buttonText={{
+                                    today: 'Hôm nay',
+                                    month: 'Tháng',
+                                    week: 'Tuần',
+                                    day: 'Ngày'
+                                }}
+                                eventContent={(eventInfo) => (
+                                    <Tooltip
+                                        content={
+                                            <div className="p-2">
+                                                <div className="font-bold text-lg mb-2">{eventInfo.event.title}</div>
+                                                <div className="space-y-1 text-sm">
+                                                    <p className="flex items-center gap-2">
+                                                        <i className="fas fa-map-marker-alt"></i>
+                                                        {eventInfo.event.extendedProps.location}
+                                                    </p>
+                                                    <p className="flex items-center gap-2">
+                                                        <i className="fas fa-users"></i>
+                                                        {eventInfo.event.extendedProps.club}
+                                                    </p>
+                                                    <p className="flex items-center gap-2">
+                                                        <i className="fas fa-user"></i>
+                                                        {eventInfo.event.extendedProps.nguoiPhuTrach}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        }
+                                        className="bg-white shadow-xl rounded-lg"
+                                    >
+                                        <div className="p-1 overflow-hidden">
+                                            <p className="font-semibold text-sm truncate">
+                                                {eventInfo.event.title}
+                                            </p>
+                                            <p className="text-xs truncate text-gray-600">
+                                                {eventInfo.event.extendedProps.location}
+                                            </p>
+                                        </div>
+                                    </Tooltip>
+                                )}
+                                className="rounded-lg shadow-md"
+                            />
+                        </div>
+                    )}
                 </CardBody>
             </Card>
 
@@ -483,7 +706,7 @@ const ApproveEvents = () => {
                                         <td className="border p-3" colSpan="3">{detailEvent.ten}</td>
                                     </tr>
                                     <tr>
-                                        <th className="border p-3 bg-gray-50">Ngày tổ chức</th>
+                                        <th className="border p-3 bg-gray-50">Ngày tổ chc</th>
                                         <td className="border p-3">
                                             {new Date(detailEvent.ngayToChuc).toLocaleDateString()}
                                         </td>
@@ -495,7 +718,7 @@ const ApproveEvents = () => {
                                     <tr>
                                         <th className="border p-3 bg-gray-50">Địa điểm</th>
                                         <td className="border p-3">{detailEvent.diaDiem}</td>
-                                        <th className="border p-3 bg-gray-50">Người phụ trách</th>
+                                        <th className="border p-3 bg-gray-50">Người ph trách</th>
                                         <td className="border p-3">{detailEvent.nguoiPhuTrach}</td>
                                     </tr>
                                     <tr>
@@ -630,6 +853,71 @@ const ApproveEvents = () => {
                         disabled={!rejectReason.trim()}
                     >
                         Xác nhận từ chối
+                    </Button>
+                </DialogFooter>
+            </Dialog>
+
+            {/* Dialog xác nhận khi có sự kiện trùng lịch */}
+            <Dialog open={isConfirmDialogOpen} handler={() => setIsConfirmDialogOpen(false)}>
+                <DialogHeader>Cảnh báo trùng lịch sự kiện</DialogHeader>
+                <DialogBody divider className="max-h-[60vh] overflow-auto">
+                    <div className="space-y-4">
+                        <Typography color="red" className="font-medium">
+                            Hiện có {conflictingEvents.length} sự kiện đã được duyệt trùng lịch:
+                        </Typography>
+                        
+                        {/* Hiển thị thông tin sự kiện cần duyệt */}
+                        {eventToApprove && (
+                            <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                                <Typography className="font-bold mb-2">Sự kiện cần duyệt:</Typography>
+                                <div className="space-y-1">
+                                    <Typography className="text-sm">Tên: {eventToApprove.ten}</Typography>
+                                    <Typography className="text-sm">
+                                        Thời gian: {eventToApprove.thoiGianBatDau} - {eventToApprove.thoiGianKetThuc}
+                                    </Typography>
+                                    <Typography className="text-sm">Địa điểm: {eventToApprove.diaDiem}</Typography>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Danh sách các sự kiện bị trùng */}
+                        <div className="space-y-2">
+                            <Typography className="font-medium">Các sự kiện trùng lịch:</Typography>
+                            {conflictingEvents.map((event, index) => (
+                                <div key={event._id} className="bg-red-50 p-3 rounded-lg">
+                                    <Typography className="font-medium">{event.ten}</Typography>
+                                    <div className="grid grid-cols-2 gap-2 mt-1 text-sm">
+                                        <Typography>
+                                            Thời gian: {event.thoiGianBatDau} - {event.thoiGianKetThuc}
+                                        </Typography>
+                                        <Typography>Địa điểm: {event.diaDiem}</Typography>
+                                        <Typography>
+                                            CLB: {event.club?.ten || typeof event.club === 'string' ? event.club : 'N/A'}
+                                        </Typography>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <Typography color="red" className="font-medium mt-4">
+                            Bạn có chắc chắn muốn duyệt sự kiện này không?
+                        </Typography>
+                    </div>
+                </DialogBody>
+                <DialogFooter className="space-x-2">
+                    <Button 
+                        variant="text" 
+                        color="red" 
+                        onClick={() => setIsConfirmDialogOpen(false)}
+                    >
+                        Hủy
+                    </Button>
+                    <Button 
+                        variant="gradient" 
+                        color="green" 
+                        onClick={() => approveEvent(eventToApprove._id)}
+                    >
+                        Xác nhận duyệt
                     </Button>
                 </DialogFooter>
             </Dialog>

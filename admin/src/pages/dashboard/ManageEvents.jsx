@@ -6,6 +6,7 @@ import {
     XCircleIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
+    XMarkIcon,
 } from "@heroicons/react/24/solid";
 import {
     Button,
@@ -29,7 +30,7 @@ import { FaPlus } from "react-icons/fa6";
 import TimePicker from "react-time-picker";
 import "react-time-picker/dist/TimePicker.css";
 
-const API_URL = "http://4.242.20.80:5500/api";
+const API_URL = "http://localhost:5500/api";
 
 const ManageEvents = () => {
     const [events, setEvents] = useState([]);
@@ -58,6 +59,13 @@ const ManageEvents = () => {
     const itemsPerPage = 10;
     const [errors, setErrors] = useState({});
     const [searchTerm, setSearchTerm] = useState("");
+    const [students, setStudents] = useState([]);
+    const [filteredStudents, setFilteredStudents] = useState([]);
+    const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+    const [dateFilter, setDateFilter] = useState({
+        from: "",
+        to: ""
+    });
 
     useEffect(() => {
         const managedClubsString = localStorage.getItem("managedClubs");
@@ -85,6 +93,12 @@ const ManageEvents = () => {
         setIsLoading(false);
         fetchClubs();
     }, []);
+
+    useEffect(() => {
+        if (managedClub?._id) {
+            fetchMembersByClub(managedClub._id);
+        }
+    }, [managedClub]);
 
     const fetchClubs = async () => {
         try {
@@ -166,7 +180,7 @@ const ManageEvents = () => {
 
     const handleDeleteEvent = async (eventId, trangThai) => {
         // Kiểm tra trạng thái
-        if (trangThai === "Đã duyệt") {
+        if (trangThai === "daDuyet") {
             alert("Không thể xóa sự kiện đã được duyệt!");
             return;
         }
@@ -181,16 +195,14 @@ const ManageEvents = () => {
                     return;
                 }
 
-                const response = await axios.delete(
-                    `${API_URL}/delete-event/${eventId}`,
-                );
+                await axios.delete(`${API_URL}/delete-event/${eventId}`);
                 fetchEvents(managedClub._id);
             } catch (error) {
                 console.error("Error deleting event:", error);
                 alert(
                     `Lỗi khi xóa sự kiện: ${
                         error.response?.data?.message || "Không xác định"
-                    }`,
+                    }`
                 );
             }
         }
@@ -198,11 +210,19 @@ const ManageEvents = () => {
 
     const openEditDialog = async (id) => {
         try {
-            setErrors({});
             const response = await axios.get(`${API_URL}/get-event/${id}`);
+            const event = response.data;
+            
+            // Kiểm tra trạng thái trước khi cho phép sửa
+            if (event.trangThai === "daDuyet") {
+                alert("Không thể sửa sự kiện đã được duyệt!");
+                return;
+            }
+
+            setErrors({});
             setNewEvent({
-                ...response.data,
-                ngayToChuc: response.data.ngayToChuc.split('T')[0],
+                ...event,
+                ngayToChuc: event.ngayToChuc.split('T')[0],
             });
             setEditingEventId(id);
             setIsDialogOpen(true);
@@ -268,20 +288,43 @@ const ManageEvents = () => {
     const filteredEvents = useMemo(() => {
         let filtered = events;
         
+        // Tìm kiếm theo tên sự kiện hoặc người phụ trách
+        if (searchTerm.trim()) {
+            filtered = filtered.filter((event) =>
+                event.ten.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                event.nguoiPhuTrach.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+        
         // Lọc theo trạng thái
         if (statusFilter !== "all") {
             filtered = filtered.filter((event) => event.trangThai === statusFilter);
         }
         
-        // Lọc theo tên sự kiện
-        if (searchTerm.trim()) {
-            filtered = filtered.filter((event) =>
-                event.ten.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+        // Lọc theo ngày tổ chức
+        if (dateFilter.from || dateFilter.to) {
+            filtered = filtered.filter(event => {
+                const eventDate = new Date(event.ngayToChuc);
+                eventDate.setHours(0, 0, 0, 0);
+                
+                if (dateFilter.from && dateFilter.to) {
+                    const fromDate = new Date(dateFilter.from);
+                    const toDate = new Date(dateFilter.to);
+                    return eventDate >= fromDate && eventDate <= toDate;
+                } else if (dateFilter.from) {
+                    const fromDate = new Date(dateFilter.from);
+                    return eventDate >= fromDate;
+                } else if (dateFilter.to) {
+                    const toDate = new Date(dateFilter.to);
+                    return eventDate <= toDate;
+                }
+                return true;
+            });
         }
-        
-        return filtered;
-    }, [events, statusFilter, searchTerm]);
+
+        // Sắp xếp theo ngày tổ chức (mới nhất -> cũ nhất)
+        return filtered.sort((a, b) => new Date(b.ngayToChuc) - new Date(a.ngayToChuc));
+    }, [events, searchTerm, statusFilter, dateFilter]);
 
     // Tính toán events cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -390,34 +433,85 @@ const ManageEvents = () => {
         return Object.keys(newErrors).length === 0;
     };
 
+    const fetchMembersByClub = async (clubId) => {
+        try {
+            const response = await axios.get(`${API_URL}/get-members-by-club/${clubId}`);
+            const formattedMembers = response.data.map(member => ({
+                _id: member._id,
+                hoTen: member.hoTen,
+                mssv: member.maSoHocSinh
+            }));
+            setStudents(formattedMembers);
+        } catch (error) {
+            console.error("Error fetching members:", error);
+        }
+    };
+
+    const handleStudentSearch = (value) => {
+        setNewEvent({ ...newEvent, nguoiPhuTrach: value });
+        setShowStudentDropdown(true);
+        
+        // Lấy ngẫu nhiên 5 thành viên khi bấm vào input
+        if (value.trim() === '') {
+            const shuffled = [...students].sort(() => 0.5 - Math.random());
+            setFilteredStudents(shuffled.slice(0, 5));
+            return;
+        }
+
+        // Lọc theo tìm kiếm nếu có nhập text
+        const filtered = students.filter(student => 
+            student.hoTen.toLowerCase().includes(value.toLowerCase()) ||
+            student.mssv.toLowerCase().includes(value.toLowerCase())
+        );
+        setFilteredStudents(filtered.slice(0, 5));
+    };
+
+    const handleSelectStudent = (student) => {
+        setNewEvent({ ...newEvent, nguoiPhuTrach: student.hoTen });
+        setShowStudentDropdown(false);
+        setErrors({ ...errors, nguoiPhuTrach: "" });
+    };
+
+    // Thêm useEffect để xử lý click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            const dropdown = document.getElementById('student-dropdown');
+            const input = document.getElementById('student-input');
+            
+            if (dropdown && input && 
+                !dropdown.contains(event.target) && 
+                !input.contains(event.target)) {
+                setShowStudentDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     return (
-        <div className="flex flex-col gap-12 mt-12 mb-8">
+        <div className="flex flex-col gap-6 md:gap-12 mt-6 md:mt-12 mb-8">
             <Card>
-                <CardHeader
-                    variant="gradient"
-                    color="cyan"
-                    className="p-6 mb-8"
-                >
+                <CardHeader variant="gradient" color="cyan" className="p-4 md:p-6 mb-4 md:mb-8">
                     <Typography variant="h6" color="white">
                         Quản lý sự kiện
                     </Typography>
                 </CardHeader>
                 <CardBody className="px-0 pt-0 pb-2 overflow-auto">
-                    <div className="flex items-center justify-between p-4">
-                        {/* Cột bên trái chứa tìm kiếm và các bộ lọc */}
-                        <div className="flex items-center gap-4">
-                            {/* Ô tìm kiếm */}
-                            <div className="w-72">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between p-4 gap-4">
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                            <div className="w-full md:w-96">
                                 <Input
-                                    label="Tìm kiếm sự kiện"
+                                    label="Tìm kiếm theo tên sự kiện hoặc người phụ trách"
                                     icon={<i className="fas fa-search" />}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
                             
-                            {/* Các nút filter */}
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                                 <Button
                                     variant={statusFilter === "all" ? "gradient" : "outlined"}
                                     color="cyan"
@@ -454,17 +548,9 @@ const ManageEvents = () => {
                                     Đã từ chối
                                 </Button>
                             </div>
-
-                            {/* Hiển thị kết quả tìm kiếm nếu có */}
-                            {searchTerm && (
-                                <Typography variant="small" color="blue-gray">
-                                    Tìm thấy {filteredEvents.length} kết quả
-                                </Typography>
-                            )}
                         </div>
 
-                        {/* Nút thêm bên phải */}
-                        <div className="pr-6">
+                        <div className="flex justify-end md:pr-6">
                             <Tooltip
                                 content="Thêm"
                                 animate={{
@@ -500,322 +586,335 @@ const ManageEvents = () => {
                         </div>
                     </div>
 
-                    {isLoading
-                        ? (
-                            <div className="flex items-center justify-center h-64">
-                                <Spinner className="w-12 h-12" color="cyan" />
+                    <div className="px-4 md:px-6 mb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                                <Input
+                                    type="date"
+                                    label="Từ ngày"
+                                    value={dateFilter.from}
+                                    onChange={(e) => setDateFilter(prev => ({...prev, from: e.target.value}))}
+                                    className="bg-white"
+                                />
                             </div>
-                        )
-                        : (
-                            <>
-                                <table className="w-full min-w-[640px] table-auto">
-                                    <thead>
-                                        <tr>
-                                            {[
-                                                "Tên sự kiện",
-                                                "Ngày tổ chức",
-                                                "Địa điểm",
-                                                "Người phụ trách",
-                                                "Trạng thái",
-                                                "Thao tác",
-                                            ].map((el) => (
-                                                <th
-                                                    key={el}
-                                                    className="px-5 py-3 text-left border-b border-blue-gray-50"
+
+                            <div>
+                                <Input
+                                    type="date"
+                                    label="Đến ngày"
+                                    value={dateFilter.to}
+                                    onChange={(e) => setDateFilter(prev => ({...prev, to: e.target.value}))}
+                                    className="bg-white"
+                                />
+                            </div>
+                        </div>
+
+                        {(searchTerm || statusFilter !== "all" || dateFilter.from || dateFilter.to) && (
+                            <div className="flex justify-center mt-4">
+                                <Button
+                                    variant="text"
+                                    color="red"
+                                    className="flex items-center gap-2"
+                                    onClick={() => {
+                                        setSearchTerm("");
+                                        setStatusFilter("all");
+                                        setDateFilter({ from: "", to: "" });
+                                    }}
+                                >
+                                    <XMarkIcon className="h-4 w-4" />
+                                    <span>Xóa bộ lọc</span>
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="w-full overflow-x-auto">
+                        <table className="w-full min-w-[640px] table-auto">
+                            <thead>
+                                <tr>
+                                    {[
+                                        "STT",
+                                        "Tên sự kiện",
+                                        "Ngày tổ chức",
+                                        "Địa điểm",
+                                        "Người phụ trách",
+                                        "Trạng thái",
+                                        "Thao tác",
+                                    ].map((el) => (
+                                        <th
+                                            key={el}
+                                            className="px-5 py-3 text-left border-b border-blue-gray-50"
+                                        >
+                                            <Typography
+                                                variant="small"
+                                                className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                            >
+                                                {el}
+                                            </Typography>
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {currentEvents.map(({
+                                    _id,
+                                    ten,
+                                    ngayToChuc,
+                                    thoiGianBatDau,
+                                    thoiGianKetThuc,
+                                    diaDiem,
+                                    nguoiPhuTrach,
+                                    trangThai,
+                                }, index) => {
+                                    const className = index === currentEvents.length - 1
+                                        ? "p-4"
+                                        : "p-4 border-b border-blue-gray-50";
+
+                                    return (
+                                        <tr key={_id}>
+                                            <td className={`${className} px-2 md:px-4`}>
+                                                <Typography
+                                                    className="text-xs font-semibold text-blue-gray-600"
+                                                >
+                                                    {(currentPage - 1) * itemsPerPage + index + 1}
+                                                </Typography>
+                                            </td>
+                                            <td className={`${className} px-2 md:px-4`}>
+                                                <Tooltip
+                                                    content={ten}
+                                                    animate={{
+                                                        mount: { scale: 1, y: 0 },
+                                                        unmount: { scale: 0, y: 25 },
+                                                    }}
+                                                    className="bg-black bg-opacity-80"
                                                 >
                                                     <Typography
-                                                        variant="small"
-                                                        className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                                        className="text-xs font-semibold text-blue-gray-600 truncate max-w-[200px]"
                                                     >
-                                                        {el}
+                                                        {ten.length > 30 ? `${ten.substring(0, 30)}...` : ten}
                                                     </Typography>
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {currentEvents.map(({
-                                            _id,
-                                            ten,
-                                            ngayToChuc,
-                                            thoiGianBatDau,
-                                            thoiGianKetThuc,
-                                            diaDiem,
-                                            nguoiPhuTrach,
-                                            trangThai,
-                                        }, index) => {
-                                            const className =
-                                                index === currentEvents.length - 1
-                                                    ? "p-4"
-                                                    : "p-4 border-b border-blue-gray-50";
-
-                                            return (
-                                                <tr key={_id}>
-                                                    <td className={className}>
-                                                        <Typography
-                                                            variant="small"
-                                                            color="blue-gray"
-                                                            className="font-semibold"
-                                                        >
-                                                            {ten}
+                                                </Tooltip>
+                                            </td>
+                                            <td className={`${className} px-2 md:px-4`}>
+                                                <div className="flex flex-col">
+                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                        {new Date(ngayToChuc).toLocaleDateString("vi-VN")}
+                                                    </Typography>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <div className="w-1 h-1 rounded-full bg-blue-gray-300"></div>
+                                                        <Typography className="text-xs text-blue-gray-500">
+                                                            {thoiGianBatDau} - {thoiGianKetThuc}
                                                         </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <div className="flex flex-col">
-                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                {new Date(
-                                                                    ngayToChuc,
-                                                                ).toLocaleDateString(
-                                                                    "vi-VN",
-                                                                )}
-                                                            </Typography>
-                                                            <div className="flex items-center gap-2 mt-1">
-                                                                <div className="w-1 h-1 rounded-full bg-blue-gray-300">
-                                                                </div>
-                                                                <Typography className="text-xs text-blue-gray-500">
-                                                                    {thoiGianBatDau}
-                                                                    {" "}
-                                                                    -{" "}
-                                                                    {thoiGianKetThuc}
-                                                                </Typography>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {diaDiem}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {nguoiPhuTrach}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <div className="flex items-center gap-2">
-                                                            {trangThai ===
-                                                                    "choDuyet" && (
-                                                                <Typography className="text-xs font-semibold text-orange-500">
-                                                                    Chờ duyệt
-                                                                </Typography>
-                                                            )}
-                                                            {trangThai ===
-                                                                    "daDuyet" && (
-                                                                <Typography className="text-xs font-semibold text-green-500">
-                                                                    Đã duyệt
-                                                                </Typography>
-                                                            )}
-                                                            {trangThai ===
-                                                                    "tuChoi" && (
-                                                                <Typography className="text-xs font-semibold text-red-500">
-                                                                    Đã từ chối
-                                                                </Typography>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <div className="flex items-center gap-2">
-                                                            <Tooltip
-                                                                content="Xem"
-                                                                animate={{
-                                                                    mount: {
-                                                                        scale: 1,
-                                                                        y: 0,
-                                                                    },
-                                                                    unmount: {
-                                                                        scale: 0,
-                                                                        y: 25,
-                                                                    },
-                                                                }}
-                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                            >
-                                                                <Button
-                                                                    size="sm"
-                                                                    color="blue"
-                                                                    className="flex items-center gap-2"
-                                                                    onClick={() =>
-                                                                        openDetailDialog(
-                                                                            _id,
-                                                                        )}
-                                                                >
-                                                                    <EyeIcon
-                                                                        strokeWidth={2}
-                                                                        className="w-4 h-4"
-                                                                    />
-                                                                </Button>
-                                                            </Tooltip>
-                                                            <Tooltip
-                                                                content="Sửa"
-                                                                animate={{
-                                                                    mount: {
-                                                                        scale: 1,
-                                                                        y: 0,
-                                                                    },
-                                                                    unmount: {
-                                                                        scale: 0,
-                                                                        y: 25,
-                                                                    },
-                                                                }}
-                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                            >
-                                                                <Button
-                                                                    size="sm"
-                                                                    color="green"
-                                                                    className="flex items-center gap-2"
-                                                                    onClick={() =>
-                                                                        openEditDialog(
-                                                                            _id,
-                                                                        )}
-                                                                >
-                                                                    <PencilIcon
-                                                                        strokeWidth={2}
-                                                                        className="w-4 h-4"
-                                                                    />
-                                                                </Button>
-                                                            </Tooltip>
-                                                            <Tooltip
-                                                                content="Xóa"
-                                                                animate={{
-                                                                    mount: {
-                                                                        scale: 1,
-                                                                        y: 0,
-                                                                    },
-                                                                    unmount: {
-                                                                        scale: 0,
-                                                                        y: 25,
-                                                                    },
-                                                                }}
-                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                            >
-                                                                <Button
-                                                                    size="sm"
-                                                                    color="red"
-                                                                    className="flex items-center gap-2"
-                                                                    onClick={() =>
-                                                                        handleDeleteEvent(
-                                                                            _id,
-                                                                            trangThai
-                                                                        )}
-                                                                >
-                                                                    <TrashIcon
-                                                                        strokeWidth={2}
-                                                                        className="w-4 h-4"
-                                                                    />
-                                                                </Button>
-                                                            </Tooltip>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-
-                                {/* Thêm phân trang */}
-                                <div className="flex items-center gap-4 justify-center mt-6 mb-4">
-                                    <Button
-                                        variant="text"
-                                        className="flex items-center gap-2"
-                                        onClick={() => handlePageChange(currentPage - 1)}
-                                        disabled={currentPage === 1}
-                                    >
-                                        <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
-                                    </Button>
-
-                                    <div className="flex items-center gap-2">
-                                        {totalPages <= 5 ? (
-                                            // Hiển thị tất cả các trang nếu tổng số trang <= 5
-                                            [...Array(totalPages)].map((_, index) => (
-                                                <Button
-                                                    key={index + 1}
-                                                    variant={currentPage === index + 1 ? "gradient" : "text"}
-                                                    color="cyan"
-                                                    onClick={() => handlePageChange(index + 1)}
-                                                    className="w-10 h-10"
-                                                >
-                                                    {index + 1}
-                                                </Button>
-                                            ))
-                                        ) : (
-                                            // Hiển thị phân trang với dấu ... nếu tổng số trang > 5
-                                            <>
-                                                {/* Trang đầu */}
-                                                <Button
-                                                    variant={currentPage === 1 ? "gradient" : "text"}
-                                                    color="cyan"
-                                                    onClick={() => handlePageChange(1)}
-                                                    className="w-10 h-10"
-                                                >
-                                                    1
-                                                </Button>
-
-                                                {/* Dấu ... bên trái */}
-                                                {currentPage > 3 && (
-                                                    <span className="mx-2">...</span>
-                                                )}
-
-                                                {/* Các trang ở giữa */}
-                                                {[...Array(3)].map((_, index) => {
-                                                    const pageNumber = Math.min(
-                                                        Math.max(currentPage - 1 + index, 2),
-                                                        totalPages - 1
-                                                    );
-                                                    if (pageNumber <= 1 || pageNumber >= totalPages) return null;
-                                                    return (
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className={`${className} px-2 md:px-4`}>
+                                                <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                    {diaDiem}
+                                                </Typography>
+                                            </td>
+                                            <td className={`${className} px-2 md:px-4`}>
+                                                <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                    {nguoiPhuTrach}
+                                                </Typography>
+                                            </td>
+                                            <td className={`${className} px-2 md:px-4`}>
+                                                <div className={`px-2 py-1 rounded-full text-center text-xs font-semibold ${
+                                                    trangThai === "daDuyet" 
+                                                        ? "bg-green-100 text-green-800" 
+                                                        : trangThai === "choDuyet"
+                                                        ? "bg-orange-100 text-orange-800"
+                                                        : "bg-red-100 text-red-800"
+                                                }`}>
+                                                    {trangThai === "daDuyet" && "Đã duyệt"}
+                                                    {trangThai === "choDuyet" && "Chờ duyệt"}
+                                                    {trangThai === "tuChoi" && "Đã từ chối"}
+                                                </div>
+                                            </td>
+                                            <td className={`${className} px-2 md:px-4`}>
+                                                <div className="flex items-center gap-2">
+                                                    <Tooltip
+                                                        content="Xem"
+                                                        animate={{
+                                                            mount: {
+                                                                scale: 1,
+                                                                y: 0,
+                                                            },
+                                                            unmount: {
+                                                                scale: 0,
+                                                                y: 25,
+                                                            },
+                                                        }}
+                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                    >
                                                         <Button
-                                                            key={pageNumber}
-                                                            variant={currentPage === pageNumber ? "gradient" : "text"}
-                                                            color="cyan"
-                                                            onClick={() => handlePageChange(pageNumber)}
-                                                            className="w-10 h-10"
+                                                            size="sm"
+                                                            color="blue"
+                                                            className="flex items-center gap-2"
+                                                            onClick={() =>
+                                                                openDetailDialog(
+                                                                    _id,
+                                                                )}
                                                         >
-                                                            {pageNumber}
+                                                            <EyeIcon
+                                                                strokeWidth={2}
+                                                                className="w-4 h-4"
+                                                            />
                                                         </Button>
-                                                    );
-                                                })}
+                                                    </Tooltip>
+                                                    <Tooltip
+                                                        content={trangThai === "daDuyet" ? "Không thể sửa sự kiện đã duyệt" : "Sửa"}
+                                                        animate={{
+                                                            mount: { scale: 1, y: 0 },
+                                                            unmount: { scale: 0, y: 25 },
+                                                        }}
+                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                    >
+                                                        <Button
+                                                            size="sm"
+                                                            color="green"
+                                                            className="flex items-center gap-2"
+                                                            onClick={() =>
+                                                                openEditDialog(
+                                                                    _id,
+                                                                )}
+                                                            disabled={trangThai === "daDuyet"}
+                                                        >
+                                                            <PencilIcon
+                                                                strokeWidth={2}
+                                                                className="w-4 h-4"
+                                                            />
+                                                        </Button>
+                                                    </Tooltip>
+                                                    <Tooltip
+                                                        content={trangThai === "daDuyet" ? "Không thể xóa sự kiện đã duyệt" : "Xóa"}
+                                                        animate={{
+                                                            mount: { scale: 1, y: 0 },
+                                                            unmount: { scale: 0, y: 25 },
+                                                        }}
+                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                    >
+                                                        <Button
+                                                            size="sm"
+                                                            color="red"
+                                                            className="flex items-center gap-2"
+                                                            onClick={() =>
+                                                                handleDeleteEvent(
+                                                                    _id,
+                                                                    trangThai
+                                                                )}
+                                                            disabled={trangThai === "daDuyet"}
+                                                        >
+                                                            <TrashIcon
+                                                                strokeWidth={2}
+                                                                className="w-4 h-4"
+                                                            />
+                                                        </Button>
+                                                    </Tooltip>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
 
-                                                {/* Dấu ... bên phải */}
-                                                {currentPage < totalPages - 2 && (
-                                                    <span className="mx-2">...</span>
-                                                )}
+                    <div className="flex flex-col md:flex-row items-center gap-4 justify-center mt-6 mb-4 px-4">
+                        <Button
+                            variant="text"
+                            className="flex items-center gap-2"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                        >
+                            <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                        </Button>
 
-                                                {/* Trang cuối */}
-                                                <Button
-                                                    variant={currentPage === totalPages ? "gradient" : "text"}
-                                                    color="cyan"
-                                                    onClick={() => handlePageChange(totalPages)}
-                                                    className="w-10 h-10"
-                                                >
-                                                    {totalPages}
-                                                </Button>
-                                            </>
-                                        )}
-                                    </div>
+                        <div className="flex items-center gap-2">
+                            {totalPages <= 5 ? (
+                                [...Array(totalPages)].map((_, index) => (
+                                    <Button
+                                        key={index + 1}
+                                        variant={currentPage === index + 1 ? "gradient" : "text"}
+                                        color="cyan"
+                                        onClick={() => handlePageChange(index + 1)}
+                                        className="w-10 h-10"
+                                    >
+                                        {index + 1}
+                                    </Button>
+                                ))
+                            ) : (
+                                <>
+                                    <Button
+                                        variant={currentPage === 1 ? "gradient" : "text"}
+                                        color="cyan"
+                                        onClick={() => handlePageChange(1)}
+                                        className="w-10 h-10"
+                                    >
+                                        1
+                                    </Button>
+
+                                    {currentPage > 3 && (
+                                        <span className="mx-2">...</span>
+                                    )}
+
+                                    {[...Array(3)].map((_, index) => {
+                                        const pageNumber = Math.min(
+                                            Math.max(currentPage - 1 + index, 2),
+                                            totalPages - 1
+                                        );
+                                        if (pageNumber <= 1 || pageNumber >= totalPages) return null;
+                                        return (
+                                            <Button
+                                                key={pageNumber}
+                                                variant={currentPage === pageNumber ? "gradient" : "text"}
+                                                color="cyan"
+                                                onClick={() => handlePageChange(pageNumber)}
+                                                className="w-10 h-10"
+                                            >
+                                                {pageNumber}
+                                            </Button>
+                                        );
+                                    })}
+
+                                    {currentPage < totalPages - 2 && (
+                                        <span className="mx-2">...</span>
+                                    )}
 
                                     <Button
-                                        variant="text"
-                                        className="flex items-center gap-2"
-                                        onClick={() => handlePageChange(currentPage + 1)}
-                                        disabled={currentPage === totalPages}
+                                        variant={currentPage === totalPages ? "gradient" : "text"}
+                                        color="cyan"
+                                        onClick={() => handlePageChange(totalPages)}
+                                        className="w-10 h-10"
                                     >
-                                        Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                        {totalPages}
                                     </Button>
-                                </div>
-                            </>
-                        )}
+                                </>
+                            )}
+                        </div>
+
+                        <Button
+                            variant="text"
+                            className="flex items-center gap-2"
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                        >
+                            Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </CardBody>
             </Card>
 
-            {/* Dialog thêm/sửa sự kiện */}
             <Dialog
                 open={isDialogOpen}
                 handler={() => setIsDialogOpen(false)}
                 size="lg"
+                className="min-w-[90%] md:min-w-[70%] lg:min-w-[50%]"
             >
-                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
+                <DialogHeader className="text-base md:text-xl lg:text-2xl">
                     {editingEventId ? "Chỉnh sửa Sự kiện" : "Thêm Sự kiện Mới"}
                 </DialogHeader>
-                <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto max-h-[80vh]">
+                <DialogBody divider className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto max-h-[60vh] md:max-h-[70vh] p-4">
                     <div>
                         <Input
                             label="Tên sự kiện"
@@ -916,20 +1015,46 @@ const ManageEvents = () => {
                         )}
                     </div>
 
-                    <div>
+                    <div className="relative">
                         <Input
+                            id="student-input"
                             label="Người phụ trách"
                             value={newEvent.nguoiPhuTrach}
-                            onChange={(e) => {
-                                setNewEvent({ ...newEvent, nguoiPhuTrach: e.target.value });
-                                setErrors({ ...errors, nguoiPhuTrach: "" });
-                            }}
+                            onChange={(e) => handleStudentSearch(e.target.value)}
                             error={!!errors.nguoiPhuTrach}
+                            onFocus={() => {
+                                setShowStudentDropdown(true);
+                                // Hiển thị 5 thành viên ngẫu nhiên khi focus
+                                const shuffled = [...students].sort(() => 0.5 - Math.random());
+                                setFilteredStudents(shuffled.slice(0, 5));
+                            }}
                         />
                         {errors.nguoiPhuTrach && (
                             <Typography color="red" className="mt-1 text-xs">
                                 {errors.nguoiPhuTrach}
                             </Typography>
+                        )}
+                        
+                        {showStudentDropdown && filteredStudents.length > 0 && (
+                            <div 
+                                id="student-dropdown"
+                                className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                            >
+                                {filteredStudents.map((student) => (
+                                    <div
+                                        key={student._id}
+                                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                        onClick={() => handleSelectStudent(student)}
+                                    >
+                                        <Typography className="text-sm">
+                                            {student.hoTen}
+                                        </Typography>
+                                        <Typography className="text-xs text-gray-600">
+                                            MSHS: {student.mssv}
+                                        </Typography>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
 
@@ -1044,13 +1169,13 @@ const ManageEvents = () => {
                 </DialogFooter>
             </Dialog>
 
-            {/* Dialog xem chi tiết sự kiện */}
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
                 size="xl"
+                className="min-w-[95%] md:min-w-[80%] lg:min-w-[70%]"
             >
-                <DialogHeader className="flex items-center gap-4">
+                <DialogHeader className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4">
                     <Typography variant="h6">Chi tiết sự kiện</Typography>
                     <Typography 
                         variant="small" 
@@ -1068,11 +1193,9 @@ const ManageEvents = () => {
                 </DialogHeader>
 
                 {detailEvent && (
-                    <DialogBody divider className="overflow-y-auto lg:max-h-[65vh] sm:max-h-[50vh] p-6">
-                        <div className="grid gap-6">
-                            {/* Thông tin cơ bản */}
-                            <div className="bg-blue-gray-50 p-6 rounded-lg">
-                                {/* Tên sự kiện */}
+                    <DialogBody divider className="overflow-y-auto max-h-[50vh] md:max-h-[65vh] p-4 md:p-6">
+                        <div className="grid gap-4 md:gap-6">
+                            <div className="bg-blue-gray-50 p-4 md:p-6 rounded-lg">
                                 <div className="text-center mb-6">
                                     <Typography variant="h4" color="blue" className="font-bold mb-2">
                                         {detailEvent.ten}
@@ -1085,7 +1208,6 @@ const ManageEvents = () => {
                                     </Typography>
                                 </div>
 
-                                {/* Thông tin thời gian */}
                                 <div className="grid gap-4">
                                     <div className="bg-white p-4 rounded-lg">
                                         <Typography className="text-sm text-gray-600 mb-2">Thời gian tổ chức</Typography>
@@ -1116,7 +1238,6 @@ const ManageEvents = () => {
                                 </div>
                             </div>
 
-                            {/* Nội dung sự kiện */}
                             <div className="bg-blue-gray-50 p-4 rounded-lg">
                                 <Typography className="text-sm text-gray-600 mb-2">Nội dung sự kiện</Typography>
                                 <Typography className="font-medium whitespace-pre-line">
@@ -1124,7 +1245,6 @@ const ManageEvents = () => {
                                 </Typography>
                             </div>
 
-                            {/* Thông tin khác */}
                             <div className="bg-blue-gray-50 p-4 rounded-lg">
                                 <Typography className="text-sm text-gray-600 mb-2">Ngân sách chi tiêu</Typography>
                                 <Typography className="font-medium text-blue-900">
@@ -1146,7 +1266,6 @@ const ManageEvents = () => {
                                 </div>
                             </div>
 
-                            {/* Lý do từ chối */}
                             {detailEvent && detailEvent.trangThai === "tuChoi" && (
                                 <div className="bg-red-50 p-4 rounded-lg border border-red-200">
                                     <Typography className="text-sm text-red-800 font-medium mb-2">

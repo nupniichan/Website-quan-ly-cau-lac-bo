@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import {
     Button,
@@ -23,10 +23,11 @@ import {
     TrashIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
+    XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { FaPlus } from "react-icons/fa6";
 
-const API_URL = "http://4.242.20.80:5500/api";
+const API_URL = "http://localhost:5500/api";
 
 const ManageMembers = () => {
     const [members, setMembers] = useState([]);
@@ -53,6 +54,26 @@ const ManageMembers = () => {
     const itemsPerPage = 10;
     const [errors, setErrors] = useState({});
     const [searchTerm, setSearchTerm] = useState("");
+    const [studentIdSearch, setStudentIdSearch] = useState("");
+    const [genderFilter, setGenderFilter] = useState("all");
+    const [roleFilter, setRoleFilter] = useState("all");
+    const [joinDateFilter, setJoinDateFilter] = useState({
+        from: "",
+        to: ""
+    });
+    const [searchType, setSearchType] = useState("name");
+
+    // Thêm state để lưu trữ danh sách vai trò duy nhất
+    const uniqueRoles = useMemo(() => {
+        const roles = members
+            .map(member => member.vaiTro)
+            .filter((role, index, self) => 
+                // Lọc ra các vai trò duy nhất và không rỗng
+                role && self.indexOf(role) === index
+            )
+            .sort(); // Sắp xếp theo alphabet
+        return roles;
+    }, [members]);
 
     useEffect(() => {
         const managedClubsString = localStorage.getItem("managedClubs");
@@ -108,7 +129,7 @@ const ManageMembers = () => {
     const fetchManagedClub = async (clubId) => {
         try {
             const response = await axios.get(
-                `http://4.242.20.80:5500/api/get-club/${clubId}`,
+                `http://localhost:5500/api/get-club/${clubId}`,
             );
             setManagedClub(response.data);
             setNewMember((prev) => ({ ...prev, club: clubId }));
@@ -247,9 +268,36 @@ const ManageMembers = () => {
         }
     };
 
-    const filteredMembers = members.filter(member =>
-        member.hoTen.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredMembers = useMemo(() => {
+        const filtered = members.filter(member => {
+            // Kiểm tra xem input có phải là MSSV không (chỉ chứa số)
+            if (/^\d+$/.test(searchTerm)) {
+                return member.maSoHocSinh.toLowerCase().includes(searchTerm.toLowerCase());
+            }
+            
+            // Nếu không phải MSSV, tìm theo tên hoặc lớp
+            return member.hoTen.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                   member.lop.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            // Các điều kiện lọc khác giữ nguyên
+            const genderMatch = genderFilter === "all" || 
+                member.gioiTinh.toLowerCase() === genderFilter.toLowerCase();
+            
+            const roleMatch = roleFilter === "all" || 
+                (member.vaiTro && member.vaiTro === roleFilter);
+            
+            const joinDate = new Date(member.ngayThamGia);
+            const fromDate = joinDateFilter.from ? new Date(joinDateFilter.from) : null;
+            const toDate = joinDateFilter.to ? new Date(joinDateFilter.to) : null;
+            
+            const dateMatch = (!fromDate || joinDate >= fromDate) && 
+                             (!toDate || joinDate <= toDate);
+
+            return genderMatch && roleMatch && dateMatch;
+        });
+
+        return filtered.sort((a, b) => new Date(b.ngayThamGia) - new Date(a.ngayThamGia));
+    }, [members, searchTerm, genderFilter, roleFilter, joinDateFilter]);
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -314,44 +362,142 @@ const ManageMembers = () => {
                 </CardHeader>
 
                 <CardBody className="px-0 pt-0 pb-2 overflow-auto">
-                    <div className="flex justify-between items-center p-4 px-6 pr-10">
-                        <div className="w-72">
+                    <div className="flex justify-between items-center p-4 px-6">
+                        {/* Search input */}
+                        <div className="w-96">
                             <Input
-                                label="Tìm kiếm theo tên"
+                                label="Tìm kiếm theo tên hoặc MSHS hoặc lớp"
                                 icon={<i className="fas fa-search" />}
-                                value={searchTerm}
+                                value={searchTerm || studentIdSearch}
                                 onChange={(e) => {
-                                    setSearchTerm(e.target.value);
-                                    setCurrentPage(1); // Reset về trang 1 khi tìm kiếm
+                                    const value = e.target.value;
+                                    if (/^\d*$/.test(value)) {
+                                        setStudentIdSearch(value);
+                                        setSearchTerm("");
+                                    } else {
+                                        setSearchTerm(value);
+                                        setStudentIdSearch("");
+                                    }
                                 }}
+                                // className="!border !border-blue-gray-200 bg-white shadow-lg shadow-blue-gray-900/5 ring-4 ring-transparent placeholder:text-blue-gray-200 focus:!border-blue-500"
+                                // labelProps={{
+                                //     className: "text-xs font-normal",
+                                // }}
                             />
                         </div>
-                        <Tooltip
-                            content="Thêm"
-                            animate={{
-                                mount: { scale: 1, y: 0 },
-                                unmount: { scale: 0, y: 25 },
-                            }}
-                            className="bg-gradient-to-r from-black to-transparent opacity-70"
-                        >
-                            <Button
-                                className="flex items-center gap-3"
-                                color="blue"
-                                size="sm"
-                                onClick={openAddDialog}
+
+                        {/* Add button */}
+                        <div>
+                            <Tooltip
+                                content="Thêm"
+                                animate={{
+                                    mount: { scale: 1, y: 0 },
+                                    unmount: { scale: 0, y: 25 },
+                                }}
+                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                             >
-                                <FaPlus
-                                    className="w-4 h-4"
-                                    strokeWidth={"2rem"}
-                                />
-                            </Button>
-                        </Tooltip>
+                                <Button
+                                    className="flex items-center gap-3"
+                                    color="blue"
+                                    size="sm"
+                                    onClick={openAddDialog}
+                                >
+                                    <FaPlus className="w-4 h-4" strokeWidth={"2rem"} />
+                                </Button>
+                            </Tooltip>
+                        </div>
                     </div>
 
-                    {searchTerm && (
+                    {/* Filter section */}
+                    <div className="px-6 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {/* Gender filter */}
+                            <div>
+                                <Select
+                                    label="Giới tính"
+                                    value={genderFilter}
+                                    onChange={(value) => setGenderFilter(value)}
+                                    className="bg-white"
+                                >
+                                    <Option value="all">Tất cả</Option>
+                                    <Option value="nam">Nam</Option>
+                                    <Option value="nữ">Nữ</Option>
+                                </Select>
+                            </div>
+
+                            {/* Role filter */}
+                            <div>
+                                <Select
+                                    label="Vai trò"
+                                    value={roleFilter}
+                                    onChange={(value) => setRoleFilter(value)}
+                                    className="bg-white"
+                                >
+                                    <Option value="all">Tất cả</Option>
+                                    {uniqueRoles.map((role) => (
+                                        <Option key={role} value={role}>
+                                            {role}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </div>
+
+                            {/* From date filter */}
+                            <div>
+                                <Input
+                                    type="date"
+                                    label="Từ ngày"
+                                    value={joinDateFilter.from}
+                                    onChange={(e) => setJoinDateFilter(prev => ({...prev, from: e.target.value}))}
+                                    className="bg-white"
+                                />
+                            </div>
+
+                            {/* To date filter */}
+                            <div>
+                                <Input
+                                    type="date"
+                                    label="Đến ngày"
+                                    value={joinDateFilter.to}
+                                    onChange={(e) => setJoinDateFilter(prev => ({...prev, to: e.target.value}))}
+                                    className="bg-white"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Reset filters button */}
+                        {(searchTerm || studentIdSearch || genderFilter !== "all" || roleFilter !== "all" || joinDateFilter.from || joinDateFilter.to) && (
+                            <div className="flex justify-center mt-4">
+                                <Button
+                                    variant="text"
+                                    color="red"
+                                    className="flex items-center gap-2"
+                                    onClick={() => {
+                                        setSearchTerm("");
+                                        setStudentIdSearch("");
+                                        setGenderFilter("all");
+                                        setRoleFilter("all");
+                                        setJoinDateFilter({ from: "", to: "" });
+                                    }}
+                                >
+                                    <XMarkIcon className="h-4 w-4" />
+                                    <span>Xóa bộ lọc</span>
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Search results count */}
+                    {(searchTerm || studentIdSearch || genderFilter !== "all" || roleFilter !== "all" || joinDateFilter.from || joinDateFilter.to) && (
                         <div className="px-6 mb-4">
                             <Typography variant="small" color="blue-gray">
-                                Tìm thấy {filteredMembers.length} kết quả cho "{searchTerm}"
+                                Tìm thấy {filteredMembers.length} kết quả
+                                {searchTerm && ` cho "${searchTerm}"`}
+                                {studentIdSearch && ` cho MSSV "${studentIdSearch}"`}
+                                {genderFilter !== "all" && ` với giới tính ${genderFilter}`}
+                                {roleFilter !== "all" && ` với vai trò ${roleFilter}`}
+                                {joinDateFilter.from && ` từ ${new Date(joinDateFilter.from).toLocaleDateString('vi-VN')}`}
+                                {joinDateFilter.to && ` đến ${new Date(joinDateFilter.to).toLocaleDateString('vi-VN')}`}
                             </Typography>
                         </div>
                     )}
@@ -374,11 +520,14 @@ const ManageMembers = () => {
                                     <thead>
                                         <tr>
                                             {[
+                                                "STT",
                                                 "Mã số học sinh",
                                                 "Họ tên",
                                                 "Giới tính",
                                                 "Lớp",
                                                 "Vai trò",
+                                                "Ngày tham gia",
+                                                "Trạng thái",
                                                 "Thao tác",
                                             ].map((el) => (
                                                 <th
@@ -404,6 +553,8 @@ const ManageMembers = () => {
                                                     gioiTinh,
                                                     lop,
                                                     vaiTro,
+                                                    ngayThamGia,
+                                                    tinhTrang,
                                                 },
                                                 key,
                                             ) => {
@@ -413,8 +564,16 @@ const ManageMembers = () => {
                                                         : "border-b border-blue-gray-50"
                                                 }`;
 
+                                                // Tính s thứ tự dựa trên trang hiện tại
+                                                const index = (currentPage - 1) * itemsPerPage + key + 1;
+
                                                 return (
                                                     <tr key={maSoHocSinh}>
+                                                        <td className={className}>
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {index}
+                                                            </Typography>
+                                                        </td>
                                                         <td className={className}>
                                                             <Typography className="text-xs font-semibold text-blue-gray-600">
                                                                 {maSoHocSinh}
@@ -439,6 +598,20 @@ const ManageMembers = () => {
                                                             <Typography className="text-xs font-semibold text-blue-gray-600">
                                                                 {vaiTro || "Chưa phân công"}
                                                             </Typography>
+                                                        </td>
+                                                        <td className={className}>
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {new Date(ngayThamGia).toLocaleDateString("vi-VN")}
+                                                            </Typography>
+                                                        </td>
+                                                        <td className={className}>
+                                                            <div className={`px-2 py-1 rounded-full text-center text-xs font-semibold ${
+                                                                tinhTrang === "Đang hoạt động" 
+                                                                    ? "bg-green-100 text-green-800" 
+                                                                    : "bg-red-100 text-red-800"
+                                                            }`}>
+                                                                {tinhTrang}
+                                                            </div>
                                                         </td>
                                                         <td className={className}>
                                                             <div className="flex items-center gap-2">
@@ -545,7 +718,6 @@ const ManageMembers = () => {
                                     </tbody>
                                 </table>
 
-                                {/* Thêm phân trang */}
                                 <div className="flex items-center gap-4 justify-center mt-6 mb-4">
                                     <Button
                                         variant="text"
@@ -558,7 +730,6 @@ const ManageMembers = () => {
 
                                     <div className="flex items-center gap-2">
                                         {totalPages <= 5 ? (
-                                            // Hiển thị tất cả các trang nếu tổng số trang <= 5
                                             [...Array(totalPages)].map((_, index) => (
                                                 <Button
                                                     key={index + 1}
@@ -571,9 +742,7 @@ const ManageMembers = () => {
                                                 </Button>
                                             ))
                                         ) : (
-                                            // Hiển thị phân trang với dấu ... nếu tổng số trang > 5
                                             <>
-                                                {/* Trang đầu */}
                                                 <Button
                                                     variant={currentPage === 1 ? "gradient" : "text"}
                                                     color="blue"
@@ -583,12 +752,10 @@ const ManageMembers = () => {
                                                     1
                                                 </Button>
 
-                                                {/* Dấu ... bên trái */}
                                                 {currentPage > 3 && (
                                                     <span className="mx-2">...</span>
                                                 )}
 
-                                                {/* Các trang ở giữa */}
                                                 {[...Array(3)].map((_, index) => {
                                                     const pageNumber = Math.min(
                                                         Math.max(currentPage - 1 + index, 2),
@@ -608,12 +775,10 @@ const ManageMembers = () => {
                                                     );
                                                 })}
 
-                                                {/* Dấu ... bên phải */}
                                                 {currentPage < totalPages - 2 && (
                                                     <span className="mx-2">...</span>
                                                 )}
 
-                                                {/* Trang cuối */}
                                                 <Button
                                                     variant={currentPage === totalPages ? "gradient" : "text"}
                                                     color="blue"
@@ -640,7 +805,6 @@ const ManageMembers = () => {
                 </CardBody>
             </Card>
 
-            {/* Dialog thêm/sửa thành viên */}
             <Dialog
                 open={isDialogOpen}
                 handler={() => setIsDialogOpen(false)}
@@ -712,7 +876,7 @@ const ManageMembers = () => {
                                 setErrors({ ...errors, ngayThamGia: "" });
                             }}
                             error={!!errors.ngayThamGia}
-                            max={new Date().toISOString().split('T')[0]} // Giới hạn không chọn được ngày tương lai
+                            max={new Date().toISOString().split('T')[0]}
                         />
                         {errors.ngayThamGia && (
                             <Typography color="red" className="mt-1 text-xs">
@@ -763,7 +927,6 @@ const ManageMembers = () => {
                 </DialogFooter>
             </Dialog>
 
-            {/* Dialog xem chi tiết thành viên */}
             <Dialog
                 open={isDetailDialogOpen}
                 handler={() => setIsDetailDialogOpen(false)}
@@ -787,10 +950,8 @@ const ManageMembers = () => {
                 {detailMember ? (
                     <DialogBody divider className="overflow-y-auto lg:max-h-[65vh] sm:max-h-[50vh] p-6">
                         <div className="flex gap-6">
-                            {/* Cột trái - Thông tin cơ bản */}
                             <div className="flex-1">
                                 <div className="bg-blue-gray-50 p-6 rounded-lg">
-                                    {/* Tên và MSHS */}
                                     <div className="text-center mb-6">
                                         <Typography variant="h4" color="blue" className="font-bold mb-2">
                                             {detailMember.hoTen}
@@ -803,7 +964,6 @@ const ManageMembers = () => {
                                         </Typography>
                                     </div>
 
-                                    {/* Thông tin cơ bản */}
                                     <div className="grid gap-4">
                                         <div className="bg-white p-4 rounded-lg">
                                             <Typography className="text-sm text-gray-600 mb-1">Câu lạc bộ</Typography>
@@ -826,7 +986,6 @@ const ManageMembers = () => {
                                 </div>
                             </div>
 
-                            {/* Cột phải - Thông tin chi tiết */}
                             <div className="flex-[1.5]">
                                 <div className="grid gap-4">
                                     <div className="info-item bg-blue-gray-50 p-4 rounded-lg">

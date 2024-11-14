@@ -16,8 +16,9 @@ import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
-const API_URL = "http://4.242.20.80:5500/api";
+const API_URL = "http://localhost:5500/api";
 
 const BudgetAllocation = () => {
     const [allocations, setAllocations] = useState([]);
@@ -43,6 +44,7 @@ const BudgetAllocation = () => {
     const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         fetchAllocations();
@@ -236,22 +238,27 @@ const BudgetAllocation = () => {
     };
 
     const filteredAllocations = useMemo(() => {
-        return allocations.filter((allocation) => {
-            const matchClub = !filters.club ||
-                allocation.club._id === filters.club;
-            const matchDate = (!filters.startDate ||
-                new Date(allocation.allocationDate) >=
-                    new Date(filters.startDate)) &&
-                (!filters.endDate ||
-                    new Date(allocation.allocationDate) <=
-                        new Date(filters.endDate));
-            const matchAmount = (!filters.minAmount ||
-                allocation.amount >= Number(filters.minAmount)) &&
-                (!filters.maxAmount ||
-                    allocation.amount <= Number(filters.maxAmount));
-            return matchClub && matchDate && matchAmount;
-        });
-    }, [allocations, filters]);
+        return allocations
+            .filter((allocation) => {
+                const matchClub = !filters.club || allocation.club._id === filters.club;
+                const matchDate = (!filters.startDate ||
+                    new Date(allocation.allocationDate) >= new Date(filters.startDate)) &&
+                    (!filters.endDate ||
+                        new Date(allocation.allocationDate) <= new Date(filters.endDate));
+                const matchAmount = (!filters.minAmount ||
+                    allocation.amount >= Number(filters.minAmount)) &&
+                    (!filters.maxAmount ||
+                        allocation.amount <= Number(filters.maxAmount));
+                
+                const matchSearch = !searchTerm || (
+                    allocation.club?.ten.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    allocation.purpose.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+
+                return matchClub && matchDate && matchAmount && matchSearch;
+            })
+            .sort((a, b) => new Date(b.allocationDate) - new Date(a.allocationDate));
+    }, [allocations, filters, searchTerm]);
 
     // Tính toán allocations cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -262,7 +269,17 @@ const BudgetAllocation = () => {
     // Reset trang khi thay đổi bộ lọc
     useEffect(() => {
         setCurrentPage(1);
-    }, [filters]);
+    }, [filters, searchTerm]);
+
+    // Thêm hàm format date kiểu VN
+    const formatDateToVN = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
 
     return (
         <div className="flex flex-col gap-12 mt-12 mb-8">
@@ -299,14 +316,27 @@ const BudgetAllocation = () => {
                             </Button>
                         </Tooltip>
                     </div>
-                    {/* Thêm phần filter */}
-                    <div className="px-6 py-3 absolute z-[60]">
+                    {/* Thanh tìm kiếm đơn */}
+                    <div className="px-6 py-3">
+                        <div className="w-full">
+                            <Input
+                                label="Tìm kiếm theo tên câu lạc bộ hoặc mục đích"
+                                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Phần filter hiện tại */}
+                    <div className="px-6 py-3">
                         <div className="grid gap-4 2xl:grid-cols-5 xl:grid-cols-3 md:grid-cols-3 sm:grid-cols-2">
                             <Select
                                 label="Câu lạc bộ"
                                 value={filters.club}
                                 onChange={(value) =>
                                     setFilters({ ...filters, club: value })}
+                                menuProps={{ className: "absolute z-[70]" }}
                             >
                                 <Option value="" className="bg-transparent">
                                     <strong>Tất cả</strong>
@@ -314,7 +344,7 @@ const BudgetAllocation = () => {
 
                                 <hr className="my-2 border-t border-gray-300" />
 
-                                <div className="overflow-y-auto lg:max-h-48 md:max-h-32 sm:max-h-20">
+                                <div className="overflow-y-auto max-h-[200px]">
                                     {clubs.map((club) => (
                                         <Option
                                             key={club._id}
@@ -326,16 +356,6 @@ const BudgetAllocation = () => {
                                     ))}
                                 </div>
                             </Select>
-                            {/* Display filtered club */}
-                            {filters.club && (
-                                <Typography
-                                    variant="small"
-                                    color="blue-gray"
-                                    className="font-normal translate-x-3 translate-y-[0.65rem] absolute z-0 pointer-events-none"
-                                >
-                                    {clubs.find((c) => c._id === filters.club)?.ten}
-                                </Typography>
-                            )}
                             <Input
                                 type="date"
                                 label="Từ ngày"
@@ -380,10 +400,11 @@ const BudgetAllocation = () => {
                     </div>
 
                     {/* Bảng hiển thị */}
-                    <table className="w-full min-w-[640px] table-auto 2xl:mt-24 xl:mt-40 lg:mt-44 md:mt-48 sm:mt-52">
+                    <table className="w-full min-w-[640px] table-auto 2xl:mt-0 xl:mt-0 lg:mt-0 md:mt-0 sm:mt-0">
                         <thead>
                             <tr>
                                 {[
+                                    "STT",
                                     "Câu lạc bộ",
                                     "Số tiền",
                                     "Mục đích",
@@ -417,6 +438,11 @@ const BudgetAllocation = () => {
                                         <tr key={_id}>
                                             <td className={className}>
                                                 <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                    {indexOfFirstItem + key + 1}
+                                                </Typography>
+                                            </td>
+                                            <td className={className}>
+                                                <Typography className="text-xs font-semibold text-blue-gray-600">
                                                     {club?.ten || "N/A"}
                                                 </Typography>
                                             </td>
@@ -433,9 +459,7 @@ const BudgetAllocation = () => {
                                             </td>
                                             <td className={className}>
                                                 <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                    {new Date(
-                                                        allocationDate,
-                                                    ).toLocaleDateString()}
+                                                    {formatDateToVN(allocationDate)}
                                                 </Typography>
                                             </td>
                                             <td className={className}>
@@ -660,7 +684,7 @@ const BudgetAllocation = () => {
                                 <tr>
                                     <th className="border p-3 bg-gray-50">Ngày phân bổ</th>
                                     <td className="border p-3">
-                                        {new Date(detailAllocation.allocationDate).toLocaleDateString()}
+                                        {formatDateToVN(detailAllocation.allocationDate)}
                                     </td>
                                 </tr>
                             </tbody>
@@ -686,12 +710,12 @@ const BudgetAllocation = () => {
             >
                 <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
                     {editingAllocationId
-                        ? "Chnh sửa Phân bổ Ngân sách"
+                        ? "Chỉnh sửa Phân bổ Ngân sách"
                         : "Thêm Phân bổ Ngân sách Mới"}
                 </DialogHeader>
                 <DialogBody
                     divider
-                    className="grid grid-cols-2 gap-4 lg:max-h-[60vh]sm:max-h-[45vh]"
+                    className="grid grid-cols-2 gap-4 lg:max-h-[60vh] sm:max-h-[45vh]"
                 >
                     <Select
                         label="Câu lạc bộ"

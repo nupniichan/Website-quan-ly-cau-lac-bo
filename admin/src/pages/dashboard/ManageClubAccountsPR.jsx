@@ -19,9 +19,11 @@ import {
     EyeIcon,
     PencilIcon,
     TrashIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 
-const API_URL = "http://4.242.20.80:5500/api";
+const API_URL = "http://localhost:5500/api";
 
 const ManageClubAccountsPR = () => {
     const [accounts, setAccounts] = useState([]);
@@ -39,6 +41,8 @@ const ManageClubAccountsPR = () => {
     const [validationErrors, setValidationErrors] = useState({});
     const [editValidationErrors, setEditValidationErrors] = useState({});
     const [detailAccount, setDetailAccount] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         fetchAccounts();
@@ -159,6 +163,15 @@ const ManageClubAccountsPR = () => {
         }
     };
 
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentAccounts = accounts.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(accounts.length / itemsPerPage);
+
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+    };
+
     return (
         <div className="p-4 bg-gray-50 min-h-screen">
             {isLoading ? (
@@ -195,7 +208,7 @@ const ManageClubAccountsPR = () => {
                             <table className="w-full min-w-[640px] table-auto">
                                 <thead>
                                     <tr>
-                                        {["User ID", "Email", "Role", "Actions"].map((el) => (
+                                        {["STT", "User ID", "Email", "Role", "Actions"].map((el) => (
                                             <th key={el} className="px-5 py-3 text-left border-b border-blue-gray-50">
                                                 <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                                                     {el}
@@ -205,10 +218,17 @@ const ManageClubAccountsPR = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {accounts.map(({ userId, email, role }, key) => {
-                                        const className = `py-3 px-5 ${key === accounts.length - 1 ? "" : "border-b border-blue-gray-50"}`;
+                                    {currentAccounts.map(({ userId, email, role }, index) => {
+                                        const className = `py-3 px-5 ${index === currentAccounts.length - 1 ? "" : "border-b border-blue-gray-50"}`;
+                                        const stt = indexOfFirstItem + index + 1;
+
                                         return (
                                             <tr key={userId}>
+                                                <td className={className}>
+                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                        {stt}
+                                                    </Typography>
+                                                </td>
                                                 <td className={className}>
                                                     <Typography className="text-xs font-semibold text-blue-gray-600">
                                                         {userId}
@@ -243,6 +263,89 @@ const ManageClubAccountsPR = () => {
                                 </tbody>
                             </table>
                         )}
+
+                        <div className="flex items-center gap-4 justify-center mt-6 mb-4">
+                            <Button
+                                variant="text"
+                                className="flex items-center gap-2"
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                            >
+                                <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                            </Button>
+
+                            <div className="flex items-center gap-2">
+                                {totalPages <= 5 ? (
+                                    [...Array(totalPages)].map((_, index) => (
+                                        <Button
+                                            key={index + 1}
+                                            variant={currentPage === index + 1 ? "gradient" : "text"}
+                                            color="blue"
+                                            onClick={() => handlePageChange(index + 1)}
+                                            className="w-10 h-10"
+                                        >
+                                            {index + 1}
+                                        </Button>
+                                    ))
+                                ) : (
+                                    <>
+                                        <Button
+                                            variant={currentPage === 1 ? "gradient" : "text"}
+                                            color="blue"
+                                            onClick={() => handlePageChange(1)}
+                                            className="w-10 h-10"
+                                        >
+                                            1
+                                        </Button>
+
+                                        {currentPage > 3 && (
+                                            <span className="mx-2">...</span>
+                                        )}
+
+                                        {[...Array(3)].map((_, index) => {
+                                            const pageNumber = Math.min(
+                                                Math.max(currentPage - 1 + index, 2),
+                                                totalPages - 1
+                                            );
+                                            if (pageNumber <= 1 || pageNumber >= totalPages) return null;
+                                            return (
+                                                <Button
+                                                    key={pageNumber}
+                                                    variant={currentPage === pageNumber ? "gradient" : "text"}
+                                                    color="blue"
+                                                    onClick={() => handlePageChange(pageNumber)}
+                                                    className="w-10 h-10"
+                                                >
+                                                    {pageNumber}
+                                                </Button>
+                                            );
+                                        })}
+
+                                        {currentPage < totalPages - 2 && (
+                                            <span className="mx-2">...</span>
+                                        )}
+
+                                        <Button
+                                            variant={currentPage === totalPages ? "gradient" : "text"}
+                                            color="blue"
+                                            onClick={() => handlePageChange(totalPages)}
+                                            className="w-10 h-10"
+                                        >
+                                            {totalPages}
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
+
+                            <Button
+                                variant="text"
+                                className="flex items-center gap-2"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                            >
+                                Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </CardBody>
                 </Card>
             )}

@@ -22,7 +22,7 @@ import { useEffect, useState, useMemo } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
-const API_URL = "http://4.242.20.80:5500/api";
+const API_URL = "http://localhost:5500/api";
 
 const ManageBudget = () => {
     const [budgets, setBudgets] = useState([]);
@@ -49,6 +49,9 @@ const ManageBudget = () => {
         startDate: "",
         endDate: ""
     });
+    const [students, setStudents] = useState([]);
+    const [filteredStudents, setFilteredStudents] = useState([]);
+    const [showStudentDropdown, setShowStudentDropdown] = useState(false);
 
     useEffect(() => {
         const managedClubsString = localStorage.getItem("managedClubs");
@@ -77,6 +80,12 @@ const ManageBudget = () => {
         fetchClubs();
     }, []);
 
+    useEffect(() => {
+        if (club?._id) {
+            fetchMembersByClub(club._id);
+        }
+    }, [club]);
+
     const fetchBudgets = async (clubId) => {
         setIsLoading(true);
         try {
@@ -98,6 +107,43 @@ const ManageBudget = () => {
         } catch (error) {
             console.error("Error fetching clubs:", error);
         }
+    };
+
+    const fetchMembersByClub = async (clubId) => {
+        try {
+            const response = await axios.get(`${API_URL}/get-members-by-club/${clubId}`);
+            const formattedMembers = response.data.map(member => ({
+                _id: member._id,
+                hoTen: member.hoTen,
+                mssv: member.maSoHocSinh
+            }));
+            setStudents(formattedMembers);
+        } catch (error) {
+            console.error("Error fetching members:", error);
+        }
+    };
+
+    const handleStudentSearch = (value) => {
+        setNewBudget({ ...newBudget, thanhVienChiuTrachNhiem: value });
+        setShowStudentDropdown(true);
+        
+        if (value.trim() === '') {
+            const shuffled = [...students].sort(() => 0.5 - Math.random());
+            setFilteredStudents(shuffled.slice(0, 5));
+            return;
+        }
+
+        const filtered = students.filter(student => 
+            student.hoTen.toLowerCase().includes(value.toLowerCase()) ||
+            student.mssv.toLowerCase().includes(value.toLowerCase())
+        );
+        setFilteredStudents(filtered.slice(0, 5));
+    };
+
+    const handleSelectStudent = (student) => {
+        setNewBudget({ ...newBudget, thanhVienChiuTrachNhiem: student.hoTen });
+        setShowStudentDropdown(false);
+        setErrors({ ...errors, thanhVienChiuTrachNhiem: "" });
     };
 
     const validateForm = () => {
@@ -281,6 +327,24 @@ const ManageBudget = () => {
         setCurrentPage(1);
     }, [searchTerm, dateFilter]);
 
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            const dropdown = document.getElementById('student-dropdown');
+            const input = document.getElementById('student-input');
+            
+            if (dropdown && input && 
+                !dropdown.contains(event.target) && 
+                !input.contains(event.target)) {
+                setShowStudentDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     return (
         <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
@@ -460,8 +524,11 @@ const ManageBudget = () => {
                                                 </td>
                                                 <td className={className}>
                                                     <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                        {new Date(ngay)
-                                                            .toLocaleDateString()}
+                                                        {new Date(ngay).toLocaleDateString('vi-VN', {
+                                                            day: '2-digit',
+                                                            month: '2-digit',
+                                                            year: 'numeric'
+                                                        })}
                                                     </Typography>
                                                 </td>
                                                 <td className={className}>
@@ -759,23 +826,45 @@ const ManageBudget = () => {
                         )}
                     </div>
 
-                    <div>
+                    <div className="relative">
                         <Input
+                            id="student-input"
                             label="Thành viên chịu trách nhiệm"
                             value={newBudget.thanhVienChiuTrachNhiem}
-                            onChange={(e) => {
-                                setNewBudget({
-                                    ...newBudget,
-                                    thanhVienChiuTrachNhiem: e.target.value,
-                                });
-                                setErrors({ ...errors, thanhVienChiuTrachNhiem: "" });
-                            }}
+                            onChange={(e) => handleStudentSearch(e.target.value)}
                             error={!!errors.thanhVienChiuTrachNhiem}
+                            onFocus={() => {
+                                setShowStudentDropdown(true);
+                                const shuffled = [...students].sort(() => 0.5 - Math.random());
+                                setFilteredStudents(shuffled.slice(0, 5));
+                            }}
                         />
                         {errors.thanhVienChiuTrachNhiem && (
                             <Typography color="red" className="mt-1 text-xs">
                                 {errors.thanhVienChiuTrachNhiem}
                             </Typography>
+                        )}
+                        
+                        {showStudentDropdown && filteredStudents.length > 0 && (
+                            <div 
+                                id="student-dropdown"
+                                className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                            >
+                                {filteredStudents.map((student) => (
+                                    <div
+                                        key={student._id}
+                                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                        onClick={() => handleSelectStudent(student)}
+                                    >
+                                        <Typography className="text-sm">
+                                            {student.hoTen}
+                                        </Typography>
+                                        <Typography className="text-xs text-gray-600">
+                                            MSHS: {student.mssv}
+                                        </Typography>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
 
@@ -897,9 +986,9 @@ const ManageBudget = () => {
                                         <Typography className="font-medium">
                                             {new Date(detailBudget.ngay).toLocaleDateString('vi-VN', {
                                                 weekday: 'long',
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric'
+                                                day: '2-digit',
+                                                month: '2-digit',
+                                                year: 'numeric'
                                             })}
                                         </Typography>
                                     </div>

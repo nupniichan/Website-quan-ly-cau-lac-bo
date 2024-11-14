@@ -65,7 +65,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'http://4.242.20.80:5500',
+                url: 'http://localhost:5500',
             }
         ]
     },

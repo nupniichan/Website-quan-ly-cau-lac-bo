@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -40,7 +40,7 @@ ChartJS.register(
 );
 
 // Thêm baseURL cho axios
-const baseURL = 'http://4.242.20.80:5500'; // Port của server backend
+const baseURL = 'http://localhost:5500'; // Port của server backend
 axios.defaults.baseURL = baseURL;
 
 // Tạo hàm format date
@@ -56,6 +56,11 @@ const formatDate = (dateString) => {
 // Thêm styles cho cards
 const cardHeaderStyles = "rounded-none bg-transparent shadow-none";
 const cardBodyStyles = "px-2 pb-0";
+
+// Thêm hàm sắp xếp ngày
+const sortEventsByDate = (events) => {
+    return [...events].sort((a, b) => new Date(b.ngayToChuc) - new Date(a.ngayToChuc));
+};
 
 export function Home() {
     const [userData, setUserData] = useState(null);
@@ -245,7 +250,9 @@ export function Home() {
         const fetchPendingEvents = async () => {
             try {
                 const response = await axios.get(`${baseURL}/api/get-pending-events`);
-                setPendingEvents(response.data);
+                // Sắp xếp events trước khi set state
+                const sortedEvents = sortEventsByDate(response.data);
+                setPendingEvents(sortedEvents);
             } catch (error) {
                 console.error('Error fetching pending events:', error);
             }
@@ -456,34 +463,36 @@ export function Home() {
             </div>
 
             {/* Pending Events Table - Enhanced styling */}
-            <Card className="transition-shadow duration-300 hover:shadow-lg">
-                <CardHeader className={`${cardHeaderStyles} p-4 flex items-center justify-between`}>
-                    <Typography variant="h6" color="blue-gray" className="font-semibold">
-                        Sự Kiện Chờ Duyệt
-                    </Typography>
-                    <Link 
-                        to="/dashboard/approve-events" 
-                        className="font-medium text-blue-500 transition-colors duration-300 hover:text-blue-700"
-                    >
-                        Xem tất cả →
-                    </Link>
+            <Card className="mt-[3.2rem]">
+                <CardHeader className={`relative bg-clip-border mx-4 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-blue-400 text-white shadow-blue-500/40 shadow-lg -mt-6 p-6 mb-8`}>
+                    <div className="flex items-center justify-between">
+                        <Typography variant="h6" className="text-xl font-semibold text-white">
+                            Sự Kiện Chờ Duyệt
+                        </Typography>
+                        <Link 
+                            to="/dashboard/approve-events" 
+                            className="font-medium text-white transition-colors duration-300 hover:text-blue-100"
+                        >
+                            Xem tất cả →
+                        </Link>
+                    </div>
                 </CardHeader>
                 <CardBody>
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[640px] table-auto">
                             <thead>
-                                <tr className="bg-blue-gray-50">
-                                    <th className="px-4 py-3 text-left border-b border-blue-gray-50">
+                                <tr>
+                                    <th className="border-b border-blue-gray-50 py-3 px-6 text-left">
                                         <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                                             Tên Sự Kiện
                                         </Typography>
                                     </th>
-                                    <th className="px-4 py-3 text-left border-b border-blue-gray-50">
+                                    <th className="border-b border-blue-gray-50 py-3 px-6 text-left">
                                         <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                                             CLB Tổ Chức
                                         </Typography>
                                     </th>
-                                    <th className="px-4 py-3 text-left border-b border-blue-gray-50">
+                                    <th className="border-b border-blue-gray-50 py-3 px-6 text-left">
                                         <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                                             Ngày Tổ Chức
                                         </Typography>
@@ -492,21 +501,21 @@ export function Home() {
                             </thead>
                             <tbody>
                                 {pendingEvents.map((event, index) => (
-                                    <tr key={event._id}
+                                    <tr key={event._id} 
                                         className={`hover:bg-blue-gray-50/50 transition-colors duration-200
                                         ${index % 2 === 0 ? 'bg-blue-gray-50/30' : ''}`}>
-                                        <td className="px-4 py-3">
-                                            <Typography variant="small" className="text-xs font-semibold text-blue-gray-600">
+                                        <td className="py-3 px-6">
+                                            <Typography variant="small" className="text-sm font-semibold text-blue-gray-600">
                                                 {event.ten}
                                             </Typography>
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <Typography variant="small" className="text-xs font-semibold text-blue-gray-600">
+                                        <td className="py-3 px-6">
+                                            <Typography variant="small" className="text-sm font-semibold text-blue-gray-600">
                                                 {event.club?.ten}
                                             </Typography>
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <Typography variant="small" className="text-xs font-semibold text-blue-gray-600">
+                                        <td className="py-3 px-6">
+                                            <Typography variant="small" className="text-sm font-semibold text-blue-gray-600">
                                                 {formatDate(event.ngayToChuc)}
                                             </Typography>
                                         </td>

@@ -14,6 +14,8 @@ import {
     Textarea,
     Tooltip,
     Typography,
+    Select,
+    Option,
 } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState, useMemo } from "react";
@@ -21,7 +23,7 @@ import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 
-const API_URL = "http://4.242.20.80:5500/api";
+const API_URL = "http://localhost:5500/api";
 
 // Thêm hàm validate chung
 const validateClubData = (clubData) => {
@@ -32,6 +34,7 @@ const validateClubData = (clubData) => {
         { key: "ngayThanhLap", label: "Ngày thành lập" },
         { key: "giaoVienPhuTrach", label: "Giáo viên phụ trách" },
         { key: "truongBanCLB", label: "Trưởng ban CLB" },
+        { key: "tinhTrang", label: "Tình trạng" },
     ];
 
     // Kiểm tra trường rỗng
@@ -55,6 +58,16 @@ const validateClubData = (clubData) => {
     }
 };
 
+// Thêm hàm helper để format ngày
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+};
+
 const ManageClubs = () => {
     const [clubs, setClubs] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -69,6 +82,7 @@ const ManageClubs = () => {
         mieuTa: "",
         quyDinh: "",
         logo: null,
+        tinhTrang: "Còn hoạt động",
     });
     const [detailClub, setDetailClub] = useState(null);
     const [editingClubId, setEditingClubId] = useState(null);
@@ -81,6 +95,7 @@ const ManageClubs = () => {
         startDate: "",
         endDate: ""
     });
+    const [fieldFilter, setFieldFilter] = useState("");
 
     useEffect(() => {
         fetchClubs();
@@ -215,6 +230,7 @@ const ManageClubs = () => {
             mieuTa: "",
             quyDinh: "",
             logo: null,
+            tinhTrang: "Còn hoạt động",
         });
         setEditingClubId(null);
         setIsDialogOpen(true);
@@ -225,13 +241,16 @@ const ManageClubs = () => {
         const clubToEdit = clubs.find((club) => club.clubId === clubId);
         try {
             const response = await axios.get(`${API_URL}/get-club/${clubId}`);
+            const date = new Date(response.data.ngayThanhLap);
+            const formattedDate = date.toISOString().split('T')[0]; // Format YYYY-MM-DD cho input
+
             setNewClub({
                 ...response.data,
-                ngayThanhLap: response.data.ngayThanhLap.split("T")[0],
+                ngayThanhLap: formattedDate,
             });
             if (clubToEdit) {
                 setCurrentLogo(
-                    clubToEdit.logo ? `${API_URL}${clubToEdit.logo}` : null,
+                    clubToEdit.logo ? `${API_URL}/${clubToEdit.logo}` : null,
                 );
             }
             setEditingClubId(clubId);
@@ -281,7 +300,13 @@ const ManageClubs = () => {
         }
     };
 
-    // Thêm hàm lọc clubs
+    // Tạo danh sách lĩnh vực hoạt động duy nhất từ clubs
+    const uniqueFields = useMemo(() => {
+        const fields = clubs.map(club => club.linhVucHoatDong);
+        return [...new Set(fields)].filter(field => field); // Lọc bỏ giá trị null/undefined/empty
+    }, [clubs]);
+
+    // Cập nhật hàm lọc clubs
     const filteredClubs = useMemo(() => {
         return clubs.filter(club => {
             // Lọc theo tên CLB hoặc lĩnh vực hoạt động hoặc giáo viên phụ trách hoặc trưởng ban CLB
@@ -296,14 +321,17 @@ const ManageClubs = () => {
             const matchesDateRange = (!dateFilter.startDate || new Date(dateFilter.startDate) <= clubDate) &&
                 (!dateFilter.endDate || new Date(dateFilter.endDate) >= clubDate);
 
-            return matchesSearch && matchesDateRange;
+            // Lọc theo lĩnh vực hoạt động
+            const matchesField = !fieldFilter || club.linhVucHoatDong === fieldFilter;
+
+            return matchesSearch && matchesDateRange && matchesField;
         });
-    }, [clubs, searchTerm, dateFilter]);
+    }, [clubs, searchTerm, dateFilter, fieldFilter]);
 
     // Reset trang khi thay đổi bộ lọc
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, dateFilter]);
+    }, [searchTerm, dateFilter, fieldFilter]);
 
     // Cập nhật phân trang
     const currentClubs = filteredClubs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -335,6 +363,22 @@ const ManageClubs = () => {
                                 />
                             </div>
 
+                            {/* Bộ lọc lĩnh vực hoạt động */}
+                            <div className="w-72">
+                                <Select
+                                    label="Lọc theo lĩnh vực"
+                                    value={fieldFilter}
+                                    onChange={(value) => setFieldFilter(value)}
+                                >
+                                    <Option value="">Tất cả lĩnh vực</Option>
+                                    {uniqueFields.map((field) => (
+                                        <Option key={field} value={field}>
+                                            {field}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </div>
+
                             {/* Bộ lọc ngày thành lập */}
                             <div className="flex items-center gap-2">
                                 <div>
@@ -364,8 +408,8 @@ const ManageClubs = () => {
                                     />
                                 </div>
 
-                                {/* Nút reset bộ lọc */}
-                                {(dateFilter.startDate || dateFilter.endDate || searchTerm) && (
+                                {/* Nút reset bộ lọc - cập nhật để xóa cả fieldFilter */}
+                                {(dateFilter.startDate || dateFilter.endDate || searchTerm || fieldFilter) && (
                                     <Button
                                         variant="text"
                                         color="red"
@@ -373,6 +417,7 @@ const ManageClubs = () => {
                                         onClick={() => {
                                             setDateFilter({ startDate: "", endDate: "" });
                                             setSearchTerm("");
+                                            setFieldFilter("");
                                         }}
                                     >
                                         <XMarkIcon className="h-4 w-4" />
@@ -404,13 +449,14 @@ const ManageClubs = () => {
                     </div>
 
                     {/* Hiển thị kết quả tìm kiếm và lọc */}
-                    {(searchTerm || dateFilter.startDate || dateFilter.endDate) && (
+                    {(searchTerm || dateFilter.startDate || dateFilter.endDate || fieldFilter) && (
                         <div className="px-6 mb-4">
                             <Typography variant="small" color="blue-gray">
                                 Tìm thấy {filteredClubs.length} kết quả
                                 {searchTerm && ` cho "${searchTerm}"`}
-                                {dateFilter.startDate && ` từ ${new Date(dateFilter.startDate).toLocaleDateString('vi-VN')}`}
-                                {dateFilter.endDate && ` đến ${new Date(dateFilter.endDate).toLocaleDateString('vi-VN')}`}
+                                {fieldFilter && ` trong lĩnh vực "${fieldFilter}"`}
+                                {dateFilter.startDate && ` từ ${formatDate(dateFilter.startDate)}`}
+                                {dateFilter.endDate && ` đến ${formatDate(dateFilter.endDate)}`}
                             </Typography>
                         </div>
                     )}
@@ -437,12 +483,14 @@ const ManageClubs = () => {
                                         <thead>
                                             <tr>
                                                 {[
+                                                    "STT",
                                                     "Logo",
                                                     "Tên CLB",
                                                     "Lĩnh vực hoạt động",
                                                     "Ngày thành lập",
                                                     "Giáo viên phụ trách",
                                                     "Trưởng ban CLB",
+                                                    "Tình trạng",
                                                     "Thao tác",
                                                 ].map((el) => (
                                                     <th
@@ -461,7 +509,7 @@ const ManageClubs = () => {
                                         </thead>
                                         <tbody>
                                             {currentClubs.map(
-                                                ({ clubId, ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, truongBanCLB, logo }, key) => {
+                                                ({ clubId, ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, truongBanCLB, logo, tinhTrang }, key) => {
                                                     const className = `py-3 px-5 ${
                                                         key === currentClubs.length - 1
                                                             ? ""
@@ -470,9 +518,12 @@ const ManageClubs = () => {
 
                                                     return (
                                                         <tr key={clubId}>
-                                                            <td
-                                                                className={className}
-                                                            >
+                                                            <td className={className}>
+                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                    {(currentPage - 1) * itemsPerPage + key + 1}
+                                                                </Typography>
+                                                            </td>
+                                                            <td className={className}>
                                                                 <img
                                                                     src={logo
                                                                         ? `${API_URL}/${logo}`
@@ -509,9 +560,7 @@ const ManageClubs = () => {
                                                                 className={className}
                                                             >
                                                                 <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {new Date(
-                                                                        ngayThanhLap,
-                                                                    ).toLocaleDateString()}
+                                                                    {formatDate(ngayThanhLap)}
                                                                 </Typography>
                                                             </td>
                                                             <td
@@ -526,6 +575,17 @@ const ManageClubs = () => {
                                                             >
                                                                 <Typography className="text-xs font-semibold text-blue-gray-600">
                                                                     {truongBanCLB}
+                                                                </Typography>
+                                                            </td>
+                                                            <td className={className}>
+                                                                <Typography 
+                                                                    className={`text-xs font-semibold ${
+                                                                        tinhTrang === "Còn hoạt động" 
+                                                                            ? "text-green-600" 
+                                                                            : "text-red-600"
+                                                                    }`}
+                                                                >
+                                                                    {tinhTrang || "Còn hoạt động"}
                                                                 </Typography>
                                                             </td>
                                                             <td
@@ -840,6 +900,14 @@ const ManageClubs = () => {
                             setNewClub({ ...newClub, quyDinh: e.target.value })}
                         className="col-span-2 transfor"
                     />
+                    <Select
+                        label="Tình trạng"
+                        value={newClub.tinhTrang}
+                        onChange={(value) => setNewClub({ ...newClub, tinhTrang: value })}
+                    >
+                        <Option value="Còn hoạt động">Còn hoạt động</Option>
+                        <Option value="Ngừng hoạt động">Ngừng hoạt động</Option>
+                    </Select>
                 </DialogBody>
                 <DialogFooter>
                     <Button
@@ -909,7 +977,7 @@ const ManageClubs = () => {
                                             <tr>
                                                 <th className="border p-3 bg-gray-50">Ngày thành lập</th>
                                                 <td className="border p-3">
-                                                    {new Date(detailClub.ngayThanhLap).toLocaleDateString()}
+                                                    {formatDate(detailClub.ngayThanhLap)}
                                                 </td>
                                             </tr>
                                             <tr>
@@ -919,6 +987,18 @@ const ManageClubs = () => {
                                             <tr>
                                                 <th className="border p-3 bg-gray-50">Trưởng ban CLB</th>
                                                 <td className="border p-3">{detailClub.truongBanCLB}</td>
+                                            </tr>
+                                            <tr>
+                                                <th className="border p-3 bg-gray-50">Tình trạng</th>
+                                                <td className="border p-3">
+                                                    <span className={`font-semibold ${
+                                                        detailClub.tinhTrang === "Còn hoạt động" 
+                                                            ? "text-green-600" 
+                                                            : "text-red-600"
+                                                    }`}>
+                                                        {detailClub.tinhTrang || "Còn hoạt động"}
+                                                    </span>
+                                                </td>
                                             </tr>
                                         </tbody>
                                     </table>

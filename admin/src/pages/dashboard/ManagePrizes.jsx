@@ -22,7 +22,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
-const API_URL = "http://4.242.20.80:5500/api";
+const API_URL = "http://localhost:5500/api";
 
 const ManagePrizes = () => {
     const [prizes, setPrizes] = useState([]);
@@ -49,13 +49,24 @@ const ManagePrizes = () => {
     const [memberSearch, setMemberSearch] = useState("");
     const [filteredMembers, setFilteredMembers] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [dateFilter, setDateFilter] = useState({
+        startDate: '',
+        endDate: ''
+    });
+    const [showMemberDropdown, setShowMemberDropdown] = useState(false);
 
     const filteredPrizes = useMemo(() => {
-        return prizes.filter(prize => 
-            prize.tenGiaiThuong.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            members.find(m => m._id === prize.thanhVienDatGiai)?.hoTen.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [prizes, members, searchTerm]);
+        return prizes.filter(prize => {
+            const matchesSearch = prize.tenGiaiThuong.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                members.find(m => m._id === prize.thanhVienDatGiai)?.hoTen.toLowerCase().includes(searchTerm.toLowerCase());
+
+            const prizeDate = new Date(prize.ngayDatGiai);
+            const matchesDateRange = (!dateFilter.startDate || prizeDate >= new Date(dateFilter.startDate)) &&
+                (!dateFilter.endDate || prizeDate <= new Date(dateFilter.endDate));
+
+            return matchesSearch && matchesDateRange;
+        });
+    }, [prizes, members, searchTerm, dateFilter]);
 
     useEffect(() => {
         const managedClubsString = localStorage.getItem("managedClubs");
@@ -203,9 +214,9 @@ const ManagePrizes = () => {
     };
 
     const handleDeletePrize = async (prizeId) => {
-        if (window.confirm("Bạn có chắc chắn muốn xóa giải thưởng này?")) {
+        if (window.confirm("Bạn có chắc chắn muốn xóa giải thư��ng này?")) {
             try {
-                // Kiểm tra xem giải thưởng có trong báo cáo nào không
+                // Kiểm tra xem gi thưởng có trong báo cáo nào không
                 const checkResponse = await axios.get(`${API_URL}/check-prize-in-reports/${prizeId}`);
                 
                 if (checkResponse.data.exists) {
@@ -327,11 +338,40 @@ const ManagePrizes = () => {
 
     const handleMemberSearch = (searchTerm) => {
         setMemberSearch(searchTerm);
+        setShowMemberDropdown(true);
+        
+        // Nếu input trống, hiển thị 5 thành viên ngẫu nhiên
+        if (searchTerm.trim() === '') {
+            const shuffled = [...members].sort(() => 0.5 - Math.random());
+            setFilteredMembers(shuffled.slice(0, 5));
+            return;
+        }
+
+        // Nếu có nhập text, lọc theo tên
         const filtered = members.filter(member => 
             member.hoTen.toLowerCase().includes(searchTerm.toLowerCase())
         );
-        setFilteredMembers(filtered);
+        setFilteredMembers(filtered.slice(0, 5));
     };
+
+    // Thêm useEffect để xử lý click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            const dropdown = document.getElementById('member-dropdown');
+            const input = document.getElementById('member-input');
+            
+            if (dropdown && input && 
+                !dropdown.contains(event.target) && 
+                !input.contains(event.target)) {
+                setShowMemberDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     return (
         <div className="flex flex-col gap-12 mt-12 mb-8">
@@ -347,17 +387,64 @@ const ManagePrizes = () => {
                 </CardHeader>
 
                 <CardBody className="px-0 pt-0 pb-2 overflow-auto">
-                    <div className="flex justify-between items-center p-4 px-6">
-                        <div className="w-96">
-                            <Input
-                                label="Tìm kiếm theo tên giải hoặc người đạt giải"
-                                icon={<i className="fas fa-search" />}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
+                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center p-4 px-6 gap-4">
+                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full lg:w-auto">
+                            <div className="w-full sm:w-96">
+                                <Input
+                                    label="Tìm kiếm theo tên giải hoặc người đạt giải"
+                                    icon={<i className="fas fa-search" />}
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full sm:w-auto">
+                                <div className="relative w-full sm:w-40">
+                                    <Input
+                                        type="date"
+                                        label="Từ ngày"
+                                        value={dateFilter.startDate}
+                                        onChange={(e) => setDateFilter(prev => ({
+                                            ...prev,
+                                            startDate: e.target.value
+                                        }))}
+                                        max={dateFilter.endDate || new Date().toISOString().split('T')[0]}
+                                        className="w-full"
+                                        containerProps={{
+                                            className: "!min-w-0"
+                                        }}
+                                    />
+                                </div>
+                                <div className="relative w-full sm:w-40">
+                                    <Input
+                                        type="date"
+                                        label="Đến ngày"
+                                        value={dateFilter.endDate}
+                                        onChange={(e) => setDateFilter(prev => ({
+                                            ...prev,
+                                            endDate: e.target.value
+                                        }))}
+                                        min={dateFilter.startDate}
+                                        max={new Date().toISOString().split('T')[0]}
+                                        className="w-full"
+                                        containerProps={{
+                                            className: "!min-w-0"
+                                        }}
+                                    />
+                                </div>
+                                {(dateFilter.startDate || dateFilter.endDate) && (
+                                    <Button
+                                        variant="text"
+                                        color="red"
+                                        className="p-2"
+                                        onClick={() => setDateFilter({ startDate: '', endDate: '' })}
+                                    >
+                                        <TrashIcon className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="pr-4">
+                        <div className="w-full sm:w-auto">
                             <Tooltip
                                 content="Thêm"
                                 animate={{
@@ -367,7 +454,7 @@ const ManagePrizes = () => {
                                 className="bg-gradient-to-r from-black to-transparent opacity-70"
                             >
                                 <Button
-                                    className="flex items-center gap-3"
+                                    className="flex items-center gap-3 w-full sm:w-auto justify-center"
                                     color="blue"
                                     size="sm"
                                     onClick={openAddDialog}
@@ -378,10 +465,13 @@ const ManagePrizes = () => {
                         </div>
                     </div>
 
-                    {searchTerm && (
+                    {(searchTerm || dateFilter.startDate || dateFilter.endDate) && (
                         <div className="px-6 mb-4">
                             <Typography variant="small" color="blue-gray">
-                                Tìm thấy {filteredPrizes.length} kết quả cho "{searchTerm}"
+                                Tìm thấy {filteredPrizes.length} kết quả
+                                {searchTerm && ` cho từ khóa "${searchTerm}"`}
+                                {dateFilter.startDate && ` từ ngày ${new Date(dateFilter.startDate).toLocaleDateString('vi-VN')}`}
+                                {dateFilter.endDate && ` đến ngày ${new Date(dateFilter.endDate).toLocaleDateString('vi-VN')}`}
                             </Typography>
                         </div>
                     )}
@@ -394,181 +484,205 @@ const ManagePrizes = () => {
                         )
                         : (
                             <>
-                                <table className="w-full min-w-[640px] table-auto">
-                                    <thead>
-                                        <tr>
-                                            {[
-                                                "Tên giải thưởng",
-                                                "Ngày đạt giải",
-                                                "Loại giải",
-                                                "Thành viên đạt giải",
-                                                "Thao tác",
-                                            ].map((el) => (
-                                                <th
-                                                    key={el}
-                                                    className="px-5 py-3 text-left border-b border-blue-gray-50"
-                                                >
-                                                    <Typography
-                                                        variant="small"
-                                                        className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                <div className="overflow-x-auto">
+                                    <table className="w-full min-w-[640px] table-auto">
+                                        <thead>
+                                            <tr>
+                                                {[
+                                                    "STT",
+                                                    "Tên giải thưởng",
+                                                    "Ngày đạt giải",
+                                                    "Loại giải",
+                                                    "Thành viên đạt giải",
+                                                    "Thao tác",
+                                                ].map((el) => (
+                                                    <th
+                                                        key={el}
+                                                        className="px-5 py-3 text-left border-b border-blue-gray-50"
                                                     >
-                                                        {el}
-                                                    </Typography>
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {currentPrizes.map(
-                                            (
-                                                {
-                                                    _id,
-                                                    tenGiaiThuong,
-                                                    ngayDatGiai,
-                                                    loaiGiai,
-                                                    thanhVienDatGiai,
+                                                        <Typography
+                                                            variant="small"
+                                                            className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                                        >
+                                                            {el}
+                                                        </Typography>
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {currentPrizes.map(
+                                                (
+                                                    {
+                                                        _id,
+                                                        tenGiaiThuong,
+                                                        ngayDatGiai,
+                                                        loaiGiai,
+                                                        thanhVienDatGiai,
+                                                    },
+                                                    index,
+                                                ) => {
+                                                    const className = `py-3 px-5 ${
+                                                        index === currentPrizes.length - 1
+                                                            ? ""
+                                                            : "border-b border-blue-gray-50"
+                                                    }`;
+
+                                                    // Format ngày thành dd/mm/yyyy
+                                                    const formatDate = (dateString) => {
+                                                        const date = new Date(dateString);
+                                                        return date.toLocaleDateString('vi-VN', {
+                                                            day: '2-digit',
+                                                            month: '2-digit',
+                                                            year: 'numeric'
+                                                        });
+                                                    };
+
+                                                    return (
+                                                        <tr key={_id}>
+                                                            <td className={className}>
+                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                    {indexOfFirstItem + index + 1}
+                                                                </Typography>
+                                                            </td>
+                                                            <td className={className}>
+                                                                <Tooltip
+                                                                    content={tenGiaiThuong}
+                                                                    animate={{
+                                                                        mount: { scale: 1, y: 0 },
+                                                                        unmount: { scale: 0, y: 25 },
+                                                                    }}
+                                                                    className="bg-black bg-opacity-80"
+                                                                >
+                                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                        {tenGiaiThuong.length > 30 ? `${tenGiaiThuong.substring(0, 30)}...` : tenGiaiThuong}
+                                                                    </Typography>
+                                                                </Tooltip>
+                                                            </td>
+                                                            <td className={className}>
+                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                    {formatDate(ngayDatGiai)}
+                                                                </Typography>
+                                                            </td>
+                                                            <td className={className}>
+                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                    {loaiGiai}
+                                                                </Typography>
+                                                            </td>
+                                                            <td className={className}>
+                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                    {members.find((m) =>
+                                                                        m._id ===
+                                                                            thanhVienDatGiai
+                                                                    )?.hoTen || "N/A"}
+                                                                </Typography>
+                                                            </td>
+                                                            <td className={className}>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Tooltip
+                                                                        content="Xem"
+                                                                        animate={{
+                                                                            mount: {
+                                                                                scale:
+                                                                                    1,
+                                                                                y: 0,
+                                                                            },
+                                                                            unmount: {
+                                                                                scale:
+                                                                                    0,
+                                                                                y: 25,
+                                                                            },
+                                                                        }}
+                                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                                    >
+                                                                        <Button
+                                                                            size="sm"
+                                                                            color="blue"
+                                                                            className="flex items-center gap-2"
+                                                                            onClick={() =>
+                                                                                openDetailDialog(
+                                                                                    _id,
+                                                                                )}
+                                                                        >
+                                                                            <EyeIcon
+                                                                                strokeWidth={2}
+                                                                                className="w-4 h-4"
+                                                                            />
+                                                                        </Button>
+                                                                    </Tooltip>
+                                                                    <Tooltip
+                                                                        content="Sửa"
+                                                                        animate={{
+                                                                            mount: {
+                                                                                scale:
+                                                                                    1,
+                                                                                y: 0,
+                                                                            },
+                                                                            unmount: {
+                                                                                scale:
+                                                                                    0,
+                                                                                y: 25,
+                                                                            },
+                                                                        }}
+                                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                                    >
+                                                                        <Button
+                                                                            size="sm"
+                                                                            color="green"
+                                                                            className="flex items-center gap-2"
+                                                                            onClick={() =>
+                                                                                openEditDialog(
+                                                                                    _id,
+                                                                                )}
+                                                                        >
+                                                                            <PencilIcon
+                                                                                strokeWidth={2}
+                                                                                className="w-4 h-4"
+                                                                            />
+                                                                        </Button>
+                                                                    </Tooltip>
+                                                                    <Tooltip
+                                                                        content="Xóa"
+                                                                        animate={{
+                                                                            mount: {
+                                                                                scale:
+                                                                                    1,
+                                                                                y: 0,
+                                                                            },
+                                                                            unmount: {
+                                                                                scale:
+                                                                                    0,
+                                                                                y: 25,
+                                                                            },
+                                                                        }}
+                                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                                    >
+                                                                        <Button
+                                                                            size="sm"
+                                                                            color="red"
+                                                                            className="flex items-center gap-2"
+                                                                            onClick={() =>
+                                                                                handleDeletePrize(
+                                                                                    _id,
+                                                                                )}
+                                                                        >
+                                                                            <TrashIcon
+                                                                                strokeWidth={2}
+                                                                                className="w-4 h-4"
+                                                                            />
+                                                                        </Button>
+                                                                    </Tooltip>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
                                                 },
-                                                index,
-                                            ) => {
-                                                const className = `py-3 px-5 ${
-                                                    index === currentPrizes.length - 1
-                                                        ? ""
-                                                        : "border-b border-blue-gray-50"
-                                                }`;
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                                                return (
-                                                    <tr key={_id}>
-                                                        <td className={className}>
-                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                {tenGiaiThuong}
-                                                            </Typography>
-                                                        </td>
-                                                        <td className={className}>
-                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                {new Date(
-                                                                    ngayDatGiai,
-                                                                ).toLocaleDateString()}
-                                                            </Typography>
-                                                        </td>
-                                                        <td className={className}>
-                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                {loaiGiai}
-                                                            </Typography>
-                                                        </td>
-                                                        <td className={className}>
-                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                {members.find((m) =>
-                                                                    m._id ===
-                                                                        thanhVienDatGiai
-                                                                )?.hoTen || "N/A"}
-                                                            </Typography>
-                                                        </td>
-                                                        <td className={className}>
-                                                            <div className="flex items-center gap-2">
-                                                                <Tooltip
-                                                                    content="Xem"
-                                                                    animate={{
-                                                                        mount: {
-                                                                            scale:
-                                                                                1,
-                                                                            y: 0,
-                                                                        },
-                                                                        unmount: {
-                                                                            scale:
-                                                                                0,
-                                                                            y: 25,
-                                                                        },
-                                                                    }}
-                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                                >
-                                                                    <Button
-                                                                        size="sm"
-                                                                        color="blue"
-                                                                        className="flex items-center gap-2"
-                                                                        onClick={() =>
-                                                                            openDetailDialog(
-                                                                                _id,
-                                                                            )}
-                                                                    >
-                                                                        <EyeIcon
-                                                                            strokeWidth={2}
-                                                                            className="w-4 h-4"
-                                                                        />
-                                                                    </Button>
-                                                                </Tooltip>
-                                                                <Tooltip
-                                                                    content="Sửa"
-                                                                    animate={{
-                                                                        mount: {
-                                                                            scale:
-                                                                                1,
-                                                                            y: 0,
-                                                                        },
-                                                                        unmount: {
-                                                                            scale:
-                                                                                0,
-                                                                            y: 25,
-                                                                        },
-                                                                    }}
-                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                                >
-                                                                    <Button
-                                                                        size="sm"
-                                                                        color="green"
-                                                                        className="flex items-center gap-2"
-                                                                        onClick={() =>
-                                                                            openEditDialog(
-                                                                                _id,
-                                                                            )}
-                                                                    >
-                                                                        <PencilIcon
-                                                                            strokeWidth={2}
-                                                                            className="w-4 h-4"
-                                                                        />
-                                                                    </Button>
-                                                                </Tooltip>
-                                                                <Tooltip
-                                                                    content="Xóa"
-                                                                    animate={{
-                                                                        mount: {
-                                                                            scale:
-                                                                                1,
-                                                                            y: 0,
-                                                                        },
-                                                                        unmount: {
-                                                                            scale:
-                                                                                0,
-                                                                            y: 25,
-                                                                        },
-                                                                    }}
-                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                                >
-                                                                    <Button
-                                                                        size="sm"
-                                                                        color="red"
-                                                                        className="flex items-center gap-2"
-                                                                        onClick={() =>
-                                                                            handleDeletePrize(
-                                                                                _id,
-                                                                            )}
-                                                                    >
-                                                                        <TrashIcon
-                                                                            strokeWidth={2}
-                                                                            className="w-4 h-4"
-                                                                        />
-                                                                    </Button>
-                                                                </Tooltip>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            },
-                                        )}
-                                    </tbody>
-                                </table>
-
-                                {/* Thêm phân trang ở đây */}
-                                <div className="flex items-center gap-4 justify-center mt-4">
+                                <div className="flex flex-col sm:flex-row items-center gap-4 justify-center mt-4 px-4">
                                     <Button
                                         variant="text"
                                         className="flex items-center gap-2"
@@ -578,14 +692,14 @@ const ManagePrizes = () => {
                                         <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
                                     </Button>
                                     
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 overflow-x-auto py-2">
                                         {[...Array(totalPages)].map((_, index) => (
                                             <Button
                                                 key={index + 1}
                                                 variant={currentPage === index + 1 ? "gradient" : "text"}
                                                 color="blue"
                                                 onClick={() => handlePageChange(index + 1)}
-                                                className="w-10 h-10"
+                                                className="w-10 h-10 min-w-[2.5rem]"
                                             >
                                                 {index + 1}
                                             </Button>
@@ -684,13 +798,29 @@ const ManagePrizes = () => {
 
                     <div className="relative">
                         <Input
+                            id="member-input"
                             label="Tìm thành viên"
                             value={memberSearch}
                             onChange={(e) => handleMemberSearch(e.target.value)}
                             error={!!errors.thanhVienDatGiai}
+                            onFocus={() => {
+                                setShowMemberDropdown(true);
+                                // Hiển thị 5 thành viên ngẫu nhiên khi focus
+                                const shuffled = [...members].sort(() => 0.5 - Math.random());
+                                setFilteredMembers(shuffled.slice(0, 5));
+                            }}
                         />
-                        {memberSearch && (
-                            <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                        {errors.thanhVienDatGiai && (
+                            <Typography color="red" className="mt-1 text-xs">
+                                {errors.thanhVienDatGiai}
+                            </Typography>
+                        )}
+                        
+                        {showMemberDropdown && filteredMembers.length > 0 && (
+                            <div 
+                                id="member-dropdown"
+                                className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                            >
                                 {filteredMembers.map((member) => (
                                     <div
                                         key={member._id}
@@ -701,19 +831,16 @@ const ManagePrizes = () => {
                                                 thanhVienDatGiai: member._id
                                             });
                                             setMemberSearch(member.hoTen);
+                                            setShowMemberDropdown(false);
                                             setErrors({ ...errors, thanhVienDatGiai: "" });
-                                            setFilteredMembers([]);
                                         }}
                                     >
-                                        {member.hoTen}
+                                        <Typography className="text-sm font-medium">
+                                            {member.hoTen}
+                                        </Typography>
                                     </div>
                                 ))}
                             </div>
-                        )}
-                        {errors.thanhVienDatGiai && (
-                            <Typography color="red" className="mt-1 text-xs">
-                                {errors.thanhVienDatGiai}
-                            </Typography>
                         )}
                     </div>
 
@@ -794,10 +921,12 @@ const ManagePrizes = () => {
                 handler={() => setIsDetailDialogOpen(false)}
                 size="xl"
             >
-                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">Chi tiết Giải thưởng</DialogHeader>
+                <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
+                    Chi tiết Giải thưởng
+                </DialogHeader>
                 {detailPrize && (
                     <DialogBody divider className="overflow-y-auto lg:max-h-[65vh] sm:max-h-[50vh] p-6">
-                        <div className="flex gap-6">
+                        <div className="flex flex-col lg:flex-row gap-6">
                             {/* Cột trái - Thông tin cơ bản */}
                             <div className="flex-1">
                                 <Typography variant="h6" color="blue" className="mb-4">
@@ -829,7 +958,7 @@ const ManagePrizes = () => {
                             </div>
 
                             {/* Cột phải - Thông tin chi tiết */}
-                            <div className="flex-[1.5]">
+                            <div className="flex-1 lg:flex-[1.5]">
                                 <Typography variant="h6" color="blue" className="mb-4">
                                     Chi tiết giải thưởng
                                 </Typography>

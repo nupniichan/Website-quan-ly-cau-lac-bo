@@ -11,6 +11,10 @@
         "lint": "eslint ."
     },
     "dependencies": {
+        "@fullcalendar/daygrid": "^6.1.15",
+        "@fullcalendar/interaction": "^6.1.15",
+        "@fullcalendar/react": "^6.1.15",
+        "@fullcalendar/timegrid": "^6.1.15",
         "@heroicons/react": "^2.1.5",
         "@material-tailwind/react": "2.1.10",
         "apexcharts": "3.54.1",
@@ -19,6 +23,7 @@
         "eslint-plugin-react": "^7.37.2",
         "eslint-plugin-react-hooks": "^5.0.0",
         "eslint-plugin-react-refresh": "^0.4.14",
+        "install": "^0.13.0",
         "ngrok": "^5.0.0-beta.2",
         "prop-types": "15.8.1",
         "react": "18.3.1",
