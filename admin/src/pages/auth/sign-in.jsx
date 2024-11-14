@@ -32,7 +32,7 @@ export function SignIn() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await axios.post("http://localhost:5500/api/login", {
+      const response = await axios.post("http://4.242.20.80:5500/api/login", {
         email,
         password,
       });
@@ -49,7 +49,7 @@ export function SignIn() {
 
           // Fetch managed clubs only if userId is available
           try {
-            const clubsResponse = await axios.get(`http://localhost:5500/api/get-managed-clubs/${userId}`);
+            const clubsResponse = await axios.get(`http://4.242.20.80:5500/api/get-managed-clubs/${userId}`);
             localStorage.setItem("managedClubs", JSON.stringify(clubsResponse.data));
           } catch (clubError) {
             console.error("Error fetching managed clubs:", clubError);

@@ -24,7 +24,7 @@ export function SignUp() {
       return;
     }
     try {
-      const response = await axios.post("http://localhost:5500/api/register", {
+      const response = await axios.post("http://4.242.20.80:5500/api/register", {
         userId,
         email,
         password,
