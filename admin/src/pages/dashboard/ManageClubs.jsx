@@ -18,7 +18,7 @@ import {
     Option,
 } from "@material-tailwind/react";
 import axios from "axios";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
@@ -96,10 +96,50 @@ const ManageClubs = () => {
         endDate: ""
     });
     const [fieldFilter, setFieldFilter] = useState("");
+    const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+    const [studentAccounts, setStudentAccounts] = useState([]);
+    const [studentSearch, setStudentSearch] = useState("");
+    const dropdownRef = useRef(null);
 
     useEffect(() => {
         fetchClubs();
     }, []);
+
+    // Fetch student accounts khi component mount
+    useEffect(() => {
+        const fetchStudentAccounts = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/get-accounts`);
+                const students = response.data
+                    .filter(account => account.role === 'student')
+                    .slice(0, 10);
+                setStudentAccounts(students);
+            } catch (error) {
+                console.error("Error fetching student accounts:", error);
+            }
+        };
+        fetchStudentAccounts();
+    }, []);
+
+    // Handle click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowStudentDropdown(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // Thêm hàm lọc students
+    const getFilteredStudents = (searchValue) => {
+        return studentAccounts.filter(student =>
+            student.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+            student.userId.toLowerCase().includes(searchValue.toLowerCase())
+        );
+    };
 
     const fetchClubs = async () => {
         setIsLoading(true);
@@ -199,6 +239,15 @@ const ManageClubs = () => {
     };
 
     const handleDeleteClub = async (clubId) => {
+        // Tìm club cần xóa
+        const clubToDelete = clubs.find(club => club.clubId === clubId);
+        
+        // Kiểm tra tình trạng
+        if (clubToDelete.tinhTrang === "Còn hoạt động") {
+            alert("Không thể xóa câu lạc bộ đang hoạt động!");
+            return;
+        }
+
         if (window.confirm("Bạn có chắc chắn muốn xóa câu lạc bộ này?")) {
             try {
                 const response = await axios.delete(
@@ -574,7 +623,7 @@ const ManageClubs = () => {
                                                                 className={className}
                                                             >
                                                                 <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {truongBanCLB}
+                                                                    {studentAccounts.find(s => s.userId === truongBanCLB)?.name || truongBanCLB}
                                                                 </Typography>
                                                             </td>
                                                             <td className={className}>
@@ -831,6 +880,49 @@ const ManageClubs = () => {
                             giaoVienPhuTrach: e.target.value,
                         })}
                     />
+                    <div className="relative" ref={dropdownRef}>
+                        <Input
+                            label="Trưởng ban CLB"
+                            value={studentAccounts.find(s => s.userId === newClub.truongBanCLB)?.name || newClub.truongBanCLB}
+                            onFocus={() => setShowStudentDropdown(true)}
+                            onChange={(e) => {
+                                setNewClub({ ...newClub, truongBanCLB: e.target.value });
+                                setStudentSearch(e.target.value);
+                            }}
+                        />
+                        {showStudentDropdown && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                {getFilteredStudents(studentSearch).map((student) => (
+                                    <div
+                                        key={student.userId}
+                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                        onClick={() => {
+                                            setNewClub({ ...newClub, truongBanCLB: student.userId });
+                                            setShowStudentDropdown(false);
+                                            setStudentSearch("");
+                                        }}
+                                    >
+                                        <Typography className="text-sm">
+                                            {student.name} ({student.userId})
+                                        </Typography>
+                                    </div>
+                                ))}
+                                {getFilteredStudents(studentSearch).length === 0 && (
+                                    <div className="px-4 py-2 text-gray-500">
+                                        Không tìm thấy kết quả
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    <Select
+                        label="Tình trạng"
+                        value={newClub.tinhTrang}
+                        onChange={(value) => setNewClub({ ...newClub, tinhTrang: value })}
+                    >
+                        <Option value="Còn hoạt động">Còn hoạt động</Option>
+                        <Option value="Ngừng hoạt động">Ngừng hoạt động</Option>
+                    </Select>
                     <Textarea
                         label="Miêu tả"
                         value={newClub.mieuTa}
@@ -838,17 +930,16 @@ const ManageClubs = () => {
                             setNewClub({ ...newClub, mieuTa: e.target.value })}
                         className="col-span-2"
                     />
-                    <div>
-                        <Input
-                            label="Trưởng ban CLB"
-                            value={newClub.truongBanCLB}
-                            onChange={(e) =>
-                                setNewClub({
-                                    ...newClub,
-                                    truongBanCLB: e.target.value,
-                                })}
-                        />
-                        <div className="flex flex-col gap-2 translate-y-4">
+                    <Textarea
+                        label="Quy định"
+                        value={newClub.quyDinh}
+                        onChange={(e) =>
+                            setNewClub({ ...newClub, quyDinh: e.target.value })}
+                        className="col-span-2"
+                    />
+                    {/* Phần tải logo */}
+                    <div className="col-span-2">
+                        <div className="flex flex-col gap-4">
                             <Button
                                 variant="gradient"
                                 className="flex items-center gap-3 w-[10.6rem] h-[3rem]"
@@ -860,54 +951,37 @@ const ManageClubs = () => {
                                     type="file"
                                     accept="image/*"
                                     onChange={handleLogoChange}
-                                    className="absolute inset-0 w-full h-full opacity-0"
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                 />
                             </Button>
-                            <div className="grid grid-cols-2 font-normal">
+                            <div className="grid grid-cols-2 gap-4">
                                 {editingClubId && currentLogo && (
-                                    <>
-                                        <p>
-                                            <strong>Ảnh hiện tại:</strong>
-                                        </p>
-                                        <img
-                                            src={currentLogo}
-                                            alt="Ảnh clb hiện tại"
-                                            className="h-auto max-w-full mt-2"
-                                            style={{ maxHeight: "100px" }}
-                                        />
-                                    </>
+                                    <div className="flex flex-col gap-2">
+                                        <p className="font-semibold">Ảnh hiện tại:</p>
+                                        <div className="w-32 h-32 relative">
+                                            <img
+                                                src={currentLogo}
+                                                alt="Ảnh clb hiện tại"
+                                                className="absolute w-full h-full object-cover rounded-lg shadow-md"
+                                            />
+                                        </div>
+                                    </div>
                                 )}
                                 {previewLogo && (
-                                    <>
-                                        <p>
-                                            <strong>Ảnh mới:</strong>
-                                        </p>
-                                        <img
-                                            src={previewLogo}
-                                            alt="Ảnh clb mới"
-                                            className="h-auto max-w-full mt-2"
-                                            style={{ maxHeight: "100px" }}
-                                        />
-                                    </>
+                                    <div className="flex flex-col gap-2">
+                                        <p className="font-semibold">Ảnh mới:</p>
+                                        <div className="w-32 h-32 relative">
+                                            <img
+                                                src={previewLogo}
+                                                alt="Ảnh clb mới"
+                                                className="absolute w-full h-full object-cover rounded-lg shadow-md"
+                                            />
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         </div>
                     </div>
-                    <Textarea
-                        label="Quy định"
-                        value={newClub.quyDinh}
-                        onChange={(e) =>
-                            setNewClub({ ...newClub, quyDinh: e.target.value })}
-                        className="col-span-2 transfor"
-                    />
-                    <Select
-                        label="Tình trạng"
-                        value={newClub.tinhTrang}
-                        onChange={(value) => setNewClub({ ...newClub, tinhTrang: value })}
-                    >
-                        <Option value="Còn hoạt động">Còn hoạt động</Option>
-                        <Option value="Ngừng hoạt động">Ngừng hoạt động</Option>
-                    </Select>
                 </DialogBody>
                 <DialogFooter>
                     <Button

@@ -352,66 +352,161 @@ const ActivityReports = () => {
         // Tạo workbook mới
         const wb = XLSX.utils.book_new();
 
-        // Tạo worksheet cho thông tin chung
+        // Lấy ID báo cáo từ MongoDB (lấy 6 ký tự cuối)
+        const reportId = report._id;
+
+        // Định nghĩa styles chung
+        const borderStyle = {
+            style: "medium", // hoặc "thin" tùy preference
+            color: { rgb: "000000" }
+        };
+
+        const commonStyle = {
+            border: {
+                top: borderStyle,
+                bottom: borderStyle,
+                left: borderStyle,
+                right: borderStyle
+            }
+        };
+
+        // Tạo worksheet cho thông tin chung với border
         const generalInfo = [
-            ['BÁO CÁO HOẠT ĐỘNG', ''],
-            ['', ''],
-            ['Tên báo cáo', report.tenBaoCao],
-            ['Ngày báo cáo', new Date(report.ngayBaoCao).toLocaleDateString('vi-VN')],
-            ['Người phụ trách', report.nhanSuPhuTrach],
-            ['Tổng ngân sách chi tiêu', report.tongNganSachChiTieu?.toLocaleString('vi-VN') + ' đ'],
-            ['Tổng thu', report.tongThu?.toLocaleString('vi-VN') + ' đ'],
-            ['Kết quả đạt được', report.ketQuaDatDuoc],
+            [{v: 'BÁO CÁO HOẠT ĐỘNG CÂU LẠC BỘ', s: {
+                font: { bold: true, sz: 16 },
+                alignment: { horizontal: "center", vertical: "center" },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "4F46E5" } },
+                font: { color: { rgb: "FFFFFF" }, bold: true }
+            }}],
+            [''],
+            [{v: 'THÔNG TIN CHUNG', s: {
+                font: { bold: true },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "E5E7EB" } }
+            }}],
+            [
+                {v: 'Tên báo cáo:', s: commonStyle},
+                {v: report.tenBaoCao, s: commonStyle}
+            ],
+            [
+                {v: 'Ngày báo cáo:', s: commonStyle},
+                {v: new Date(report.ngayBaoCao).toLocaleDateString('vi-VN'), s: commonStyle}
+            ],
+            [
+                {v: 'Người phụ trách:', s: commonStyle},
+                {v: report.nhanSuPhuTrach, s: commonStyle}
+            ],
+            [''],
+            [{v: 'THÔNG TIN TÀI CHÍNH', s: {
+                font: { bold: true },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "E5E7EB" } }
+            }}],
+            [
+                {v: 'Tổng ngân sách chi tiêu:', s: commonStyle},
+                {v: `${report.tongNganSachChiTieu?.toLocaleString('vi-VN')} đ`, s: commonStyle}
+            ],
+            [
+                {v: 'Tổng thu:', s: commonStyle},
+                {v: `${report.tongThu?.toLocaleString('vi-VN')} đ`, s: commonStyle}
+            ],
+            [''],
+            [{v: 'KẾT QUẢ ĐẠT ĐƯỢC', s: {
+                font: { bold: true },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "E5E7EB" } }
+            }}],
+            [{v: report.ketQuaDatDuoc || "Chưa cập nhật", s: commonStyle}]
         ];
-        const wsGeneral = XLSX.utils.aoa_to_sheet(generalInfo);
 
-        // Tạo worksheet cho danh sách sự kiện
+        // Tạo worksheet cho danh sách sự kiện với border
         const eventsData = [
-            ['DANH SÁCH SỰ KIỆN', '', '', ''],
-            ['Tên sự kiện', 'Người phụ trách', 'Ngày tổ chức', 'Mô tả'],
-            ...report.danhSachSuKien.map(event => [
-                event.tenSuKien,
-                event.nguoiPhuTrach,
-                new Date(event.ngayToChuc).toLocaleDateString('vi-VN'),
-                event.moTa || ''
+            [{v: 'DANH SÁCH SỰ KIỆN', s: {
+                font: { bold: true, sz: 14 },
+                alignment: { horizontal: "center" },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "4F46E5" } },
+                font: { color: { rgb: "FFFFFF" }, bold: true }
+            }}],
+            [
+                {v: 'STT', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Tên sự kiện', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Người phụ trách', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Ngày tổ chức', s: {...commonStyle, font: { bold: true }}}
+            ],
+            ...report.danhSachSuKien.map((event, index) => [
+                {v: index + 1, s: commonStyle},
+                {v: event.tenSuKien, s: commonStyle},
+                {v: event.nguoiPhuTrach, s: commonStyle},
+                {v: new Date(event.ngayToChuc).toLocaleDateString('vi-VN'), s: commonStyle}
             ])
         ];
-        const wsEvents = XLSX.utils.aoa_to_sheet(eventsData);
 
-        // Tạo worksheet cho danh sách giải thưởng
+        // Tạo worksheet cho danh sách giải thưởng với border
         const awardsData = [
-            ['DANH SÁCH GIẢI THƯỞNG', '', '', ''],
-            ['Tên giải', 'Người nhận giải', 'Ngày nhận giải', 'Mô tả'],
-            ...report.danhSachGiai.map(award => [
-                award.tenGiai,
-                award.nguoiNhanGiai,
-                new Date(award.ngayNhanGiai).toLocaleDateString('vi-VN'),
-                award.moTa || ''
+            [{v: 'DANH SÁCH GIẢI THƯỞNG', s: {
+                font: { bold: true, sz: 14 },
+                alignment: { horizontal: "center" },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "4F46E5" } },
+                font: { color: { rgb: "FFFFFF" }, bold: true }
+            }}],
+            [
+                {v: 'STT', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Tên giải', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Người nhận giải', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Ngày nhận giải', s: {...commonStyle, font: { bold: true }}}
+            ],
+            ...report.danhSachGiai.map((award, index) => [
+                {v: index + 1, s: commonStyle},
+                {v: award.tenGiai, s: commonStyle},
+                {v: award.nguoiNhanGiai, s: commonStyle},
+                {v: new Date(award.ngayNhanGiai).toLocaleDateString('vi-VN'), s: commonStyle}
             ])
         ];
+
+        // Tạo các worksheet
+        const wsGeneral = XLSX.utils.aoa_to_sheet(generalInfo);
+        const wsEvents = XLSX.utils.aoa_to_sheet(eventsData);
         const wsAwards = XLSX.utils.aoa_to_sheet(awardsData);
+
+        // Áp dụng độ rộng cột và merge cells
+        [wsGeneral, wsEvents, wsAwards].forEach(ws => {
+            ws['!cols'] = [
+                { wch: 25 },  // A
+                { wch: 40 }, // B
+                { wch: 25 }, // C
+                { wch: 20 }, // D
+            ];
+
+            ws['!rows'] = [{ hpt: 30 }];
+        });
+
+        // Merge cells
+        wsGeneral['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
+            { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } },
+            { s: { r: 7, c: 0 }, e: { r: 7, c: 1 } },
+            { s: { r: 11, c: 0 }, e: { r: 11, c: 1 } },
+            { s: { r: 12, c: 0 }, e: { r: 12, c: 1 } }
+        ];
+
+        wsEvents['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }
+        ];
+
+        wsAwards['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }
+        ];
 
         // Thêm các worksheet vào workbook
         XLSX.utils.book_append_sheet(wb, wsGeneral, "Thông tin chung");
         XLSX.utils.book_append_sheet(wb, wsEvents, "Danh sách sự kiện");
         XLSX.utils.book_append_sheet(wb, wsAwards, "Danh sách giải thưởng");
 
-        // Tùy chỉnh style cho các worksheet
-        const styleSheets = [wsGeneral, wsEvents, wsAwards];
-        styleSheets.forEach(ws => {
-            // Đặt độ rộng cột
-            ws['!cols'] = [
-                { wch: 20 }, // A
-                { wch: 30 }, // B
-                { wch: 15 }, // C
-                { wch: 40 }, // D
-            ];
-        });
-
-        // Tạo tên file với định dạng: BaoCao_[TenBaoCao]_[Ngay].xlsx
-        const fileName = `BaoCao_${report.tenBaoCao.replace(/[^a-zA-Z0-9]/g, '_')}_${
-            new Date(report.ngayBaoCao).toISOString().split('T')[0]
-        }.xlsx`;
+        // Tạo tên file với ID báo cáo
+        const fileName = `Baocao_${reportId}.xlsx`;
 
         // Xuất file
         XLSX.writeFile(wb, fileName);

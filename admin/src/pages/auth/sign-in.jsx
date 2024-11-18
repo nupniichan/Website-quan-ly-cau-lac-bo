@@ -36,32 +36,42 @@ export function SignIn() {
         email,
         password,
       });
+      
       if (response.status === 200 && response.data.token) {
-        localStorage.setItem("role", response.data.role);
-        localStorage.setItem("token", response.data.token);
+        const role = response.data.role;
+        
+        // Nếu là manager, cho phép đăng nhập trực tiếp
+        if (role === 'manager') {
+          localStorage.setItem("role", role);
+          localStorage.setItem("token", response.data.token);
+          const decodedToken = JSON.parse(atob(response.data.token.split('.')[1]));
+          localStorage.setItem("userId", decodedToken.userId);
+          navigate(redirectUrl);
+          return;
+        }
 
-        // Decode the JWT token to get the userId
+        // Đối với các role khác, kiểm tra xem có quản lý CLB nào không
         const decodedToken = JSON.parse(atob(response.data.token.split('.')[1]));
         const userId = decodedToken.userId;
 
-        if (userId) {
-          localStorage.setItem("userId", userId);
-
-          // Fetch managed clubs only if userId is available
-          try {
-            const clubsResponse = await axios.get(`http://localhost:5500/api/get-managed-clubs/${userId}`);
+        try {
+          const clubsResponse = await axios.get(`http://localhost:5500/api/get-managed-clubs/${userId}`);
+          
+          if (clubsResponse.data && clubsResponse.data.length > 0) {
+            // Có quản lý CLB, cho phép đăng nhập
+            localStorage.setItem("role", role);
+            localStorage.setItem("token", response.data.token);
+            localStorage.setItem("userId", userId);
             localStorage.setItem("managedClubs", JSON.stringify(clubsResponse.data));
-          } catch (clubError) {
-            console.error("Error fetching managed clubs:", clubError);
+            navigate(redirectUrl);
+          } else {
+            // Không quản lý CLB nào
+            alert("Bạn đang không quản lý câu lạc bộ nào. Vui lòng liên hệ quản trị viên.");
           }
-
-          // Redirect to the specified URL after successful login
-          navigate(redirectUrl);
-        } else {
-          console.error("Decoded token doesn't contain userId:", decodedToken);
+        } catch (clubError) {
+          console.error("Error fetching managed clubs:", clubError);
+          alert("Có lỗi xảy ra khi kiểm tra thông tin câu lạc bộ.");
         }
-      } else {
-        console.error("Login response doesn't contain token:", response.data);
       }
     } catch (error) {
       console.error("Đăng nhập thất bại:", error);
@@ -72,18 +82,18 @@ export function SignIn() {
   };
 
   return (
-    <section className="m-8 flex gap-4">
-      <div className="w-full lg:w-3/5 mt-24">
+    <section className="m-8 flex justify-center items-center min-h-screen">
+      <Card className="w-full max-w-xl p-8 shadow-xl">
         <div className="text-center">
           <Typography variant="h2" className="font-bold mb-4">Đăng Nhập</Typography>
           <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">
-            Nhập email và mật khẩu để đăng nhập.
+            Nhập mã và mật khẩu để đăng nhập.
           </Typography>
         </div>
-        <form onSubmit={handleSubmit} className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
+        <form onSubmit={handleSubmit} className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg">
           <div className="mb-1 flex flex-col gap-6">
             <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
-              Email của bạn
+              Mã của bạn
             </Typography>
             <Input
               size="lg"
@@ -113,18 +123,8 @@ export function SignIn() {
           <Button type="submit" className="mt-6" fullWidth disabled={isLoading}>
             {isLoading ? "Đang đăng nhập..." : "Đăng Nhập"}
           </Button>
-          <Typography variant="paragraph" className="text-center text-blue-gray-500 font-medium mt-4">
-            Chưa có tài khoản?
-            <Link to="/auth/sign-up" className="text-gray-900 ml-1">Tạo tài khoản</Link>
-          </Typography>
         </form>
-      </div>
-      <div className="w-2/5 h-full hidden lg:block">
-        <img
-          src="/img/pattern.png"
-          className="h-full w-full object-cover rounded-3xl"
-        />
-      </div>
+      </Card>
     </section>
   );
 }

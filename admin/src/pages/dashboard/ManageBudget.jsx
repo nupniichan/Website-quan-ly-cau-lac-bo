@@ -473,6 +473,7 @@ const ManageBudget = () => {
                             <thead>
                                 <tr>
                                     {[
+                                        "STT",
                                         "Tên ngân sách",
                                         "Khoản chi tiêu",
                                         "Tổng thu",
@@ -497,10 +498,15 @@ const ManageBudget = () => {
                             <tbody>
                                 {filteredBudgets
                                     .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                                    .map(({ _id, ten, khoanChiTieu, nguonThu, ngay, thanhVienChiuTrachNhiem }) => {
+                                    .map(({ _id, ten, khoanChiTieu, nguonThu, ngay, thanhVienChiuTrachNhiem }, index) => {
                                         const className = "p-4";
                                         return (
                                             <tr key={_id}>
+                                                <td className={className}>
+                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                        {(currentPage - 1) * itemsPerPage + index + 1}
+                                                    </Typography>
+                                                </td>
                                                 <td className={className}>
                                                     <Typography className="text-xs font-semibold text-blue-gray-600">
                                                         {ten}
