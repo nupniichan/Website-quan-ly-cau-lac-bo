@@ -97,14 +97,24 @@ const ManageClubAccountsPR = () => {
 
     const handleDeleteAccount = async (userId) => {
         console.log("Deleting account with User ID:", userId);
-        if (window.confirm("Bạn có chắc chắn muốn xóa tài khoản này?")) {
-            try {
+        try {
+            // Kiểm tra xem tài khoản có đang quản lý CLB nào không
+            const response = await axios.get(`${API_URL}/check-account-clubs/${userId}`);
+            const { hasActiveClubs } = response.data;
+            
+            if (hasActiveClubs) {
+                alert("Không thể xóa tài khoản này vì đang quản lý câu lạc bộ đang hoạt động!");
+                return;
+            }
+
+            if (window.confirm("Bạn có chắc chắn muốn xóa tài khoản này?")) {
                 await axios.delete(`${API_URL}/delete-account/${userId}`);
                 console.log(`Account with User ID ${userId} deleted`);
                 setAccounts((prev) => prev.filter(account => account.userId !== userId));
-            } catch (error) {
-                console.error("Error deleting account:", error);
             }
+        } catch (error) {
+            console.error("Error deleting account:", error);
+            alert("Có lỗi xảy ra khi xóa tài khoản!");
         }
     };
 
@@ -429,17 +439,69 @@ const ManageClubAccountsPR = () => {
             </Dialog>
 
             {/* Account Details Dialog */}
-            <Dialog open={isDetailDialogOpen} onClose={() => setIsDetailDialogOpen(false)}>
-                <DialogHeader>Chi tiết Tài khoản</DialogHeader>
-                <DialogBody>
-                    <Typography>Mã số học sinh: {detailAccount?.userId}</Typography>
-                    <Typography>Họ và tên: {detailAccount?.name}</Typography>
-                    <Typography>Email: {detailAccount?.email}</Typography>
-                    <Typography>Vai trò: {detailAccount?.role}</Typography>
-                    <Typography><strong>Mật khẩu:</strong> {detailAccount?.password}</Typography>
-                </DialogBody>
+            <Dialog open={isDetailDialogOpen} handler={() => setIsDetailDialogOpen(false)} size="xl">
+                <DialogHeader className="flex items-center gap-4">
+                    <Typography variant="h6">Chi tiết tài khoản</Typography>
+                    <Typography 
+                        variant="small" 
+                        className={`
+                            px-3 py-1 rounded-full font-bold uppercase
+                            ${detailAccount?.role === 'admin' 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-green-500 text-white'}
+                        `}
+                    >
+                        {detailAccount?.role}
+                    </Typography>
+                </DialogHeader>
+
+                {detailAccount ? (
+                    <DialogBody divider className="overflow-y-auto lg:max-h-[65vh] sm:max-h-[50vh] p-6">
+                        <div className="bg-blue-gray-50 p-6 rounded-lg">
+                            <div className="text-center mb-6">
+                                <Typography variant="h4" color="blue" className="font-bold mb-2">
+                                    {detailAccount.name}
+                                </Typography>
+                                <Typography 
+                                    variant="small" 
+                                    className="bg-white px-4 py-2 rounded-full text-blue-900 inline-block font-medium"
+                                >
+                                    MSHS: {detailAccount.userId}
+                                </Typography>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white p-4 rounded-lg">
+                                    <Typography className="text-sm text-gray-600 mb-1">Email</Typography>
+                                    <Typography className="font-medium text-blue-900">
+                                        {detailAccount.email}
+                                    </Typography>
+                                </div>
+
+                                <div className="bg-white p-4 rounded-lg">
+                                    <Typography className="text-sm text-gray-600 mb-1">Vai trò</Typography>
+                                    <Typography className="font-medium">
+                                        {detailAccount.role}
+                                    </Typography>
+                                </div>
+                            </div>
+                        </div>
+                    </DialogBody>
+                ) : (
+                    <DialogBody className="flex justify-center items-center h-64">
+                        <Spinner className="h-12 w-12" color="blue" />
+                    </DialogBody>
+                )}
+                
                 <DialogFooter>
-                    <Button color="blue" onClick={() => setIsDetailDialogOpen(false)}>Đóng</Button>
+                    <Button
+                        variant="text"
+                        color="red"
+                        onClick={() => setIsDetailDialogOpen(false)}
+                        className="mr-1"
+                    >
+                        Đóng
+                    </Button>
                 </DialogFooter>
             </Dialog>
         </div>

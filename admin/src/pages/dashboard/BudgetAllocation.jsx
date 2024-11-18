@@ -225,7 +225,8 @@ const BudgetAllocation = () => {
         if (allocationToEdit) {
             setNewAllocation({
                 ...allocationToEdit,
-                allocationDate: allocationToEdit.allocationDate.split("T")[0],
+                club: allocationToEdit.club._id,
+                allocationDate: new Date().toISOString().split("T")[0],
             });
             setEditingAllocationId(id);
             setIsDialogOpen(true);
@@ -721,10 +722,10 @@ const BudgetAllocation = () => {
                         label="Câu lạc bộ"
                         value={newAllocation.club}
                         onChange={(value) => {
-                            console.log("Selected club:", value);
                             setNewAllocation({ ...newAllocation, club: value });
                         }}
-                        menuProps={{ className: "absolute z-[70]", id: "club-select-dropdown" }}
+                        menuProps={{ className: "absolute z-[70]" }}
+                        disabled={editingAllocationId !== null}
                     >
                         {clubs.map((club) => (
                             <Option key={club._id} value={club._id}>
@@ -754,11 +755,8 @@ const BudgetAllocation = () => {
                         type="date"
                         label="Ngày phân bổ"
                         value={newAllocation.allocationDate}
-                        onChange={(e) =>
-                            setNewAllocation({
-                                ...newAllocation,
-                                allocationDate: e.target.value,
-                            })}
+                        disabled={true}
+                        className="cursor-not-allowed"
                     />
                 </DialogBody>
                 

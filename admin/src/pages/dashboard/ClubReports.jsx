@@ -26,6 +26,7 @@ import {
     ChevronRightIcon,
     XMarkIcon,
 } from "@heroicons/react/24/solid";
+import * as XLSX from 'xlsx';
 
 const API_URL = "http://localhost:5500/api";
 
@@ -198,6 +199,142 @@ const ClubReports = () => {
             month: '2-digit',
             year: 'numeric'
         });
+    };
+
+    // Thêm function xuất Excel
+    const exportToExcel = (report) => {
+        // Tạo workbook mới
+        const wb = XLSX.utils.book_new();
+
+        // Định nghĩa styles chung
+        const borderStyle = {
+            style: "medium",
+            color: { rgb: "000000" }
+        };
+
+        const commonStyle = {
+            border: {
+                top: borderStyle,
+                bottom: borderStyle,
+                left: borderStyle,
+                right: borderStyle
+            }
+        };
+
+        // Tạo worksheet cho thông tin chung với border
+        const generalInfo = [
+            [{v: 'BÁO CÁO CÂU LẠC BỘ', s: {
+                font: { bold: true, sz: 16 },
+                alignment: { horizontal: "center", vertical: "center" },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "4F46E5" } },
+                font: { color: { rgb: "FFFFFF" }, bold: true }
+            }}],
+            [''],
+            [{v: 'THÔNG TIN CHUNG', s: {
+                font: { bold: true },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "E5E7EB" } }
+            }}],
+            [
+                {v: 'Tên báo cáo:', s: commonStyle},
+                {v: report.tenBaoCao, s: commonStyle}
+            ],
+            [
+                {v: 'Ngày báo cáo:', s: commonStyle},
+                {v: formatDate(report.ngayBaoCao), s: commonStyle}
+            ],
+            [
+                {v: 'Người phụ trách:', s: commonStyle},
+                {v: report.nhanSuPhuTrach, s: commonStyle}
+            ],
+            [
+                {v: 'Câu lạc bộ:', s: commonStyle},
+                {v: clubs.find(c => c._id === report.club)?.ten || "N/A", s: commonStyle}
+            ],
+            [''],
+            [{v: 'THÔNG TIN TÀI CHÍNH', s: {
+                font: { bold: true },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "E5E7EB" } }
+            }}],
+            [
+                {v: 'Tổng ngân sách chi tiêu:', s: commonStyle},
+                {v: `${report.tongNganSachChiTieu?.toLocaleString('vi-VN')} đ`, s: commonStyle}
+            ],
+            [
+                {v: 'Tổng thu:', s: commonStyle},
+                {v: `${report.tongThu?.toLocaleString('vi-VN')} đ`, s: commonStyle}
+            ],
+            [''],
+            [{v: 'KẾT QUẢ ĐẠT ĐƯỢC', s: {
+                font: { bold: true },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "E5E7EB" } }
+            }}],
+            [{v: report.ketQuaDatDuoc || "Chưa cập nhật", s: commonStyle}]
+        ];
+
+        // Tạo worksheet cho danh sách sự kiện với border
+        const eventsData = [
+            [{v: 'DANH SÁCH SỰ KIỆN', s: {
+                font: { bold: true, sz: 14 },
+                alignment: { horizontal: "center" },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "4F46E5" } },
+                font: { color: { rgb: "FFFFFF" }, bold: true }
+            }}],
+            [
+                {v: 'STT', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Tên sự kiện', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Mô tả', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Ngày tổ chức', s: {...commonStyle, font: { bold: true }}}
+            ],
+            ...report.danhSachSuKien.map((event, index) => [
+                {v: index + 1, s: commonStyle},
+                {v: events.find(e => e._id === event)?.tenSuKien || "N/A", s: commonStyle},
+                {v: events.find(e => e._id === event)?.moTa || "N/A", s: commonStyle},
+                {v: formatDate(events.find(e => e._id === event)?.ngayToChuc) || "N/A", s: commonStyle}
+            ])
+        ];
+
+        // Tạo các worksheet
+        const wsGeneral = XLSX.utils.aoa_to_sheet(generalInfo);
+        const wsEvents = XLSX.utils.aoa_to_sheet(eventsData);
+
+        // Áp dụng độ rộng cột và merge cells
+        [wsGeneral, wsEvents].forEach(ws => {
+            ws['!cols'] = [
+                { wch: 25 },
+                { wch: 40 },
+                { wch: 25 },
+                { wch: 20 },
+            ];
+            ws['!rows'] = [{ hpt: 30 }];
+        });
+
+        // Merge cells
+        wsGeneral['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
+            { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } },
+            { s: { r: 8, c: 0 }, e: { r: 8, c: 1 } },
+            { s: { r: 12, c: 0 }, e: { r: 12, c: 1 } },
+            { s: { r: 13, c: 0 }, e: { r: 13, c: 1 } }
+        ];
+
+        wsEvents['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }
+        ];
+
+        // Thêm các worksheet vào workbook
+        XLSX.utils.book_append_sheet(wb, wsGeneral, "Thông tin chung");
+        XLSX.utils.book_append_sheet(wb, wsEvents, "Danh sách sự kiện");
+
+        // Tạo tên file với ID báo cáo
+        const fileName = `BaocaoCLB_${report._id}.xlsx`;
+
+        // Xuất file
+        XLSX.writeFile(wb, fileName);
     };
 
     return (
@@ -564,7 +701,7 @@ const ClubReports = () => {
                             ? handleUpdateReport
                             : handleAddReport}
                     >
-                        {editingReportId ? "Cập nhật" : "Thêm"}
+                        {editingReportId ? "Cập nh���t" : "Thêm"}
                     </Button>
                 </DialogFooter>
             </Dialog>
@@ -715,13 +852,35 @@ const ClubReports = () => {
                     </DialogBody>
                 )}
                 <DialogFooter>
-                    <Button
-                        variant="gradient"
-                        color="blue"
-                        onClick={() => setIsDetailDialogOpen(false)}
-                    >
-                        Đóng
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outlined"
+                            color="blue"
+                            className="flex items-center gap-2"
+                            onClick={() => exportToExcel(detailReport)}
+                        >
+                            <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                viewBox="0 0 24 24" 
+                                fill="currentColor" 
+                                className="w-4 h-4"
+                            >
+                                <path 
+                                    fillRule="evenodd" 
+                                    d="M12 2.25a.75.75 0 0 1 .75.75v11.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3a.75.75 0 0 1 .75-.75Zm-9 13.5a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z" 
+                                    clipRule="evenodd" 
+                                />
+                            </svg>
+                            Xuất Excel
+                        </Button>
+                        <Button
+                            variant="gradient"
+                            color="blue"
+                            onClick={() => setIsDetailDialogOpen(false)}
+                        >
+                            Đóng
+                        </Button>
+                    </div>
                 </DialogFooter>
             </Dialog>
         </div>
