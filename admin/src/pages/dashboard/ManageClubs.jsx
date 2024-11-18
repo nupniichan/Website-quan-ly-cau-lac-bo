@@ -14,9 +14,11 @@ import {
     Textarea,
     Tooltip,
     Typography,
+    Select,
+    Option,
 } from "@material-tailwind/react";
 import axios from "axios";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
@@ -32,6 +34,7 @@ const validateClubData = (clubData) => {
         { key: "ngayThanhLap", label: "Ngày thành lập" },
         { key: "giaoVienPhuTrach", label: "Giáo viên phụ trách" },
         { key: "truongBanCLB", label: "Trưởng ban CLB" },
+        { key: "tinhTrang", label: "Tình trạng" },
     ];
 
     // Kiểm tra trường rỗng
@@ -55,6 +58,16 @@ const validateClubData = (clubData) => {
     }
 };
 
+// Thêm hàm helper để format ngày
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+};
+
 const ManageClubs = () => {
     const [clubs, setClubs] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -69,6 +82,7 @@ const ManageClubs = () => {
         mieuTa: "",
         quyDinh: "",
         logo: null,
+        tinhTrang: "Còn hoạt động",
     });
     const [detailClub, setDetailClub] = useState(null);
     const [editingClubId, setEditingClubId] = useState(null);
@@ -81,10 +95,51 @@ const ManageClubs = () => {
         startDate: "",
         endDate: ""
     });
+    const [fieldFilter, setFieldFilter] = useState("");
+    const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+    const [studentAccounts, setStudentAccounts] = useState([]);
+    const [studentSearch, setStudentSearch] = useState("");
+    const dropdownRef = useRef(null);
 
     useEffect(() => {
         fetchClubs();
     }, []);
+
+    // Fetch student accounts khi component mount
+    useEffect(() => {
+        const fetchStudentAccounts = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/get-accounts`);
+                const students = response.data
+                    .filter(account => account.role === 'student')
+                    .slice(0, 10);
+                setStudentAccounts(students);
+            } catch (error) {
+                console.error("Error fetching student accounts:", error);
+            }
+        };
+        fetchStudentAccounts();
+    }, []);
+
+    // Handle click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowStudentDropdown(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // Thêm hàm lọc students
+    const getFilteredStudents = (searchValue) => {
+        return studentAccounts.filter(student =>
+            student.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+            student.userId.toLowerCase().includes(searchValue.toLowerCase())
+        );
+    };
 
     const fetchClubs = async () => {
         setIsLoading(true);
@@ -184,6 +239,15 @@ const ManageClubs = () => {
     };
 
     const handleDeleteClub = async (clubId) => {
+        // Tìm club cần xóa
+        const clubToDelete = clubs.find(club => club.clubId === clubId);
+        
+        // Kiểm tra tình trạng
+        if (clubToDelete.tinhTrang === "Còn hoạt động") {
+            alert("Không thể xóa câu lạc bộ đang hoạt động!");
+            return;
+        }
+
         if (window.confirm("Bạn có chắc chắn muốn xóa câu lạc bộ này?")) {
             try {
                 const response = await axios.delete(
@@ -215,6 +279,7 @@ const ManageClubs = () => {
             mieuTa: "",
             quyDinh: "",
             logo: null,
+            tinhTrang: "Còn hoạt động",
         });
         setEditingClubId(null);
         setIsDialogOpen(true);
@@ -225,13 +290,16 @@ const ManageClubs = () => {
         const clubToEdit = clubs.find((club) => club.clubId === clubId);
         try {
             const response = await axios.get(`${API_URL}/get-club/${clubId}`);
+            const date = new Date(response.data.ngayThanhLap);
+            const formattedDate = date.toISOString().split('T')[0]; // Format YYYY-MM-DD cho input
+
             setNewClub({
                 ...response.data,
-                ngayThanhLap: response.data.ngayThanhLap.split("T")[0],
+                ngayThanhLap: formattedDate,
             });
             if (clubToEdit) {
                 setCurrentLogo(
-                    clubToEdit.logo ? `${API_URL}${clubToEdit.logo}` : null,
+                    clubToEdit.logo ? `${API_URL}/${clubToEdit.logo}` : null,
                 );
             }
             setEditingClubId(clubId);
@@ -281,7 +349,13 @@ const ManageClubs = () => {
         }
     };
 
-    // Thêm hàm lọc clubs
+    // Tạo danh sách lĩnh vực hoạt động duy nhất từ clubs
+    const uniqueFields = useMemo(() => {
+        const fields = clubs.map(club => club.linhVucHoatDong);
+        return [...new Set(fields)].filter(field => field); // Lọc bỏ giá trị null/undefined/empty
+    }, [clubs]);
+
+    // Cập nhật hàm lọc clubs
     const filteredClubs = useMemo(() => {
         return clubs.filter(club => {
             // Lọc theo tên CLB hoặc lĩnh vực hoạt động hoặc giáo viên phụ trách hoặc trưởng ban CLB
@@ -296,14 +370,17 @@ const ManageClubs = () => {
             const matchesDateRange = (!dateFilter.startDate || new Date(dateFilter.startDate) <= clubDate) &&
                 (!dateFilter.endDate || new Date(dateFilter.endDate) >= clubDate);
 
-            return matchesSearch && matchesDateRange;
+            // Lọc theo lĩnh vực hoạt động
+            const matchesField = !fieldFilter || club.linhVucHoatDong === fieldFilter;
+
+            return matchesSearch && matchesDateRange && matchesField;
         });
-    }, [clubs, searchTerm, dateFilter]);
+    }, [clubs, searchTerm, dateFilter, fieldFilter]);
 
     // Reset trang khi thay đổi bộ lọc
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, dateFilter]);
+    }, [searchTerm, dateFilter, fieldFilter]);
 
     // Cập nhật phân trang
     const currentClubs = filteredClubs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -335,6 +412,22 @@ const ManageClubs = () => {
                                 />
                             </div>
 
+                            {/* Bộ lọc lĩnh vực hoạt động */}
+                            <div className="w-72">
+                                <Select
+                                    label="Lọc theo lĩnh vực"
+                                    value={fieldFilter}
+                                    onChange={(value) => setFieldFilter(value)}
+                                >
+                                    <Option value="">Tất cả lĩnh vực</Option>
+                                    {uniqueFields.map((field) => (
+                                        <Option key={field} value={field}>
+                                            {field}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </div>
+
                             {/* Bộ lọc ngày thành lập */}
                             <div className="flex items-center gap-2">
                                 <div>
@@ -364,8 +457,8 @@ const ManageClubs = () => {
                                     />
                                 </div>
 
-                                {/* Nút reset bộ lọc */}
-                                {(dateFilter.startDate || dateFilter.endDate || searchTerm) && (
+                                {/* Nút reset bộ lọc - cập nhật để xóa cả fieldFilter */}
+                                {(dateFilter.startDate || dateFilter.endDate || searchTerm || fieldFilter) && (
                                     <Button
                                         variant="text"
                                         color="red"
@@ -373,6 +466,7 @@ const ManageClubs = () => {
                                         onClick={() => {
                                             setDateFilter({ startDate: "", endDate: "" });
                                             setSearchTerm("");
+                                            setFieldFilter("");
                                         }}
                                     >
                                         <XMarkIcon className="h-4 w-4" />
@@ -404,13 +498,14 @@ const ManageClubs = () => {
                     </div>
 
                     {/* Hiển thị kết quả tìm kiếm và lọc */}
-                    {(searchTerm || dateFilter.startDate || dateFilter.endDate) && (
+                    {(searchTerm || dateFilter.startDate || dateFilter.endDate || fieldFilter) && (
                         <div className="px-6 mb-4">
                             <Typography variant="small" color="blue-gray">
                                 Tìm thấy {filteredClubs.length} kết quả
                                 {searchTerm && ` cho "${searchTerm}"`}
-                                {dateFilter.startDate && ` từ ${new Date(dateFilter.startDate).toLocaleDateString('vi-VN')}`}
-                                {dateFilter.endDate && ` đến ${new Date(dateFilter.endDate).toLocaleDateString('vi-VN')}`}
+                                {fieldFilter && ` trong lĩnh vực "${fieldFilter}"`}
+                                {dateFilter.startDate && ` từ ${formatDate(dateFilter.startDate)}`}
+                                {dateFilter.endDate && ` đến ${formatDate(dateFilter.endDate)}`}
                             </Typography>
                         </div>
                     )}
@@ -437,12 +532,14 @@ const ManageClubs = () => {
                                         <thead>
                                             <tr>
                                                 {[
+                                                    "STT",
                                                     "Logo",
                                                     "Tên CLB",
                                                     "Lĩnh vực hoạt động",
                                                     "Ngày thành lập",
                                                     "Giáo viên phụ trách",
                                                     "Trưởng ban CLB",
+                                                    "Tình trạng",
                                                     "Thao tác",
                                                 ].map((el) => (
                                                     <th
@@ -461,7 +558,7 @@ const ManageClubs = () => {
                                         </thead>
                                         <tbody>
                                             {currentClubs.map(
-                                                ({ clubId, ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, truongBanCLB, logo }, key) => {
+                                                ({ clubId, ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, truongBanCLB, logo, tinhTrang }, key) => {
                                                     const className = `py-3 px-5 ${
                                                         key === currentClubs.length - 1
                                                             ? ""
@@ -470,9 +567,12 @@ const ManageClubs = () => {
 
                                                     return (
                                                         <tr key={clubId}>
-                                                            <td
-                                                                className={className}
-                                                            >
+                                                            <td className={className}>
+                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                    {(currentPage - 1) * itemsPerPage + key + 1}
+                                                                </Typography>
+                                                            </td>
+                                                            <td className={className}>
                                                                 <img
                                                                     src={logo
                                                                         ? `${API_URL}/${logo}`
@@ -509,9 +609,7 @@ const ManageClubs = () => {
                                                                 className={className}
                                                             >
                                                                 <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {new Date(
-                                                                        ngayThanhLap,
-                                                                    ).toLocaleDateString()}
+                                                                    {formatDate(ngayThanhLap)}
                                                                 </Typography>
                                                             </td>
                                                             <td
@@ -525,7 +623,18 @@ const ManageClubs = () => {
                                                                 className={className}
                                                             >
                                                                 <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {truongBanCLB}
+                                                                    {studentAccounts.find(s => s.userId === truongBanCLB)?.name || truongBanCLB}
+                                                                </Typography>
+                                                            </td>
+                                                            <td className={className}>
+                                                                <Typography 
+                                                                    className={`text-xs font-semibold ${
+                                                                        tinhTrang === "Còn hoạt động" 
+                                                                            ? "text-green-600" 
+                                                                            : "text-red-600"
+                                                                    }`}
+                                                                >
+                                                                    {tinhTrang || "Còn hoạt động"}
                                                                 </Typography>
                                                             </td>
                                                             <td
@@ -771,6 +880,49 @@ const ManageClubs = () => {
                             giaoVienPhuTrach: e.target.value,
                         })}
                     />
+                    <div className="relative" ref={dropdownRef}>
+                        <Input
+                            label="Trưởng ban CLB"
+                            value={studentAccounts.find(s => s.userId === newClub.truongBanCLB)?.name || newClub.truongBanCLB}
+                            onFocus={() => setShowStudentDropdown(true)}
+                            onChange={(e) => {
+                                setNewClub({ ...newClub, truongBanCLB: e.target.value });
+                                setStudentSearch(e.target.value);
+                            }}
+                        />
+                        {showStudentDropdown && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                {getFilteredStudents(studentSearch).map((student) => (
+                                    <div
+                                        key={student.userId}
+                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                        onClick={() => {
+                                            setNewClub({ ...newClub, truongBanCLB: student.userId });
+                                            setShowStudentDropdown(false);
+                                            setStudentSearch("");
+                                        }}
+                                    >
+                                        <Typography className="text-sm">
+                                            {student.name} ({student.userId})
+                                        </Typography>
+                                    </div>
+                                ))}
+                                {getFilteredStudents(studentSearch).length === 0 && (
+                                    <div className="px-4 py-2 text-gray-500">
+                                        Không tìm thấy kết quả
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    <Select
+                        label="Tình trạng"
+                        value={newClub.tinhTrang}
+                        onChange={(value) => setNewClub({ ...newClub, tinhTrang: value })}
+                    >
+                        <Option value="Còn hoạt động">Còn hoạt động</Option>
+                        <Option value="Ngừng hoạt động">Ngừng hoạt động</Option>
+                    </Select>
                     <Textarea
                         label="Miêu tả"
                         value={newClub.mieuTa}
@@ -778,17 +930,16 @@ const ManageClubs = () => {
                             setNewClub({ ...newClub, mieuTa: e.target.value })}
                         className="col-span-2"
                     />
-                    <div>
-                        <Input
-                            label="Trưởng ban CLB"
-                            value={newClub.truongBanCLB}
-                            onChange={(e) =>
-                                setNewClub({
-                                    ...newClub,
-                                    truongBanCLB: e.target.value,
-                                })}
-                        />
-                        <div className="flex flex-col gap-2 translate-y-4">
+                    <Textarea
+                        label="Quy định"
+                        value={newClub.quyDinh}
+                        onChange={(e) =>
+                            setNewClub({ ...newClub, quyDinh: e.target.value })}
+                        className="col-span-2"
+                    />
+                    {/* Phần tải logo */}
+                    <div className="col-span-2">
+                        <div className="flex flex-col gap-4">
                             <Button
                                 variant="gradient"
                                 className="flex items-center gap-3 w-[10.6rem] h-[3rem]"
@@ -800,46 +951,37 @@ const ManageClubs = () => {
                                     type="file"
                                     accept="image/*"
                                     onChange={handleLogoChange}
-                                    className="absolute inset-0 w-full h-full opacity-0"
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                 />
                             </Button>
-                            <div className="grid grid-cols-2 font-normal">
+                            <div className="grid grid-cols-2 gap-4">
                                 {editingClubId && currentLogo && (
-                                    <>
-                                        <p>
-                                            <strong>Ảnh hiện tại:</strong>
-                                        </p>
-                                        <img
-                                            src={currentLogo}
-                                            alt="Ảnh clb hiện tại"
-                                            className="h-auto max-w-full mt-2"
-                                            style={{ maxHeight: "100px" }}
-                                        />
-                                    </>
+                                    <div className="flex flex-col gap-2">
+                                        <p className="font-semibold">Ảnh hiện tại:</p>
+                                        <div className="w-32 h-32 relative">
+                                            <img
+                                                src={currentLogo}
+                                                alt="Ảnh clb hiện tại"
+                                                className="absolute w-full h-full object-cover rounded-lg shadow-md"
+                                            />
+                                        </div>
+                                    </div>
                                 )}
                                 {previewLogo && (
-                                    <>
-                                        <p>
-                                            <strong>Ảnh mới:</strong>
-                                        </p>
-                                        <img
-                                            src={previewLogo}
-                                            alt="Ảnh clb mới"
-                                            className="h-auto max-w-full mt-2"
-                                            style={{ maxHeight: "100px" }}
-                                        />
-                                    </>
+                                    <div className="flex flex-col gap-2">
+                                        <p className="font-semibold">Ảnh mới:</p>
+                                        <div className="w-32 h-32 relative">
+                                            <img
+                                                src={previewLogo}
+                                                alt="Ảnh clb mới"
+                                                className="absolute w-full h-full object-cover rounded-lg shadow-md"
+                                            />
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         </div>
                     </div>
-                    <Textarea
-                        label="Quy định"
-                        value={newClub.quyDinh}
-                        onChange={(e) =>
-                            setNewClub({ ...newClub, quyDinh: e.target.value })}
-                        className="col-span-2 transfor"
-                    />
                 </DialogBody>
                 <DialogFooter>
                     <Button
@@ -909,7 +1051,7 @@ const ManageClubs = () => {
                                             <tr>
                                                 <th className="border p-3 bg-gray-50">Ngày thành lập</th>
                                                 <td className="border p-3">
-                                                    {new Date(detailClub.ngayThanhLap).toLocaleDateString()}
+                                                    {formatDate(detailClub.ngayThanhLap)}
                                                 </td>
                                             </tr>
                                             <tr>
@@ -919,6 +1061,18 @@ const ManageClubs = () => {
                                             <tr>
                                                 <th className="border p-3 bg-gray-50">Trưởng ban CLB</th>
                                                 <td className="border p-3">{detailClub.truongBanCLB}</td>
+                                            </tr>
+                                            <tr>
+                                                <th className="border p-3 bg-gray-50">Tình trạng</th>
+                                                <td className="border p-3">
+                                                    <span className={`font-semibold ${
+                                                        detailClub.tinhTrang === "Còn hoạt động" 
+                                                            ? "text-green-600" 
+                                                            : "text-red-600"
+                                                    }`}>
+                                                        {detailClub.tinhTrang || "Còn hoạt động"}
+                                                    </span>
+                                                </td>
                                             </tr>
                                         </tbody>
                                     </table>

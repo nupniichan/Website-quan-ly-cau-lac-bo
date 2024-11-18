@@ -68,6 +68,15 @@ const ActivityReports = () => {
         startDate: "",
         endDate: ""
     });
+    const [students, setStudents] = useState([]);
+    const [filteredStudents, setFilteredStudents] = useState([]);
+    const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+    const [selectedEventIndex, setSelectedEventIndex] = useState(-1);
+    const [showMainStaffDropdown, setShowMainStaffDropdown] = useState(false);
+    const [isFocused, setIsFocused] = useState({
+        eventIndex: -1,
+        awardIndex: -1
+    });
 
     useEffect(() => {
         const managedClubsString = localStorage.getItem("managedClubs");
@@ -94,6 +103,12 @@ const ActivityReports = () => {
         }
         setIsLoading(false);
     }, []);
+
+    useEffect(() => {
+        if (club?._id) {
+            fetchMembersByClub(club._id);
+        }
+    }, [club]);
 
     const fetchReports = async (clubId) => {
         setIsLoading(true);
@@ -277,18 +292,21 @@ const ActivityReports = () => {
 
     const handleEventNameChange = async (e, index) => {
         const value = e.target.value;
-        handleUpdateEvent(index, "tenSuKien", value);
-        if (value.length > 2 && club) {
-            try {
-                const response = await axios.get(
-                    `${API_URL}/search-events/${club._id}?query=${value}`,
-                );
-                setEventSuggestions({ index, suggestions: response.data });
-            } catch (error) {
-                console.error("Error fetching event suggestions:", error);
-            }
-        } else {
-            setEventSuggestions({ index, suggestions: [] });
+        const updatedEvents = [...newReport.danhSachSuKien];
+        updatedEvents[index] = {
+            ...updatedEvents[index],
+            tenSuKien: value,
+            isSelected: false
+        };
+        setNewReport({ ...newReport, danhSachSuKien: updatedEvents });
+        
+        try {
+            const response = await axios.get(
+                `${API_URL}/search-events/${club._id}?query=${value}&limit=5`,
+            );
+            setEventSuggestions({ index, suggestions: response.data });
+        } catch (error) {
+            console.error("Error fetching event suggestions:", error);
         }
     };
 
@@ -298,6 +316,7 @@ const ActivityReports = () => {
             tenSuKien: suggestion.ten,
             nguoiPhuTrach: suggestion.nguoiPhuTrach,
             ngayToChuc: suggestion.ngayToChuc.split("T")[0],
+            isSelected: true // Thêm flag để đánh dấu đã chọn từ suggestion
         };
         setNewReport({ ...newReport, danhSachSuKien: updatedEvents });
         setEventSuggestions({ index: -1, suggestions: [] });
@@ -306,17 +325,13 @@ const ActivityReports = () => {
     const handleAwardNameChange = async (e, index) => {
         const value = e.target.value;
         handleUpdateAward(index, "tenGiai", value);
-        if (value.length > 2 && club) {
-            try {
-                const response = await axios.get(
-                    `${API_URL}/search-prizes/${club._id}?query=${value}`,
-                );
-                setAwardSuggestions({ index, suggestions: response.data });
-            } catch (error) {
-                console.error("Error fetching award suggestions:", error);
-            }
-        } else {
-            setAwardSuggestions({ index, suggestions: [] });
+        try {
+            const response = await axios.get(
+                `${API_URL}/search-prizes/${club._id}?query=${value}&limit=5`,
+            );
+            setAwardSuggestions({ index, suggestions: response.data });
+        } catch (error) {
+            console.error("Error fetching award suggestions:", error);
         }
     };
 
@@ -324,8 +339,9 @@ const ActivityReports = () => {
         const updatedAwards = [...newReport.danhSachGiai];
         updatedAwards[index] = {
             tenGiai: suggestion.tenGiai,
-            nguoiNhanGiai: suggestion.nguoiNhanGiai, // Lưu tên người nhận giải
+            nguoiNhanGiai: suggestion.nguoiNhanGiai,
             ngayNhanGiai: suggestion.ngayNhanGiai.split("T")[0],
+            isSelected: true // Thêm flag để đánh dấu đã chọn từ suggestion
         };
         setNewReport({ ...newReport, danhSachGiai: updatedAwards });
         setAwardSuggestions({ index: -1, suggestions: [] });
@@ -336,86 +352,188 @@ const ActivityReports = () => {
         // Tạo workbook mới
         const wb = XLSX.utils.book_new();
 
-        // Tạo worksheet cho thông tin chung
+        // Lấy ID báo cáo từ MongoDB (lấy 6 ký tự cuối)
+        const reportId = report._id;
+
+        // Định nghĩa styles chung
+        const borderStyle = {
+            style: "medium", // hoặc "thin" tùy preference
+            color: { rgb: "000000" }
+        };
+
+        const commonStyle = {
+            border: {
+                top: borderStyle,
+                bottom: borderStyle,
+                left: borderStyle,
+                right: borderStyle
+            }
+        };
+
+        // Tạo worksheet cho thông tin chung với border
         const generalInfo = [
-            ['BÁO CÁO HOẠT ĐỘNG', ''],
-            ['', ''],
-            ['Tên báo cáo', report.tenBaoCao],
-            ['Ngày báo cáo', new Date(report.ngayBaoCao).toLocaleDateString('vi-VN')],
-            ['Người phụ trách', report.nhanSuPhuTrach],
-            ['Tổng ngân sách chi tiêu', report.tongNganSachChiTieu?.toLocaleString('vi-VN') + ' đ'],
-            ['Tổng thu', report.tongThu?.toLocaleString('vi-VN') + ' đ'],
-            ['Kết quả đạt được', report.ketQuaDatDuoc],
+            [{v: 'BÁO CÁO HOẠT ĐỘNG CÂU LẠC BỘ', s: {
+                font: { bold: true, sz: 16 },
+                alignment: { horizontal: "center", vertical: "center" },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "4F46E5" } },
+                font: { color: { rgb: "FFFFFF" }, bold: true }
+            }}],
+            [''],
+            [{v: 'THÔNG TIN CHUNG', s: {
+                font: { bold: true },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "E5E7EB" } }
+            }}],
+            [
+                {v: 'Tên báo cáo:', s: commonStyle},
+                {v: report.tenBaoCao, s: commonStyle}
+            ],
+            [
+                {v: 'Ngày báo cáo:', s: commonStyle},
+                {v: new Date(report.ngayBaoCao).toLocaleDateString('vi-VN'), s: commonStyle}
+            ],
+            [
+                {v: 'Người phụ trách:', s: commonStyle},
+                {v: report.nhanSuPhuTrach, s: commonStyle}
+            ],
+            [''],
+            [{v: 'THÔNG TIN TÀI CHÍNH', s: {
+                font: { bold: true },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "E5E7EB" } }
+            }}],
+            [
+                {v: 'Tổng ngân sách chi tiêu:', s: commonStyle},
+                {v: `${report.tongNganSachChiTieu?.toLocaleString('vi-VN')} đ`, s: commonStyle}
+            ],
+            [
+                {v: 'Tổng thu:', s: commonStyle},
+                {v: `${report.tongThu?.toLocaleString('vi-VN')} đ`, s: commonStyle}
+            ],
+            [''],
+            [{v: 'KẾT QUẢ ĐẠT ĐƯỢC', s: {
+                font: { bold: true },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "E5E7EB" } }
+            }}],
+            [{v: report.ketQuaDatDuoc || "Chưa cập nhật", s: commonStyle}]
         ];
-        const wsGeneral = XLSX.utils.aoa_to_sheet(generalInfo);
 
-        // Tạo worksheet cho danh sách sự kiện
+        // Tạo worksheet cho danh sách sự kiện với border
         const eventsData = [
-            ['DANH SÁCH SỰ KIỆN', '', '', ''],
-            ['Tên sự kiện', 'Người phụ trách', 'Ngày tổ chức', 'Mô tả'],
-            ...report.danhSachSuKien.map(event => [
-                event.tenSuKien,
-                event.nguoiPhuTrach,
-                new Date(event.ngayToChuc).toLocaleDateString('vi-VN'),
-                event.moTa || ''
+            [{v: 'DANH SÁCH SỰ KIỆN', s: {
+                font: { bold: true, sz: 14 },
+                alignment: { horizontal: "center" },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "4F46E5" } },
+                font: { color: { rgb: "FFFFFF" }, bold: true }
+            }}],
+            [
+                {v: 'STT', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Tên sự kiện', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Người phụ trách', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Ngày tổ chức', s: {...commonStyle, font: { bold: true }}}
+            ],
+            ...report.danhSachSuKien.map((event, index) => [
+                {v: index + 1, s: commonStyle},
+                {v: event.tenSuKien, s: commonStyle},
+                {v: event.nguoiPhuTrach, s: commonStyle},
+                {v: new Date(event.ngayToChuc).toLocaleDateString('vi-VN'), s: commonStyle}
             ])
         ];
-        const wsEvents = XLSX.utils.aoa_to_sheet(eventsData);
 
-        // Tạo worksheet cho danh sách giải thưởng
+        // Tạo worksheet cho danh sách giải thưởng với border
         const awardsData = [
-            ['DANH SÁCH GIẢI THƯỞNG', '', '', ''],
-            ['Tên giải', 'Người nhận giải', 'Ngày nhận giải', 'Mô tả'],
-            ...report.danhSachGiai.map(award => [
-                award.tenGiai,
-                award.nguoiNhanGiai,
-                new Date(award.ngayNhanGiai).toLocaleDateString('vi-VN'),
-                award.moTa || ''
+            [{v: 'DANH SÁCH GIẢI THƯỞNG', s: {
+                font: { bold: true, sz: 14 },
+                alignment: { horizontal: "center" },
+                ...commonStyle,
+                fill: { fgColor: { rgb: "4F46E5" } },
+                font: { color: { rgb: "FFFFFF" }, bold: true }
+            }}],
+            [
+                {v: 'STT', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Tên giải', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Người nhận giải', s: {...commonStyle, font: { bold: true }}},
+                {v: 'Ngày nhận giải', s: {...commonStyle, font: { bold: true }}}
+            ],
+            ...report.danhSachGiai.map((award, index) => [
+                {v: index + 1, s: commonStyle},
+                {v: award.tenGiai, s: commonStyle},
+                {v: award.nguoiNhanGiai, s: commonStyle},
+                {v: new Date(award.ngayNhanGiai).toLocaleDateString('vi-VN'), s: commonStyle}
             ])
         ];
+
+        // Tạo các worksheet
+        const wsGeneral = XLSX.utils.aoa_to_sheet(generalInfo);
+        const wsEvents = XLSX.utils.aoa_to_sheet(eventsData);
         const wsAwards = XLSX.utils.aoa_to_sheet(awardsData);
+
+        // Áp dụng độ rộng cột và merge cells
+        [wsGeneral, wsEvents, wsAwards].forEach(ws => {
+            ws['!cols'] = [
+                { wch: 25 },  // A
+                { wch: 40 }, // B
+                { wch: 25 }, // C
+                { wch: 20 }, // D
+            ];
+
+            ws['!rows'] = [{ hpt: 30 }];
+        });
+
+        // Merge cells
+        wsGeneral['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
+            { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } },
+            { s: { r: 7, c: 0 }, e: { r: 7, c: 1 } },
+            { s: { r: 11, c: 0 }, e: { r: 11, c: 1 } },
+            { s: { r: 12, c: 0 }, e: { r: 12, c: 1 } }
+        ];
+
+        wsEvents['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }
+        ];
+
+        wsAwards['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }
+        ];
 
         // Thêm các worksheet vào workbook
         XLSX.utils.book_append_sheet(wb, wsGeneral, "Thông tin chung");
         XLSX.utils.book_append_sheet(wb, wsEvents, "Danh sách sự kiện");
         XLSX.utils.book_append_sheet(wb, wsAwards, "Danh sách giải thưởng");
 
-        // Tùy chỉnh style cho các worksheet
-        const styleSheets = [wsGeneral, wsEvents, wsAwards];
-        styleSheets.forEach(ws => {
-            // Đặt độ rộng cột
-            ws['!cols'] = [
-                { wch: 20 }, // A
-                { wch: 30 }, // B
-                { wch: 15 }, // C
-                { wch: 40 }, // D
-            ];
-        });
-
-        // Tạo tên file với định dạng: BaoCao_[TenBaoCao]_[Ngay].xlsx
-        const fileName = `BaoCao_${report.tenBaoCao.replace(/[^a-zA-Z0-9]/g, '_')}_${
-            new Date(report.ngayBaoCao).toISOString().split('T')[0]
-        }.xlsx`;
+        // Tạo tên file với ID báo cáo
+        const fileName = `Baocao_${reportId}.xlsx`;
 
         // Xuất file
         XLSX.writeFile(wb, fileName);
     };
 
-    // Thêm hàm lọc reports
+    // Thêm hàm format date mới
+    const formatDateVN = (dateString) => {
+        if (!dateString) return "";
+        return new Date(dateString).toLocaleDateString('vi-VN');
+    };
+
+    // Cập nhật phần filter và sort reports
     const filteredReports = useMemo(() => {
-        return reports.filter(report => {
-            // Lọc theo tên báo cáo
-            const matchesSearch = report.tenBaoCao
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase());
+        return reports
+            .sort((a, b) => new Date(b.ngayBaoCao) - new Date(a.ngayBaoCao)) // Sắp xếp theo ngày mới nhất
+            .filter(report => {
+                // Lọc theo tên báo cáo hoặc nhân sự phụ trách
+                const matchesSearch = report.tenBaoCao.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    report.nhanSuPhuTrach.toLowerCase().includes(searchTerm.toLowerCase());
 
-            // Lọc theo khoảng thời gian
-            const reportDate = new Date(report.ngayBaoCao);
-            const matchesDateRange = (!dateFilter.startDate || new Date(dateFilter.startDate) <= reportDate) &&
-                (!dateFilter.endDate || new Date(dateFilter.endDate) >= reportDate);
+                // Lọc theo khoảng thời gian
+                const reportDate = new Date(report.ngayBaoCao);
+                const matchesDateRange = (!dateFilter.startDate || new Date(dateFilter.startDate) <= reportDate) &&
+                    (!dateFilter.endDate || new Date(dateFilter.endDate) >= reportDate);
 
-            return matchesSearch && matchesDateRange;
-        });
+                return matchesSearch && matchesDateRange;
+            });
     }, [reports, searchTerm, dateFilter]);
 
     // Tính toán reports cho trang hiện tại
@@ -439,14 +557,16 @@ const ActivityReports = () => {
             newErrors.tenBaoCao = "Vui lòng nhập tên báo cáo";
         }
 
-        // Validate ngày báo cáo
-        if (!newReport.ngayBaoCao) {
-            newErrors.ngayBaoCao = "Vui lòng chọn ngày báo cáo";
-        } else {
-            const reportDate = new Date(newReport.ngayBaoCao);
-            reportDate.setHours(0, 0, 0, 0);
-            if (reportDate.getTime() !== today.getTime()) {
-                newErrors.ngayBaoCao = "Ngày báo cáo phải là ngày hiện tại";
+        // Chỉ validate ngày báo cáo khi thêm mới
+        if (!editingReportId) {
+            if (!newReport.ngayBaoCao) {
+                newErrors.ngayBaoCao = "Vui lòng chọn ngày báo cáo";
+            } else {
+                const reportDate = new Date(newReport.ngayBaoCao);
+                reportDate.setHours(0, 0, 0, 0);
+                if (reportDate.getTime() !== today.getTime()) {
+                    newErrors.ngayBaoCao = "Ngày báo cáo phải là ngày hiện tại";
+                }
             }
         }
 
@@ -480,6 +600,116 @@ const ActivityReports = () => {
         setCurrentPage(1);
     }, [searchTerm, dateFilter]);
 
+    const fetchMembersByClub = async (clubId) => {
+        try {
+            const response = await axios.get(`${API_URL}/get-members-by-club/${clubId}`);
+            const formattedMembers = response.data.map(member => ({
+                _id: member._id,
+                hoTen: member.hoTen,
+                mssv: member.maSoHocSinh
+            }));
+            setStudents(formattedMembers);
+        } catch (error) {
+            console.error("Error fetching members:", error);
+        }
+    };
+
+    const handleStudentSearch = (value, index) => {
+        const updatedEvents = [...newReport.danhSachSuKien];
+        updatedEvents[index] = {
+            ...updatedEvents[index],
+            nguoiPhuTrach: value
+        };
+        setNewReport({ ...newReport, danhSachSuKien: updatedEvents });
+        setSelectedEventIndex(index);
+        setShowStudentDropdown(true);
+        
+        if (value.trim() === '') {
+            setFilteredStudents(students);
+            return;
+        }
+
+        const filtered = students.filter(student => 
+            student.hoTen.toLowerCase().includes(value.toLowerCase()) ||
+            student.mssv.toLowerCase().includes(value.toLowerCase())
+        );
+        setFilteredStudents(filtered);
+    };
+
+    const handleSelectStudent = (student, index) => {
+        const updatedEvents = [...newReport.danhSachSuKien];
+        updatedEvents[index] = {
+            ...updatedEvents[index],
+            nguoiPhuTrach: student.hoTen
+        };
+        setNewReport({ ...newReport, danhSachSuKien: updatedEvents });
+        setShowStudentDropdown(false);
+        setSelectedEventIndex(-1);
+    };
+
+    const handleMainStaffSearch = (value) => {
+        setNewReport({
+            ...newReport,
+            nhanSuPhuTrach: value
+        });
+        setShowMainStaffDropdown(true);
+        
+        if (value.trim() === '') {
+            setFilteredStudents(students);
+            return;
+        }
+
+        const filtered = students.filter(student => 
+            student.hoTen.toLowerCase().includes(value.toLowerCase()) ||
+            student.mssv.toLowerCase().includes(value.toLowerCase())
+        );
+        setFilteredStudents(filtered);
+    };
+
+    const handleSelectMainStaff = (student) => {
+        setNewReport({
+            ...newReport,
+            nhanSuPhuTrach: student.hoTen
+        });
+        setShowMainStaffDropdown(false);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            // Xử lý cho sự kiện
+            if (!event.target.closest('.event-suggestion-container')) {
+                setEventSuggestions({ index: -1, suggestions: [] });
+                setIsFocused(prev => ({ ...prev, eventIndex: -1 }));
+            }
+            // Xử lý cho giải thưởng
+            if (!event.target.closest('.award-suggestion-container')) {
+                setAwardSuggestions({ index: -1, suggestions: [] });
+                setIsFocused(prev => ({ ...prev, awardIndex: -1 }));
+            }
+            // Xử lý cho nhân sự phụ trách
+            if (!event.target.closest('.main-staff-container')) {
+                setShowMainStaffDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (showMainStaffDropdown && students.length > 0) {
+            setFilteredStudents(students);
+        }
+    }, [showMainStaffDropdown, students]);
+
+    // Thêm function mới để xử lý rút gọn text
+    const truncateText = (text, limit) => {
+        if (text.length <= limit) return text;
+        return text.slice(0, limit) + '...';
+    };
+
     return (
         <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
@@ -498,9 +728,9 @@ const ActivityReports = () => {
                         {/* Cột trái - Tìm kiếm và bộ lọc */}
                         <div className="flex flex-wrap items-center gap-4">
                             {/* Thanh tìm kiếm */}
-                            <div className="w-72">
+                            <div className="w-96">
                                 <Input
-                                    label="Tìm kiếm theo tên báo cáo"
+                                    label="Tìm kiếm theo tên báo cáo hoặc nhân sự phụ trách"
                                     icon={<i className="fas fa-search" />}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -593,6 +823,7 @@ const ActivityReports = () => {
                                 <thead>
                                     <tr>
                                         {[
+                                            "STT",
                                             "Tên báo cáo",
                                             "Ngày báo cáo",
                                             "Nhân sự phụ trách",
@@ -630,15 +861,26 @@ const ActivityReports = () => {
                                                 <tr key={_id}>
                                                     <td className={className}>
                                                         <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {tenBaoCao}
+                                                            {indexOfFirstItem + key + 1}
                                                         </Typography>
                                                     </td>
                                                     <td className={className}>
+                                                        <Tooltip
+                                                            content={tenBaoCao}
+                                                            animate={{
+                                                                mount: { scale: 1, y: 0 },
+                                                                unmount: { scale: 0, y: 25 },
+                                                            }}
+                                                            className="bg-black bg-opacity-80"
+                                                        >
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {truncateText(tenBaoCao, 30)}
+                                                            </Typography>
+                                                        </Tooltip>
+                                                    </td>
+                                                    <td className={className}>
                                                         <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {formatDateForInput(
-                                                                ngayBaoCao,
-                                                            )}{" "}
-                                                            {/* Ngày đã được chuyển đổi ở server */}
+                                                            {formatDateVN(ngayBaoCao)}
                                                         </Typography>
                                                     </td>
                                                     <td className={className}>
@@ -874,19 +1116,38 @@ const ActivityReports = () => {
                         )}
                     </div>
 
-                    <div>
+                    <div className="relative main-staff-container">
                         <Input
                             label="Nhân sự phụ trách"
                             value={newReport.nhanSuPhuTrach}
                             onChange={(e) => {
-                                setNewReport({
-                                    ...newReport,
-                                    nhanSuPhuTrach: e.target.value,
-                                });
+                                handleMainStaffSearch(e.target.value);
                                 setErrors({ ...errors, nhanSuPhuTrach: "" });
+                            }}
+                            onFocus={() => {
+                                setShowMainStaffDropdown(true);
+                                setFilteredStudents(students);
                             }}
                             error={!!errors.nhanSuPhuTrach}
                         />
+                        {showMainStaffDropdown && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                {filteredStudents.slice(0, 5).map((student) => (
+                                    <div
+                                        key={student._id}
+                                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                        onClick={() => handleSelectMainStaff(student)}
+                                    >
+                                        <Typography className="text-sm">
+                                            {student.hoTen}
+                                        </Typography>
+                                        <Typography className="text-xs text-gray-600">
+                                            MSHS: {student.mssv}
+                                        </Typography>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         {errors.nhanSuPhuTrach && (
                             <Typography color="red" className="mt-1 text-xs">
                                 {errors.nhanSuPhuTrach}
@@ -903,60 +1164,71 @@ const ActivityReports = () => {
                             Danh sách sự kiện
                         </Typography>
                         {newReport.danhSachSuKien.map((event, index) => (
-                            <div
-                                key={index}
-                                className="relative flex items-center gap-2 mb-2"
-                            >
-                                <Input
-                                    label="Tên sự kiện"
-                                    value={event.tenSuKien}
-                                    onChange={(e) =>
-                                        handleEventNameChange(e, index)}
-                                />
-                                <Input
-                                    label="Người phụ trách"
-                                    value={event.nguoiPhuTrach}
-                                    onChange={(e) =>
-                                        handleUpdateEvent(
-                                            index,
-                                            "nguoiPhuTrach",
-                                            e.target.value,
+                            <div key={index} className="relative flex flex-col gap-2 mb-4 p-4 border rounded-lg">
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div className="relative event-suggestion-container">
+                                        <Input
+                                            label="Tên sự kiện"
+                                            value={event.tenSuKien}
+                                            onChange={(e) => handleEventNameChange(e, index)}
+                                            onFocus={() => {
+                                                setIsFocused(prev => ({ ...prev, eventIndex: index }));
+                                                if (club) handleEventNameChange({ target: { value: '' } }, index);
+                                            }}
+                                        />
+                                        {eventSuggestions.index === index && eventSuggestions.suggestions.length > 0 && (
+                                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                                {eventSuggestions.suggestions.map((suggestion) => (
+                                                    <div
+                                                        key={suggestion._id}
+                                                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                                        onClick={() => handleEventSuggestionClick(suggestion, index)}
+                                                    >
+                                                        <Typography className="text-sm font-medium">
+                                                            {suggestion.ten}
+                                                        </Typography>
+                                                        <Typography className="text-xs text-gray-600">
+                                                            {suggestion.nguoiPhuTrach} - {formatDateVN(suggestion.ngayToChuc)}
+                                                        </Typography>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         )}
-                                />
-                                <Input
-                                    type="date"
-                                    label="Ngày tổ chức"
-                                    value={formatDateForInput(event.ngayToChuc)}
-                                    onChange={(e) =>
-                                        handleUpdateEvent(
-                                            index,
-                                            "ngayToChuc",
-                                            e.target.value,
-                                        )}
-                                />
-                                {eventSuggestions.index === index &&
-                                    eventSuggestions.suggestions.length > 0 && (
-                                    <ul className="absolute left-0 z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg top-full">
-                                        {eventSuggestions.suggestions.map((
-                                            suggestion,
-                                        ) => (
-                                            <li
-                                                key={suggestion._id}
-                                                className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                                onClick={() =>
-                                                    handleEventSuggestionClick(
-                                                        suggestion,
-                                                        index,
-                                                    )}
-                                            >
-                                                {suggestion.ten}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
+                                    </div>
+
+                                    <div className="relative">
+                                        <Typography variant="small" className="absolute -top-2 left-2 px-2 bg-white text-blue-gray-500 text-[11px] font-normal z-10">
+                                            Người phụ trách
+                                        </Typography>
+                                        <Input
+                                            value={event.nguoiPhuTrach || ''}
+                                            disabled={true}
+                                            className="!border !border-blue-gray-100 !bg-white"
+                                            labelProps={{
+                                                className: "hidden"
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div className="relative">
+                                        <Typography variant="small" className="absolute -top-2 left-2 px-2 bg-white text-blue-gray-500 text-[11px] font-normal z-10">
+                                            Ngày tổ chức
+                                        </Typography>
+                                        <Input
+                                            type="date"
+                                            value={event.ngayToChuc || ''}
+                                            disabled={true}
+                                            className="!border !border-blue-gray-100 !bg-white"
+                                            labelProps={{
+                                                className: "hidden"
+                                            }}
+                                        />
+                                    </div>
+                                </div>
                                 <Button
                                     color="red"
                                     size="sm"
+                                    className="self-end"
                                     onClick={() => handleRemoveEvent(index)}
                                 >
                                     Xóa
@@ -977,62 +1249,71 @@ const ActivityReports = () => {
                             Danh sách giải thưởng
                         </Typography>
                         {newReport.danhSachGiai.map((award, index) => (
-                            <div
-                                key={index}
-                                className="relative flex items-center gap-2 mb-2"
-                            >
-                                <Input
-                                    label="Tên giải"
-                                    value={award.tenGiai}
-                                    onChange={(e) =>
-                                        handleAwardNameChange(e, index)}
-                                />
-                                <Input
-                                    label="Người nhận giải"
-                                    value={award.nguoiNhanGiai}
-                                    onChange={(e) =>
-                                        handleUpdateAward(
-                                            index,
-                                            "nguoiNhanGiai",
-                                            e.target.value,
+                            <div key={index} className="relative flex flex-col gap-2 mb-4 p-4 border rounded-lg">
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div className="relative award-suggestion-container">
+                                        <Input
+                                            label="Tên giải"
+                                            value={award.tenGiai}
+                                            onChange={(e) => handleAwardNameChange(e, index)}
+                                            onFocus={() => {
+                                                setIsFocused(prev => ({ ...prev, awardIndex: index }));
+                                                if (club) handleAwardNameChange({ target: { value: '' } }, index);
+                                            }}
+                                        />
+                                        {awardSuggestions.index === index && awardSuggestions.suggestions.length > 0 && (
+                                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                                {awardSuggestions.suggestions.map((suggestion) => (
+                                                    <div
+                                                        key={suggestion._id}
+                                                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                                        onClick={() => handleAwardSuggestionClick(suggestion, index)}
+                                                    >
+                                                        <Typography className="text-sm font-medium">
+                                                            {suggestion.tenGiai}
+                                                        </Typography>
+                                                        <Typography className="text-xs text-gray-600">
+                                                            {suggestion.nguoiNhanGiai} - {formatDateVN(suggestion.ngayNhanGiai)}
+                                                        </Typography>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         )}
-                                />
-                                <Input
-                                    type="date"
-                                    label="Ngày nhận giải"
-                                    value={formatDateForInput(
-                                        award.ngayNhanGiai,
-                                    )}
-                                    onChange={(e) =>
-                                        handleUpdateAward(
-                                            index,
-                                            "ngayNhanGiai",
-                                            e.target.value,
-                                        )}
-                                />
-                                {awardSuggestions.index === index &&
-                                    awardSuggestions.suggestions.length > 0 && (
-                                    <ul className="absolute left-0 z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg top-full">
-                                        {awardSuggestions.suggestions.map((
-                                            suggestion,
-                                        ) => (
-                                            <li
-                                                key={suggestion._id}
-                                                className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                                onClick={() =>
-                                                    handleAwardSuggestionClick(
-                                                        suggestion,
-                                                        index,
-                                                    )}
-                                            >
-                                                {suggestion.tenGiai}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
+                                    </div>
+
+                                    <div className="relative">
+                                        <Typography variant="small" className="absolute -top-2 left-2 px-2 bg-white text-blue-gray-500 text-[11px] font-normal z-10">
+                                            Người nhận giải
+                                        </Typography>
+                                        <Input
+                                            value={award.nguoiNhanGiai}
+                                            disabled
+                                            className="!border !border-blue-gray-100 !bg-white"
+                                            labelProps={{
+                                                className: "hidden"
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div className="relative">
+                                        <Typography variant="small" className="absolute -top-2 left-2 px-2 bg-white text-blue-gray-500 text-[11px] font-normal z-10">
+                                            Ngày nhận giải
+                                        </Typography>
+                                        <Input
+                                            type="date"
+                                            value={award.ngayNhanGiai}
+                                            disabled
+                                            className="!border !border-blue-gray-100 !bg-white"
+                                            labelProps={{
+                                                className: "hidden"
+                                            }}
+                                        />
+                                    </div>
+                                </div>
                                 <Button
                                     color="red"
                                     size="sm"
+                                    className="self-end"
                                     onClick={() => handleRemoveAward(index)}
                                 >
                                     Xóa
@@ -1086,16 +1367,19 @@ const ActivityReports = () => {
                         )}
                     </div>
 
-                    <Textarea
-                        label="Kết quả đạt được"
-                        value={newReport.ketQuaDatDuoc}
-                        onChange={(e) =>
-                            setNewReport({
-                                ...newReport,
-                                ketQuaDatDuoc: e.target.value,
-                            })}
-                        className="col-span-2"
-                    />
+                    <div className="col-span-2 w-full">
+                        <Textarea
+                            label="Kết quả đạt được"
+                            value={newReport.ketQuaDatDuoc}
+                            onChange={(e) =>
+                                setNewReport({
+                                    ...newReport,
+                                    ketQuaDatDuoc: e.target.value,
+                                })}
+                            className="w-full !min-h-[100px]"
+                            rows={4}
+                        />
+                    </div>
                 </DialogBody>
 
                 <DialogFooter>

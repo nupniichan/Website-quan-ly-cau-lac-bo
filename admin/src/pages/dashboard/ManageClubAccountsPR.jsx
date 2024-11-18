@@ -19,6 +19,8 @@ import {
     EyeIcon,
     PencilIcon,
     TrashIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 
 const API_URL = "http://localhost:5500/api";
@@ -31,6 +33,7 @@ const ManageClubAccountsPR = () => {
     const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
     const [newAccount, setNewAccount] = useState({
         userId: '',
+        name: '',
         email: '',
         password: '',
         role: 'student',
@@ -39,7 +42,10 @@ const ManageClubAccountsPR = () => {
     const [validationErrors, setValidationErrors] = useState({});
     const [editValidationErrors, setEditValidationErrors] = useState({});
     const [detailAccount, setDetailAccount] = useState(null);
-    
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+    const [searchQuery, setSearchQuery] = useState("");
+
     useEffect(() => {
         fetchAccounts();
     }, []);
@@ -63,14 +69,15 @@ const ManageClubAccountsPR = () => {
 
         // Validation
         const errors = {};
-        if (!newAccount.userId) errors.userId = "User ID is required.";
-        if (!newAccount.email) errors.email = "Email is required.";
-        if (!newAccount.password) errors.password = "Password is required.";
+        if (!newAccount.userId) errors.userId = "Vui lòng nhập Mã số sinh viên";
+        if (!newAccount.name) errors.name = "Vui lòng nhập Họ và tên";
+        if (!newAccount.email) errors.email = "Vui lòng nhập Email";
+        if (!newAccount.password) errors.password = "Vui lòng nhập Mật khẩu";
 
         const accountExists = accounts.some(
             (account) => account.userId === newAccount.userId
         );
-        if (accountExists) errors.userId = "Account with this User ID already exists.";
+        if (accountExists) errors.userId = "Mã số sinh viên đã tồn tại";
 
         setValidationErrors(errors);
         if (Object.keys(errors).length > 0) return;
@@ -81,7 +88,7 @@ const ManageClubAccountsPR = () => {
             console.log("Account added successfully:", response.data);
             setAccounts((prev) => [...prev, response.data]);
             setIsDialogOpen(false);
-            setNewAccount({ userId: '', email: '', password: '', role: 'Student' });
+            setNewAccount({ userId: '', name: '', email: '', password: '', role: 'Student' });
             setValidationErrors({});
         } catch (error) {
             console.error("Error adding account:", error);
@@ -90,7 +97,7 @@ const ManageClubAccountsPR = () => {
 
     const handleDeleteAccount = async (userId) => {
         console.log("Deleting account with User ID:", userId);
-        if (window.confirm("Are you sure you want to delete this account?")) {
+        if (window.confirm("Bạn có chắc chắn muốn xóa tài khoản này?")) {
             try {
                 await axios.delete(`${API_URL}/delete-account/${userId}`);
                 console.log(`Account with User ID ${userId} deleted`);
@@ -137,8 +144,9 @@ const ManageClubAccountsPR = () => {
         
         // Validation
         const errors = {};
-        if (!editAccount.userId) errors.userId = "User ID is required.";
-        if (!editAccount.email) errors.email = "Email is required.";
+        if (!editAccount.userId) errors.userId = "Vui lòng nhập Mã số sinh viên";
+        if (!editAccount.name) errors.name = "Vui lòng nhập Họ và tên";
+        if (!editAccount.email) errors.email = "Vui lòng nhập Email";
 
         setEditValidationErrors(errors);
         if (Object.keys(errors).length > 0) return;
@@ -159,6 +167,20 @@ const ManageClubAccountsPR = () => {
         }
     };
 
+    const filteredAccounts = accounts.filter(account => 
+        account.userId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        account.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentAccounts = filteredAccounts.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredAccounts.length / itemsPerPage);
+
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+    };
+
     return (
         <div className="p-4 bg-gray-50 min-h-screen">
             {isLoading ? (
@@ -167,13 +189,21 @@ const ManageClubAccountsPR = () => {
                 <Card>
                     <CardHeader variant="gradient" color="blue" className="p-6 mb-8">
                         <Typography variant="h6" color="white">
-                            Manage Accounts
+                            Quản lý Tài khoản
                         </Typography>
                     </CardHeader>
                     <CardBody className="px-0 pt-0 pb-2 overflow-auto">
                         <div className="flex justify-between items-center p-4 px-6 pr-10 mb-4">
+                            <div className="flex items-center gap-4">
+                                <Input
+                                    label="Tìm kiếm theo MSHS hoặc tên"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-72"
+                                />
+                            </div>
                             <Tooltip
-                                content="Add Account"
+                                content="Thêm Tài khoản"
                                 className="bg-gradient-to-r from-black to-transparent opacity-70"
                             >
                                 <Button
@@ -187,15 +217,15 @@ const ManageClubAccountsPR = () => {
                             </Tooltip>
                         </div>
 
-                        {accounts.length === 0 ? (
+                        {filteredAccounts.length === 0 ? (
                             <Typography className="py-4 text-center">
-                                No accounts found.
+                                Không tìm thấy tài khoản nào.   
                             </Typography>
                         ) : (
                             <table className="w-full min-w-[640px] table-auto">
                                 <thead>
                                     <tr>
-                                        {["User ID", "Email", "Role", "Actions"].map((el) => (
+                                        {["STT", "MSHS", "Họ và tên", "Email", "Vai trò", "Thao tác"].map((el) => (
                                             <th key={el} className="px-5 py-3 text-left border-b border-blue-gray-50">
                                                 <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
                                                     {el}
@@ -205,13 +235,25 @@ const ManageClubAccountsPR = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {accounts.map(({ userId, email, role }, key) => {
-                                        const className = `py-3 px-5 ${key === accounts.length - 1 ? "" : "border-b border-blue-gray-50"}`;
+                                    {currentAccounts.map(({ userId, name, email, role }, index) => {
+                                        const className = `py-3 px-5 ${index === currentAccounts.length - 1 ? "" : "border-b border-blue-gray-50"}`;
+                                        const stt = indexOfFirstItem + index + 1;
+
                                         return (
                                             <tr key={userId}>
                                                 <td className={className}>
                                                     <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                        {stt}
+                                                    </Typography>
+                                                </td>
+                                                <td className={className}>
+                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
                                                         {userId}
+                                                    </Typography>
+                                                </td>
+                                                <td className={className}>
+                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                        {name}
                                                     </Typography>
                                                 </td>
                                                 <td className={className}>
@@ -226,10 +268,10 @@ const ManageClubAccountsPR = () => {
                                                 </td>
                                                 <td className={className}>
                                                     <div className="flex gap-2">
-                                                        <Button size="sm" color="blue" onClick={() => openDetailDialog({ userId, email, role })}>
+                                                        <Button size="sm" color="blue" onClick={() => openDetailDialog({ userId, name, email, role })}>
                                                             <EyeIcon className="w-4 h-4" />
                                                         </Button>
-                                                        <Button size="sm" color="green" onClick={() => openEditDialog({ userId, email, role })}>
+                                                        <Button size="sm" color="green" onClick={() => openEditDialog({ userId, name, email, role })}>
                                                             <PencilIcon className="w-4 h-4" />
                                                         </Button>
                                                         <Button size="sm" color="red" onClick={() => handleDeleteAccount(userId)}>
@@ -243,70 +285,161 @@ const ManageClubAccountsPR = () => {
                                 </tbody>
                             </table>
                         )}
+
+                        <div className="flex items-center gap-4 justify-center mt-6 mb-4">
+                            <Button
+                                variant="text"
+                                className="flex items-center gap-2"
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                            >
+                                <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                            </Button>
+
+                            <div className="flex items-center gap-2">
+                                {totalPages <= 5 ? (
+                                    [...Array(totalPages)].map((_, index) => (
+                                        <Button
+                                            key={index + 1}
+                                            variant={currentPage === index + 1 ? "gradient" : "text"}
+                                            color="blue"
+                                            onClick={() => handlePageChange(index + 1)}
+                                            className="w-10 h-10"
+                                        >
+                                            {index + 1}
+                                        </Button>
+                                    ))
+                                ) : (
+                                    <>
+                                        <Button
+                                            variant={currentPage === 1 ? "gradient" : "text"}
+                                            color="blue"
+                                            onClick={() => handlePageChange(1)}
+                                            className="w-10 h-10"
+                                        >
+                                            1
+                                        </Button>
+
+                                        {currentPage > 3 && (
+                                            <span className="mx-2">...</span>
+                                        )}
+
+                                        {[...Array(3)].map((_, index) => {
+                                            const pageNumber = Math.min(
+                                                Math.max(currentPage - 1 + index, 2),
+                                                totalPages - 1
+                                            );
+                                            if (pageNumber <= 1 || pageNumber >= totalPages) return null;
+                                            return (
+                                                <Button
+                                                    key={pageNumber}
+                                                    variant={currentPage === pageNumber ? "gradient" : "text"}
+                                                    color="blue"
+                                                    onClick={() => handlePageChange(pageNumber)}
+                                                    className="w-10 h-10"
+                                                >
+                                                    {pageNumber}
+                                                </Button>
+                                            );
+                                        })}
+
+                                        {currentPage < totalPages - 2 && (
+                                            <span className="mx-2">...</span>
+                                        )}
+
+                                        <Button
+                                            variant={currentPage === totalPages ? "gradient" : "text"}
+                                            color="blue"
+                                            onClick={() => handlePageChange(totalPages)}
+                                            className="w-10 h-10"
+                                        >
+                                            {totalPages}
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
+
+                            <Button
+                                variant="text"
+                                className="flex items-center gap-2"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                            >
+                                Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </CardBody>
                 </Card>
             )}
 
             {/* Add Account Dialog */}
             <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
-                <DialogHeader>Add New Account</DialogHeader>
+                <DialogHeader>Thêm Tài khoản Mới</DialogHeader>
                 <DialogBody>
                     <div className="space-y-4">
-                        <Input label="User ID" value={newAccount.userId} onChange={(e) => setNewAccount({ ...newAccount, userId: e.target.value })} />
+                        <Input label="Mã số học sinh" value={newAccount.userId} 
+                            onChange={(e) => setNewAccount({ ...newAccount, userId: e.target.value })} />
                         {validationErrors.userId && <Typography color="red">{validationErrors.userId}</Typography>}
 
-                        <Input label="Email" value={newAccount.email} onChange={(e) => setNewAccount({ ...newAccount, email: e.target.value })} />
+                        <Input label="Họ và tên" value={newAccount.name}
+                            onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })} />
+                        {validationErrors.name && <Typography color="red">{validationErrors.name}</Typography>}
+
+                        <Input label="Email" value={newAccount.email}
+                            onChange={(e) => setNewAccount({ ...newAccount, email: e.target.value })} />
                         {validationErrors.email && <Typography color="red">{validationErrors.email}</Typography>}
 
-                        <Input label="Password" type="password" value={newAccount.password} onChange={(e) => setNewAccount({ ...newAccount, password: e.target.value })} />
+                        <Input label="Mật khẩu" type="password" value={newAccount.password}
+                            onChange={(e) => setNewAccount({ ...newAccount, password: e.target.value })} />
+                        {validationErrors.password && <Typography color="red">{validationErrors.password}</Typography>}
                     </div>
                 </DialogBody>
                 <DialogFooter>
-                    <Button color="red" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                    <Button color="green" onClick={handleAddAccount}>Add</Button>
+                    <Button color="red" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
+                    <Button color="green" onClick={handleAddAccount}>Thêm</Button>
                 </DialogFooter>
             </Dialog>
 
             {/* Edit Account Dialog */}
             <Dialog open={isEditDialogOpen} onClose={() => setIsEditDialogOpen(false)}>
-                <DialogHeader>Edit Account</DialogHeader>
+                <DialogHeader>Chỉnh sửa Tài khoản</DialogHeader>
                 <DialogBody>
                     <div className="space-y-4">
-                        <Input
-                            label="User ID"
-                            value={editAccount.userId || ""}
+                        <Input label="Mã số học sinh" value={editAccount.userId || ""}
                             onChange={(e) => setEditAccount({ ...editAccount, userId: e.target.value })}
-                            disabled
-                        />
+                            disabled />
                         {editValidationErrors.userId && <Typography color="red">{editValidationErrors.userId}</Typography>}
 
-                        <Input
-                            label="Email"
-                            value={editAccount.email || ""}
-                            onChange={(e) => setEditAccount({ ...editAccount, email: e.target.value })}
-                        />
+                        <Input label="Họ và tên" value={editAccount.name || ""}
+                            onChange={(e) => setEditAccount({ ...editAccount, name: e.target.value })} />
+                        {editValidationErrors.name && <Typography color="red">{editValidationErrors.name}</Typography>}
+
+                        <Input label="Email" value={editAccount.email || ""}
+                            onChange={(e) => setEditAccount({ ...editAccount, email: e.target.value })} />
                         {editValidationErrors.email && <Typography color="red">{editValidationErrors.email}</Typography>}
-                        <Input label="Password" type="password" value={editAccount.password || ""} onChange={(e) => setEditAccount({ ...editAccount, password: e.target.value })} />
-                        
+
+                        <Input label="Mật khẩu" type="password" value={editAccount.password || ""}
+                            onChange={(e) => setEditAccount({ ...editAccount, password: e.target.value })} />
                     </div>
                 </DialogBody>
                 <DialogFooter>
-                    <Button color="red" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-                    <Button color="green" onClick={handleEditAccount}>Save</Button>
+                    <Button color="red" onClick={() => setIsEditDialogOpen(false)}>Hủy</Button>
+                    <Button color="green" onClick={handleEditAccount}>Lưu</Button>
                 </DialogFooter>
             </Dialog>
 
             {/* Account Details Dialog */}
             <Dialog open={isDetailDialogOpen} onClose={() => setIsDetailDialogOpen(false)}>
-                <DialogHeader>Account Details</DialogHeader>
+                <DialogHeader>Chi tiết Tài khoản</DialogHeader>
                 <DialogBody>
-                    <Typography>User ID: {detailAccount?.userId}</Typography>
+                    <Typography>Mã số học sinh: {detailAccount?.userId}</Typography>
+                    <Typography>Họ và tên: {detailAccount?.name}</Typography>
                     <Typography>Email: {detailAccount?.email}</Typography>
-                    <Typography>Role: {detailAccount?.role}</Typography>
-                    <Typography><strong>Password:</strong> {detailAccount?.password}</Typography>
+                    <Typography>Vai trò: {detailAccount?.role}</Typography>
+                    <Typography><strong>Mật khẩu:</strong> {detailAccount?.password}</Typography>
                 </DialogBody>
                 <DialogFooter>
-                    <Button color="blue" onClick={() => setIsDetailDialogOpen(false)}>Close</Button>
+                    <Button color="blue" onClick={() => setIsDetailDialogOpen(false)}>Đóng</Button>
                 </DialogFooter>
             </Dialog>
         </div>

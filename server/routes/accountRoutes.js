@@ -6,8 +6,8 @@ const jwt = require('jsonwebtoken');
 // Register a new account
 router.post('/register', async (req, res) => {
     try {
-        const { userId, email, password, role } = req.body; 
-        const account = new Account({ userId, email, password, role });  
+        const { userId, name, email, password, role } = req.body; 
+        const account = new Account({ userId, name, email, password, role });  
         await account.save();
         res.status(201).json({ message: 'Account created successfully' });
     } catch (error) {
@@ -59,10 +59,10 @@ router.get('/get-account/:userId', async (req, res) => {
     }
 });
 router.post('/add-account', async (req, res) => {
-    const { userId, email, password, role } = req.body;
+    const { userId, name, email, password, role } = req.body;
 
     // Validation
-    if (!userId || !email || !password || !role) {
+    if (!userId || !name || !email || !password || !role) {
         return res.status(400).json({ error: "All fields are required" });
     }
 
@@ -74,7 +74,7 @@ router.post('/add-account', async (req, res) => {
         }
 
         // Create new account and save it to the database
-        const newAccount = new Account({ userId, email, password, role });
+        const newAccount = new Account({ userId, name, email, password, role });
         await newAccount.save();
 
         // Respond with the created account
@@ -86,11 +86,11 @@ router.post('/add-account', async (req, res) => {
 });
 router.put('/update-account/:userId', async (req, res) => {
     const { userId } = req.params;
-    const { email, password, role } = req.body;
+    const { name, email, password, role } = req.body;
 
     // Validate request body fields
-    if (!email || !password || !role) {
-        return res.status(400).json({ message: 'Email, password, and role are required' });
+    if (!name || !email || !password || !role) {
+        return res.status(400).json({ message: 'Name, email, password, and role are required' });
     }
 
     try {
@@ -101,6 +101,7 @@ router.put('/update-account/:userId', async (req, res) => {
         }
 
         // Proceed with update
+        account.name = name;
         account.email = email;
         account.password = password;
         account.role = role;

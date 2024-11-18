@@ -29,7 +29,7 @@ const Navbar = () => {
         <Link to="/curriculum" className="text-black no-underline">
           <li className="text-black no-underline hover:bg-gray-100">Khoa học - Công nghệ</li>
         </Link>
-        <Link to="/news" className="text-black no-underline">
+        <Link to="/international-cooperation" className="text-black no-underline">
           <li className="text-black no-underline hover:bg-gray-100">Hợp tác</li>
         </Link>
         <Link to="/admission" className="text-black no-underline">

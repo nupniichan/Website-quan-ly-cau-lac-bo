@@ -12,7 +12,8 @@ import NewsDetails from './NewsDetails.jsx';
 import AdmissionStandard from './AdmissionStandard.jsx';
 import './index.css'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
-
+import InternationalCooperation from './InternationalCooperation.jsx';
+import ICDetails from './ICDetails.jsx';
 function App() {
   return (
     <Router>
@@ -33,7 +34,9 @@ function App() {
             <Route path="/clubs" element={<ClubList />} />
             <Route path="/clubs/:clubId" element={<ClubDetails />} />
             <Route path="/curriculum" element={<CurriculumInfo />} />
-            <Route path="/news" element={<NewsDetails />} />
+            <Route path="/news/:id" element={<NewsDetails />} />
+            <Route path="/international-cooperation" element={<InternationalCooperation />} />
+            <Route path="/international-cooperation/:id" element={<ICDetails />} />
             <Route path="/admission" element={<AdmissionStandard />} />
           </Routes>
         </div>

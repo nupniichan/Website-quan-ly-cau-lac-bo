@@ -13,7 +13,13 @@ const clubSchema = new mongoose.Schema({
     mieuTa: { type: String, required: true },
     quyDinh: { type: String, required: true },
     truongBanCLB: { type: String, required: true },
-    budget: { type: Number, default: 0 }
+    budget: { type: Number, default: 0 },
+    tinhTrang: { 
+        type: String, 
+        enum: ['Còn hoạt động', 'Ngừng hoạt động'],
+        default: 'Còn hoạt động',
+        required: true 
+    }
 });
 
 // Middleware để tự động tăng giá trị clubId

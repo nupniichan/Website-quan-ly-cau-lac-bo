@@ -4,6 +4,7 @@ const Prize = require('../models/Prize');
 const Club = require('../models/Club');  // Đảm bảo đã import model Club
 const multer = require('multer');
 const path = require('path');
+const Report = require('../models/Report');
 
 // Set up multer for file upload
 const storage = multer.diskStorage({
@@ -292,6 +293,29 @@ router.get('/search-prizes/:clubId', async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+});
+
+// Kiểm tra giải thưởng có trong báo cáo hay không
+router.get('/check-prize-in-reports/:id', async (req, res) => {
+    try {
+        const prizeId = req.params.id;
+        
+        // Tìm giải thưởng trong collection Report
+        const reportWithPrize = await Report.findOne({ 
+            'danhSachGiaiThuong': prizeId 
+        });
+
+        // Trả về true nếu giải thưởng có trong báo cáo, false nếu không
+        res.status(200).json({
+            exists: !!reportWithPrize
+        });
+
+    } catch (error) {
+        console.error('Error checking prize in reports:', error);
+        res.status(500).json({ 
+            message: error.message 
+        });
+    }
 });
 
 module.exports = router;
