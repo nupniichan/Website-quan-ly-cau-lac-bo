@@ -247,7 +247,7 @@ const ApproveEvents = () => {
                 start: `${event.ngayToChuc.split('T')[0]}T${event.thoiGianBatDau}`,
                 end: `${event.ngayToChuc.split('T')[0]}T${event.thoiGianKetThuc}`,
                 location: event.diaDiem,
-                className: 'bg-blue-500 text-white rounded-md p-1',
+                className: 'bg-green-500 text-white rounded-md p-1',
                 extendedProps: {
                     club: event.club?.ten || event.club,
                     nguoiPhuTrach: event.nguoiPhuTrach
@@ -380,6 +380,30 @@ const ApproveEvents = () => {
                                     </Button>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Cột phải - Nút chuyển đổi view */}
+                        <div className="flex gap-2">
+                            <Button
+                                variant={activeTab === 'list' ? "gradient" : "outlined"}
+                                color="blue"
+                                size="sm"
+                                onClick={() => setActiveTab('list')}
+                                className="flex items-center gap-2"
+                            >
+                                <i className="fas fa-list"></i>
+                                Danh sách
+                            </Button>
+                            <Button
+                                variant={activeTab === 'calendar' ? "gradient" : "outlined"}
+                                color="blue"
+                                size="sm"
+                                onClick={() => setActiveTab('calendar')}
+                                className="flex items-center gap-2"
+                            >
+                                <i className="fas fa-calendar"></i>
+                                Lịch
+                            </Button>
                         </div>
                     </div>
 
@@ -641,27 +665,12 @@ const ApproveEvents = () => {
                                 eventContent={(eventInfo) => (
                                     <Tooltip
                                         content={
-                                            <div className="p-2 bg-white rounded-lg shadow-lg">
-                                                <div className="font-bold text-lg mb-2 text-gray-800">
-                                                    {eventInfo.event.title}
-                                                </div>
-                                                <div className="space-y-2 text-sm text-gray-600">
-                                                    <p className="flex items-center gap-2">
-                                                        <i className="fas fa-clock"></i>
-                                                        {eventInfo.timeText}
-                                                    </p>
-                                                    <p className="flex items-center gap-2">
-                                                        <i className="fas fa-map-marker-alt"></i>
-                                                        {eventInfo.event.extendedProps.location}
-                                                    </p>
-                                                    <p className="flex items-center gap-2">
-                                                        <i className="fas fa-user"></i>
-                                                        {eventInfo.event.extendedProps.nguoiPhuTrach}
-                                                    </p>
-                                                    <p className="flex items-center gap-2">
-                                                        <i className="fas fa-info-circle"></i>
-                                                        Trạng thái: {getStatusText(eventInfo.event.extendedProps.trangThai)}
-                                                    </p>
+                                            <div className="p-2">
+                                                <div className="font-bold mb-1">{eventInfo.event.title}</div>
+                                                <div className="text-sm">
+                                                    <div>Thời gian: {eventInfo.timeText}</div>
+                                                    <div>Địa điểm: {eventInfo.event.extendedProps.location}</div>
+                                                    <div>CLB: {eventInfo.event.extendedProps.club}</div>
                                                 </div>
                                             </div>
                                         }
@@ -669,10 +678,8 @@ const ApproveEvents = () => {
                                             mount: { scale: 1, y: 0 },
                                             unmount: { scale: 0, y: 25 },
                                         }}
-                                        placement="top"
-                                        className="bg-white p-2 rounded-lg shadow-xl"
                                     >
-                                        <div className="p-1 overflow-hidden cursor-pointer">
+                                        <div className="p-1">
                                             <div className="font-semibold text-sm truncate">
                                                 {eventInfo.event.title}
                                             </div>
@@ -682,7 +689,6 @@ const ApproveEvents = () => {
                                         </div>
                                     </Tooltip>
                                 )}
-                                className="rounded-lg shadow-md"
                             />
                         </div>
                     )}
