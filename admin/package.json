@@ -8,7 +8,8 @@
         "build": "vite build",
         "preview": "vite preview",
         "test": "bun test",
-        "lint": "eslint ."
+        "lint": "eslint .",
+        "format": "prettier --write ."
     },
     "dependencies": {
         "@fullcalendar/daygrid": "^6.1.15",
@@ -17,6 +18,7 @@
         "@fullcalendar/timegrid": "^6.1.15",
         "@heroicons/react": "^2.1.5",
         "@material-tailwind/react": "2.1.10",
+        "antd": "^5.22.1",
         "apexcharts": "3.54.1",
         "axios": "^1.7.7",
         "eslint": "^9.13.0",
@@ -42,7 +44,6 @@
         "autoprefixer": "10.4.20",
         "postcss": "8.4.47",
         "prettier": "3.3.3",
-        "prettier-plugin-tailwindcss": "0.6.8",
         "tailwindcss": "3.4.14",
         "vite": "^5.4.10"
     }

@@ -22,6 +22,8 @@ import {
     ChevronLeftIcon,
     ChevronRightIcon,
 } from "@heroicons/react/24/solid";
+import { message } from "antd";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -45,6 +47,10 @@ const ManageClubAccountsPR = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [searchQuery, setSearchQuery] = useState("");
+
+    // Lấy controller từ context & màu hiện tại của sidenav
+    const [controller] = useMaterialTailwindController();
+    const { sidenavColor } = controller;
 
     const isValidEmail = (email) => {
         const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -107,9 +113,10 @@ const ManageClubAccountsPR = () => {
             // Kiểm tra xem tài khoản có đang quản lý CLB nào không
             const response = await axios.get(`${API_URL}/check-account-clubs/${userId}`);
             const { hasActiveClubs } = response.data;
-            
+
             if (hasActiveClubs) {
-                alert("Không thể xóa tài khoản này vì đang quản lý câu lạc bộ đang hoạt động!");
+                // alert("Không thể xóa tài khoản này vì đang quản lý câu lạc bộ đang hoạt động!");
+                message.warning({content: "Không thể xóa tài khoản này vì đang quản lý câu lạc bộ đang hoạt động!"});
                 return;
             }
 
@@ -120,7 +127,8 @@ const ManageClubAccountsPR = () => {
             }
         } catch (error) {
             console.error("Error deleting account:", error);
-            alert("Có lỗi xảy ra khi xóa tài khoản!");
+            // alert("Có lỗi xảy ra khi xóa tài khoản!");
+            message.error({content: "Có lỗi xảy ra khi xóa tài khoản!"});
         }
     };
 
@@ -157,7 +165,7 @@ const ManageClubAccountsPR = () => {
 
     const handleEditAccount = async () => {
         console.log("Editing account:", editAccount);
-        
+
         // Validation
         const errors = {};
         if (!editAccount.userId) errors.userId = "Vui lòng nhập Mã số học sinh";
@@ -184,7 +192,7 @@ const ManageClubAccountsPR = () => {
         }
     };
 
-    const filteredAccounts = accounts.filter(account => 
+    const filteredAccounts = accounts.filter(account =>
         account.userId.toLowerCase().includes(searchQuery.toLowerCase()) ||
         account.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -201,7 +209,7 @@ const ManageClubAccountsPR = () => {
     return (
         <div className="p-4 bg-gray-50 min-h-screen">
             <Card>
-                <CardHeader variant="gradient" color="blue" className="p-6 mb-8">
+                <CardHeader variant="gradient" color={sidenavColor} className="p-6 mb-8">
                     <Typography variant="h6" color="white">
                         Quản lý Tài khoản
                     </Typography>
@@ -222,7 +230,7 @@ const ManageClubAccountsPR = () => {
                         >
                             <Button
                                 className="flex items-center gap-3"
-                                color="blue"
+                                color={sidenavColor}
                                 size="sm"
                                 onClick={openAddDialog}
                             >
@@ -233,7 +241,7 @@ const ManageClubAccountsPR = () => {
 
                     {isLoading ? (
                         <div className="flex justify-center">
-                            <Spinner />
+                            <Spinner color="pink" />
                         </div>
                     ) : filteredAccounts.length === 0 ? (
                         <div className="flex items-center justify-center h-64">
@@ -323,7 +331,7 @@ const ManageClubAccountsPR = () => {
                                                 <Button
                                                     key={index + 1}
                                                     variant={currentPage === index + 1 ? "gradient" : "text"}
-                                                    color="blue"
+                                                    color={sidenavColor}
                                                     onClick={() => handlePageChange(index + 1)}
                                                     className="w-10 h-10"
                                                 >
@@ -334,7 +342,7 @@ const ManageClubAccountsPR = () => {
                                             <>
                                                 <Button
                                                     variant={currentPage === 1 ? "gradient" : "text"}
-                                                    color="blue"
+                                                    color={sidenavColor}
                                                     onClick={() => handlePageChange(1)}
                                                     className="w-10 h-10"
                                                 >
@@ -355,7 +363,7 @@ const ManageClubAccountsPR = () => {
                                                         <Button
                                                             key={pageNumber}
                                                             variant={currentPage === pageNumber ? "gradient" : "text"}
-                                                            color="blue"
+                                                            color={sidenavColor}
                                                             onClick={() => handlePageChange(pageNumber)}
                                                             className="w-10 h-10"
                                                         >
@@ -370,7 +378,7 @@ const ManageClubAccountsPR = () => {
 
                                                 <Button
                                                     variant={currentPage === totalPages ? "gradient" : "text"}
-                                                    color="blue"
+                                                    color={sidenavColor}
                                                     onClick={() => handlePageChange(totalPages)}
                                                     className="w-10 h-10"
                                                 >
@@ -400,7 +408,7 @@ const ManageClubAccountsPR = () => {
                 <DialogHeader>Thêm Tài khoản Mới</DialogHeader>
                 <DialogBody>
                     <div className="space-y-4">
-                        <Input label="Mã số học sinh" value={newAccount.userId} 
+                        <Input label="Mã số học sinh" value={newAccount.userId}
                             onChange={(e) => setNewAccount({ ...newAccount, userId: e.target.value })} />
                         {validationErrors.userId && <Typography color="red">{validationErrors.userId}</Typography>}
 
@@ -455,12 +463,12 @@ const ManageClubAccountsPR = () => {
             <Dialog open={isDetailDialogOpen} handler={() => setIsDetailDialogOpen(false)} size="xl">
                 <DialogHeader className="flex items-center gap-4">
                     <Typography variant="h6">Chi tiết tài khoản</Typography>
-                    <Typography 
-                        variant="small" 
+                    <Typography
+                        variant="small"
                         className={`
                             px-3 py-1 rounded-full font-bold uppercase
-                            ${detailAccount?.role === 'admin' 
-                                ? 'bg-blue-500 text-white' 
+                            ${detailAccount?.role === 'admin'
+                                ? 'bg-blue-500 text-white'
                                 : 'bg-green-500 text-white'}
                         `}
                     >
@@ -475,8 +483,8 @@ const ManageClubAccountsPR = () => {
                                 <Typography variant="h4" color="blue" className="font-bold mb-2">
                                     {detailAccount.name}
                                 </Typography>
-                                <Typography 
-                                    variant="small" 
+                                <Typography
+                                    variant="small"
                                     className="bg-white px-4 py-2 rounded-full text-blue-900 inline-block font-medium"
                                 >
                                     MSHS: {detailAccount.userId}
@@ -502,10 +510,10 @@ const ManageClubAccountsPR = () => {
                     </DialogBody>
                 ) : (
                     <DialogBody className="flex justify-center items-center h-64">
-                        <Spinner className="h-12 w-12" color="blue" />
+                        <Spinner className="h-12 w-12" color="pink" />
                     </DialogBody>
                 )}
-                
+
                 <DialogFooter>
                     <Button
                         variant="text"

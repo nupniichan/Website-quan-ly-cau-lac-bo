@@ -27,6 +27,7 @@ import {
     XMarkIcon,
 } from "@heroicons/react/24/solid";
 import * as XLSX from 'xlsx';
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -57,6 +58,10 @@ const ClubReports = () => {
         endDate: ""
     });
 
+    // Lấy controller từ context & màu hiện tại của sidenav
+    const [controller] = useMaterialTailwindController();
+    const { sidenavColor } = controller;
+
     const filteredReports = useMemo(() => {
         return reports
             .filter(report => {
@@ -85,23 +90,23 @@ const ClubReports = () => {
         return filteredReports.slice(startIndex, endIndex);
     }, [filteredReports, currentPage]);
 
-    const fetchClubs = async () => {
+    const fetchClubs = useCallback(async () => {
         try {
             const response = await axios.get(`${API_URL}/get-clubs`);
             setClubs(response.data);
         } catch (error) {
             console.error("Error fetching clubs:", error);
         }
-    };
+    }, []);
 
-    const fetchEvents = async () => {
+    const fetchEvents = useCallback(async () => {
         try {
             const response = await axios.get(`${API_URL}/get-events`);
             setEvents(response.data);
         } catch (error) {
             console.error("Error fetching events:", error);
         }
-    };
+    }, []);
 
     const fetchReports = useCallback(async () => {
         setIsLoading(true);
@@ -129,7 +134,7 @@ const ClubReports = () => {
         fetchClubs();
         fetchEvents();
         fetchReports();
-    }, [fetchReports]);
+    }, [fetchClubs, fetchEvents, fetchReports]);
 
     const handleUpdateReport = async () => {
         try {
@@ -224,10 +229,10 @@ const ClubReports = () => {
         // Tạo worksheet cho thông tin chung với border
         const generalInfo = [
             [{v: 'BÁO CÁO CÂU LẠC BỘ', s: {
-                font: { bold: true, sz: 16, color: { rgb: "FFFFFF" } },
                 alignment: { horizontal: "center", vertical: "center" },
                 ...commonStyle,
-                fill: { fgColor: { rgb: "4F46E5" } }
+                fill: { fgColor: { rgb: "4F46E5" } },
+                font: { color: { rgb: "FFFFFF" }, bold: true,sz: 16 }
             }}],
             [''],
             [{v: 'THÔNG TIN CHUNG', s: {
@@ -277,10 +282,10 @@ const ClubReports = () => {
         // Tạo worksheet cho danh sách sự kiện với border
         const eventsData = [
             [{v: 'DANH SÁCH SỰ KIỆN', s: {
-                font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } },
                 alignment: { horizontal: "center" },
                 ...commonStyle,
-                fill: { fgColor: { rgb: "4F46E5" } }
+                fill: { fgColor: { rgb: "4F46E5" } },
+                font: { color: { rgb: "FFFFFF" }, bold: true, sz: 14}
             }}],
             [
                 {v: 'STT', s: {...commonStyle, font: { bold: true }}},
@@ -340,7 +345,7 @@ const ClubReports = () => {
             <Card>
                 <CardHeader
                     variant="gradient"
-                    color="blue"
+                    color={sidenavColor}
                     className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
@@ -441,7 +446,7 @@ const ClubReports = () => {
 
                     {isLoading ? (
                         <div className="flex items-center justify-center h-64 mt-14">
-                            <Spinner className="w-16 h-16 text-blue-500/10" />
+                            <Spinner className="w-16 h-16" color="pink" />
                         </div>
                     ) : filteredReports.length === 0 ? (
                         <div className="flex items-center justify-center h-64">
@@ -573,7 +578,7 @@ const ClubReports = () => {
                                         <Button
                                             key={index + 1}
                                             variant={currentPage === index + 1 ? "gradient" : "text"}
-                                            color="blue"
+                                            color={sidenavColor}
                                             onClick={() => setCurrentPage(index + 1)}
                                             className="w-10 h-10"
                                         >
@@ -855,7 +860,7 @@ const ClubReports = () => {
                     <div className="flex gap-2">
                         <Button
                             variant="outlined"
-                            color="blue"
+                            color={sidenavColor}
                             className="flex items-center gap-2"
                             onClick={() => exportToExcel(detailReport)}
                         >
@@ -875,7 +880,7 @@ const ClubReports = () => {
                         </Button>
                         <Button
                             variant="gradient"
-                            color="blue"
+                            color={sidenavColor}
                             onClick={() => setIsDetailDialogOpen(false)}
                         >
                             Đóng

@@ -1,5 +1,5 @@
 import React from "react";
-import { MaterialTailwind } from "./index"; // Update the path if needed
+import { MaterialTailwind } from "./MaterialTailwindContext"; // Updated import
 
 export function useMaterialTailwindController() {
     const context = React.useContext(MaterialTailwind);

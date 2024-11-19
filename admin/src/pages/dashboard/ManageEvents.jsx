@@ -1,11 +1,11 @@
 import {
+    ChevronLeftIcon,
+    ChevronRightIcon,
     EyeIcon,
     PencilIcon,
     PlusIcon,
     TrashIcon,
     XCircleIcon,
-    ChevronLeftIcon,
-    ChevronRightIcon,
     XMarkIcon,
 } from "@heroicons/react/24/solid";
 import {
@@ -29,10 +29,12 @@ import { useEffect, useMemo, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 import TimePicker from "react-time-picker";
 import "react-time-picker/dist/TimePicker.css";
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
+import { message, notification } from "antd";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -95,27 +97,34 @@ const ManageEvents = () => {
     const [showStudentDropdown, setShowStudentDropdown] = useState(false);
     const [dateFilter, setDateFilter] = useState({
         from: "",
-        to: ""
+        to: "",
     });
-    const [activeTab, setActiveTab] = useState('list');
+    const [activeTab, setActiveTab] = useState("list");
     const [calendarCustomStyles, setCalendarCustomStyles] = useState({
-        '.fc': 'bg-white rounded-lg shadow-md',
-        '.fc .fc-toolbar': 'p-4',
-        '.fc .fc-toolbar-title': 'text-xl font-bold text-gray-800',
-        '.fc .fc-button': 'bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200',
-        '.fc .fc-button-primary:not(:disabled):active': 'bg-blue-700',
-        '.fc .fc-button-primary:disabled': 'bg-blue-300',
-        '.fc .fc-daygrid-day': 'hover:bg-blue-50 cursor-pointer',
-        '.fc .fc-event': 'bg-blue-500 border-none hover:opacity-90 cursor-pointer',
-        '.fc .fc-event-time': 'font-semibold',
-        '.fc .fc-event-title': 'font-medium',
-        '.fc .fc-header-toolbar': 'mb-4 flex flex-wrap justify-between items-center gap-4',
-        '.fc .fc-view-harness': 'bg-white rounded-lg shadow-sm',
-        '.fc .fc-scrollgrid': 'border-none',
-        '.fc .fc-scrollgrid td': 'border-color-gray-200',
-        '.fc th': 'p-3 font-semibold text-gray-600 border-gray-200',
-        '.fc td': 'border-gray-200',
+        ".fc": "bg-white rounded-lg shadow-md",
+        ".fc .fc-toolbar": "p-4",
+        ".fc .fc-toolbar-title": "text-xl font-bold text-gray-800",
+        ".fc .fc-button":
+            "bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200",
+        ".fc .fc-button-primary:not(:disabled):active": "bg-blue-700",
+        ".fc .fc-button-primary:disabled": "bg-blue-300",
+        ".fc .fc-daygrid-day": "hover:bg-blue-50 cursor-pointer",
+        ".fc .fc-event":
+            "bg-blue-500 border-none hover:opacity-90 cursor-pointer",
+        ".fc .fc-event-time": "font-semibold",
+        ".fc .fc-event-title": "font-medium",
+        ".fc .fc-header-toolbar":
+            "mb-4 flex flex-wrap justify-between items-center gap-4",
+        ".fc .fc-view-harness": "bg-white rounded-lg shadow-sm",
+        ".fc .fc-scrollgrid": "border-none",
+        ".fc .fc-scrollgrid td": "border-color-gray-200",
+        ".fc th": "p-3 font-semibold text-gray-600 border-gray-200",
+        ".fc td": "border-gray-200",
     });
+
+    // Lấy controller từ context & màu hiện tại của sidenav
+    const [controller] = useMaterialTailwindController();
+    const { sidenavColor } = controller;
 
     useEffect(() => {
         const managedClubsString = localStorage.getItem("managedClubs");
@@ -130,15 +139,17 @@ const ManageEvents = () => {
                 }
             } catch (error) {
                 console.error("Error parsing managed clubs data:", error);
-                alert(
-                    "Không thể tải thông tin câu lạc bộ. Vui lng đăng nhập lại.",
-                );
+                // alert(
+                //     "Không thể tải thông tin câu lạc bộ. Vui lng đăng nhập lại.",
+                // );
+                message.error({content: "Không thể tải thông tin câu lạc bộ. Vui lng đăng nhập lại."});
             }
         } else {
             console.error("No managed clubs data found");
-            alert(
-                "Không tìm thấy thông tin câu lạc bộ. Vui lòng đăng nhập lại.",
-            );
+            // alert(
+            //     "Không tìm thấy thông tin câu lạc bộ. Vui lòng đăng nhập lại.",
+            // );
+            message.error({content: "Không tìm thấy thông tin câu lạc bộ. Vui lòng đăng nhập lại."});
         }
         setIsLoading(false);
         fetchClubs();
@@ -175,7 +186,7 @@ const ManageEvents = () => {
 
     const handleAddEvent = async () => {
         console.log("Handling add event...");
-        
+
         if (!validateForm()) {
             console.log("Form validation failed");
             return;
@@ -190,21 +201,25 @@ const ManageEvents = () => {
                 ...newEvent,
                 club: managedClub._id,
             };
-            
+
             console.log("Submitting event data:", eventData);
-            
+
             await axios.post(`${API_URL}/add-event`, eventData);
             setIsDialogOpen(false);
             fetchEvents(managedClub._id);
         } catch (error) {
             console.error("Error adding event:", error);
-            alert(`Lỗi khi thêm sự kiện: ${error.message || "Không xác định"}`);
+            // alert(`Lỗi khi thêm sự kiện: ${error.message || "Không xác định"}`);
+            notification.error({
+                message: "Lỗi khi thêm sự kiện",
+                description: error.message || "Không xác định",
+            })
         }
     };
 
     const handleUpdateEvent = async () => {
         console.log("Handling update event...");
-        
+
         if (!validateForm()) {
             console.log("Form validation failed");
             return;
@@ -213,35 +228,45 @@ const ManageEvents = () => {
         try {
             await axios.put(
                 `${API_URL}/update-event/${editingEventId}`,
-                newEvent
+                newEvent,
             );
             setIsDialogOpen(false);
             setEditingEventId(null);
             fetchEvents(managedClub._id);
         } catch (error) {
             console.error("Error updating event:", error);
-            alert(
-                `Lỗi khi cập nhật sự kiện: ${
-                    error.response?.data?.message || "Không xác định"
-                }`
-            );
+            // alert(
+            //     `Lỗi khi cập nhật sự kiện: ${
+            //         error.response?.data?.message || "Không xác định"
+            //     }`,
+            // );
+            notification.error({
+                message: "Lỗi khi cập nhật sự kiện",
+                description: error.response?.data?.message || "Không xác định",
+            })
         }
     };
 
     const handleDeleteEvent = async (eventId, trangThai) => {
         // Kiểm tra trạng thái
         if (trangThai === "daDuyet") {
-            alert("Không thể xóa sự kiện đã được duyệt!");
+            // alert("Không thể xóa sự kiện đã được duyệt!");
+            message.warning({content: "Không thể xóa sự kiện đã được duyệt!"});
             return;
         }
 
         if (window.confirm("Bạn có chắc chắn muốn xóa sự kiện này?")) {
             try {
                 // Kiểm tra xem sự kiện có trong báo cáo không
-                const checkResponse = await axios.get(`${API_URL}/check-event-in-reports/${eventId}`);
-                
+                const checkResponse = await axios.get(
+                    `${API_URL}/check-event-in-reports/${eventId}`,
+                );
+
                 if (checkResponse.data.exists) {
-                    alert("Không thể xóa sự kiện này vì nó đã được sử dụng trong báo cáo!");
+                    // alert(
+                    //     "Không thể xóa sự kiện này vì nó đã được sử dụng trong báo cáo!",
+                    // );
+                    message.warning({content: "Không thể xóa sự kiện này vì nó đã được sử dụng trong báo cáo!"});
                     return;
                 }
 
@@ -249,11 +274,15 @@ const ManageEvents = () => {
                 fetchEvents(managedClub._id);
             } catch (error) {
                 console.error("Error deleting event:", error);
-                alert(
-                    `Lỗi khi xóa sự kiện: ${
-                        error.response?.data?.message || "Không xác định"
-                    }`
-                );
+                // alert(
+                //     `Lỗi khi xóa sự kiện: ${
+                //         error.response?.data?.message || "Không xác định"
+                //     }`,
+                // );
+                notification.error({
+                    message: "Lỗi khi xóa sự kiện",
+                    description: error.response?.data?.message || "Không xác định",
+                })
             }
         }
     };
@@ -262,33 +291,39 @@ const ManageEvents = () => {
         try {
             const response = await axios.get(`${API_URL}/get-event/${id}`);
             const event = response.data;
-            
+
             // Kiểm tra trạng thái trước khi cho phép sửa
             if (event.trangThai === "daDuyet") {
-                alert("Không thể sửa sự kiện đã được duyệt!");
+                // alert("Không thể sửa sự kiện đã được duyệt!");
+                message.warning({content: "Không thể sửa sự kiện đã được duyệt!"});
                 return;
             }
-            
+
             // Thêm kiểm tra cho sự kiện bị từ chối
             if (event.trangThai === "tuChoi") {
-                alert("Không thể sửa sự kiện đã bị từ chối!");
+                // alert("Không thể sửa sự kiện đã bị từ chối!");
+                message.warning({content: "Không thể sửa sự kiện đã bị từ chối!"});
                 return;
             }
 
             setErrors({});
             setNewEvent({
                 ...event,
-                ngayToChuc: event.ngayToChuc.split('T')[0],
+                ngayToChuc: event.ngayToChuc.split("T")[0],
             });
             setEditingEventId(id);
             setIsDialogOpen(true);
         } catch (error) {
             console.error("Error fetching event details:", error);
-            alert(
-                `Lỗi khi lấy thông tin sự kiện: ${
-                    error.response?.data?.message || "Không xác định"
-                }`
-            );
+            // alert(
+            //     `Lỗi khi lấy thông tin sự kiện: ${
+            //         error.response?.data?.message || "Không xác định"
+            //     }`,
+            // );
+            notification.error({
+                message: "Lỗi khi lấy thông tin sự kiện",
+                description: error.response?.data?.message || "Không xác định",
+            })
         }
     };
 
@@ -333,36 +368,44 @@ const ManageEvents = () => {
             setIsDetailDialogOpen(true);
         } catch (error) {
             console.error("Error fetching event details:", error);
-            alert(
-                `Lỗi khi lấy thông tin sự kiện: ${
-                    error.response?.data?.message || "Không xác định"
-                }`,
-            );
+            // alert(
+            //     `Lỗi khi lấy thông tin sự kiện: ${
+            //         error.response?.data?.message || "Không xác định"
+            //     }`,
+            // );
+            notification.error({
+                message: "Lỗi khi lấy thông tin sự kiện",
+                description: error.response?.data?.message || "Không xác định",
+            })
         }
     };
 
     const filteredEvents = useMemo(() => {
         let filtered = events;
-        
+
         // Tìm kiếm theo tên sự kiện hoặc người phụ trách
         if (searchTerm.trim()) {
             filtered = filtered.filter((event) =>
                 event.ten.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                event.nguoiPhuTrach.toLowerCase().includes(searchTerm.toLowerCase())
+                event.nguoiPhuTrach.toLowerCase().includes(
+                    searchTerm.toLowerCase(),
+                )
             );
         }
-        
+
         // Lọc theo trạng thái
         if (statusFilter !== "all") {
-            filtered = filtered.filter((event) => event.trangThai === statusFilter);
+            filtered = filtered.filter((event) =>
+                event.trangThai === statusFilter
+            );
         }
-        
+
         // Lọc theo ngày tổ chức
         if (dateFilter.from || dateFilter.to) {
-            filtered = filtered.filter(event => {
+            filtered = filtered.filter((event) => {
                 const eventDate = new Date(event.ngayToChuc);
                 eventDate.setHours(0, 0, 0, 0);
-                
+
                 if (dateFilter.from && dateFilter.to) {
                     const fromDate = new Date(dateFilter.from);
                     const toDate = new Date(dateFilter.to);
@@ -379,13 +422,18 @@ const ManageEvents = () => {
         }
 
         // Sắp xếp theo ngày tổ chức (mới nhất -> cũ nhất)
-        return filtered.sort((a, b) => new Date(b.ngayToChuc) - new Date(a.ngayToChuc));
+        return filtered.sort((a, b) =>
+            new Date(b.ngayToChuc) - new Date(a.ngayToChuc)
+        );
     }, [events, searchTerm, statusFilter, dateFilter]);
 
     // Tính toán events cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentEvents = filteredEvents.slice(indexOfFirstItem, indexOfLastItem);
+    const currentEvents = filteredEvents.slice(
+        indexOfFirstItem,
+        indexOfLastItem,
+    );
     const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
 
     // Thêm hàm để xử lý chuyển trang
@@ -422,7 +470,8 @@ const ManageEvents = () => {
             const eventDate = new Date(newEvent.ngayToChuc);
             eventDate.setHours(0, 0, 0, 0);
             if (eventDate.getTime() <= today.getTime()) {
-                newErrors.ngayToChuc = "Ngày tổ chức phải là ngày trong tương lai";
+                newErrors.ngayToChuc =
+                    "Ngày tổ chức phải là ngày trong tương lai";
             }
         }
 
@@ -430,8 +479,8 @@ const ManageEvents = () => {
         if (!newEvent.thoiGianBatDau || !newEvent.thoiGianKetThuc) {
             newErrors.thoiGianBatDau = "Vui lòng chọn thời gian";
         } else {
-            const startTime = newEvent.thoiGianBatDau.split(':');
-            const endTime = newEvent.thoiGianKetThuc.split(':');
+            const startTime = newEvent.thoiGianBatDau.split(":");
+            const endTime = newEvent.thoiGianKetThuc.split(":");
             const startHour = parseInt(startTime[0]);
             const startMinute = parseInt(startTime[1]);
             const endHour = parseInt(endTime[0]);
@@ -444,21 +493,24 @@ const ManageEvents = () => {
 
             // Kiểm tra giờ bắt đầu
             if (startHour < 6 || startHour > 20) {
-                newErrors.thoiGianBatDau = "Thời gian bắt đầu phải từ 6:00 đến 20:00";
+                newErrors.thoiGianBatDau =
+                    "Thời gian bắt đầu phải từ 6:00 đến 20:00";
             }
 
             // Kiểm tra giờ kết thúc
             if (endHour < 6 || endHour > 20) {
-                newErrors.thoiGianKetThuc = "Thời gian kết thúc phải từ 6:00 đến 20:00";
+                newErrors.thoiGianKetThuc =
+                    "Thời gian kết thúc phải từ 6:00 đến 20:00";
             }
 
             // Kiểm tra thời gian kết thúc phải sau thời gian bắt đầu
             if (timeDifference <= 0) {
-                newErrors.thoiGianKetThuc = "Thời gian kết thúc phải sau thời gian bắt đầu";
-            }
-            // Kiểm tra khoảng cách tối thiểu 45 phút
+                newErrors.thoiGianKetThuc =
+                    "Thời gian kết thúc phải sau thời gian bắt đầu";
+            } // Kiểm tra khoảng cách tối thiểu 45 phút
             else if (timeDifference < 45) {
-                newErrors.thoiGianKetThuc = "Thời gian tổ chức phải kéo dài ít nhất 45 phút";
+                newErrors.thoiGianKetThuc =
+                    "Thời gian tổ chức phải kéo dài ít nhất 45 phút";
             }
         }
 
@@ -485,11 +537,13 @@ const ManageEvents = () => {
 
     const fetchMembersByClub = async (clubId) => {
         try {
-            const response = await axios.get(`${API_URL}/get-members-by-club/${clubId}`);
-            const formattedMembers = response.data.map(member => ({
+            const response = await axios.get(
+                `${API_URL}/get-members-by-club/${clubId}`,
+            );
+            const formattedMembers = response.data.map((member) => ({
                 _id: member._id,
                 hoTen: member.hoTen,
-                mssv: member.maSoHocSinh
+                mssv: member.maSoHocSinh,
             }));
             setStudents(formattedMembers);
         } catch (error) {
@@ -500,16 +554,16 @@ const ManageEvents = () => {
     const handleStudentSearch = (value) => {
         setNewEvent({ ...newEvent, nguoiPhuTrach: value });
         setShowStudentDropdown(true);
-        
+
         // Lấy ngẫu nhiên 5 thành viên khi bấm vào input
-        if (value.trim() === '') {
+        if (value.trim() === "") {
             const shuffled = [...students].sort(() => 0.5 - Math.random());
             setFilteredStudents(shuffled.slice(0, 5));
             return;
         }
 
         // Lọc theo tìm kiếm nếu có nhập text
-        const filtered = students.filter(student => 
+        const filtered = students.filter((student) =>
             student.hoTen.toLowerCase().includes(value.toLowerCase()) ||
             student.mssv.toLowerCase().includes(value.toLowerCase())
         );
@@ -525,41 +579,43 @@ const ManageEvents = () => {
     // Thêm useEffect để xử lý click outside
     useEffect(() => {
         const handleClickOutside = (event) => {
-            const dropdown = document.getElementById('student-dropdown');
-            const input = document.getElementById('student-input');
-            
-            if (dropdown && input && 
-                !dropdown.contains(event.target) && 
-                !input.contains(event.target)) {
+            const dropdown = document.getElementById("student-dropdown");
+            const input = document.getElementById("student-input");
+
+            if (
+                dropdown && input &&
+                !dropdown.contains(event.target) &&
+                !input.contains(event.target)
+            ) {
                 setShowStudentDropdown(false);
             }
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener("mousedown", handleClickOutside);
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
 
     const getCalendarEvents = useMemo(() => {
-        return events.map(event => ({
+        return events.map((event) => ({
             id: event._id,
             title: event.ten,
-            start: `${event.ngayToChuc.split('T')[0]}T${event.thoiGianBatDau}`,
-            end: `${event.ngayToChuc.split('T')[0]}T${event.thoiGianKetThuc}`,
+            start: `${event.ngayToChuc.split("T")[0]}T${event.thoiGianBatDau}`,
+            end: `${event.ngayToChuc.split("T")[0]}T${event.thoiGianKetThuc}`,
             location: event.diaDiem,
             className: `${
-                event.trangThai === 'daDuyet' 
-                    ? 'bg-green-500' 
-                    : event.trangThai === 'choDuyet'
-                    ? 'bg-orange-500'
-                    : 'bg-red-500'
+                event.trangThai === "daDuyet"
+                    ? "bg-green-500"
+                    : event.trangThai === "choDuyet"
+                    ? "bg-orange-500"
+                    : "bg-red-500"
             } text-white rounded-md p-1`,
             extendedProps: {
                 trangThai: event.trangThai,
                 nguoiPhuTrach: event.nguoiPhuTrach,
-                location: event.diaDiem
-            }
+                location: event.diaDiem,
+            },
         }));
     }, [events]);
 
@@ -571,27 +627,38 @@ const ManageEvents = () => {
     return (
         <div className="flex flex-col gap-6 md:gap-12 mt-6 md:mt-12 mb-8">
             <Card>
-                <CardHeader variant="gradient" color="cyan" className="p-4 md:p-6 mb-4 md:mb-8">
+                <CardHeader
+                    variant="gradient"
+                    color={sidenavColor}
+                    className="p-4 md:p-6 mb-4 md:mb-8"
+                >
                     <Typography variant="h6" color="white">
                         Quản lý sự kiện
                     </Typography>
                 </CardHeader>
                 <CardBody className="px-0 pt-0 pb-2 overflow-auto">
                     <div className="flex flex-col md:flex-row md:items-center justify-between p-4 gap-4">
-                        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:translate-x-2">
                             <div className="w-full md:w-96">
                                 <Input
-                                    label="Tìm kiếm theo tên sự kiện hoặc người phụ trách"
+                                    label={
+                                        <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+                                            Tìm theo tên event / người phụ trách
+                                        </span>
+                                    }
                                     icon={<i className="fas fa-search" />}
                                     value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onChange={(e) =>
+                                        setSearchTerm(e.target.value)}
                                 />
                             </div>
-                            
+
                             <div className="flex flex-wrap gap-2">
                                 <Button
-                                    variant={statusFilter === "all" ? "gradient" : "outlined"}
-                                    color="cyan"
+                                    variant={statusFilter === "all"
+                                        ? "gradient"
+                                        : "outlined"}
+                                    color={sidenavColor}
                                     size="sm"
                                     onClick={() => setStatusFilter("all")}
                                 >
@@ -599,8 +666,10 @@ const ManageEvents = () => {
                                 </Button>
 
                                 <Button
-                                    variant={statusFilter === "choDuyet" ? "gradient" : "outlined"}
-                                    color="cyan"
+                                    variant={statusFilter === "choDuyet"
+                                        ? "gradient"
+                                        : "outlined"}
+                                    color={sidenavColor}
                                     size="sm"
                                     onClick={() => setStatusFilter("choDuyet")}
                                 >
@@ -608,8 +677,10 @@ const ManageEvents = () => {
                                 </Button>
 
                                 <Button
-                                    variant={statusFilter === "daDuyet" ? "gradient" : "outlined"}
-                                    color="cyan"
+                                    variant={statusFilter === "daDuyet"
+                                        ? "gradient"
+                                        : "outlined"}
+                                    color={sidenavColor}
                                     size="sm"
                                     onClick={() => setStatusFilter("daDuyet")}
                                 >
@@ -617,8 +688,10 @@ const ManageEvents = () => {
                                 </Button>
 
                                 <Button
-                                    variant={statusFilter === "tuChoi" ? "gradient" : "outlined"}
-                                    color="cyan"
+                                    variant={statusFilter === "tuChoi"
+                                        ? "gradient"
+                                        : "outlined"}
+                                    color={sidenavColor}
                                     size="sm"
                                     onClick={() => setStatusFilter("tuChoi")}
                                 >
@@ -627,7 +700,7 @@ const ManageEvents = () => {
                             </div>
                         </div>
 
-                        <div className="flex justify-end md:pr-6">
+                        <div className="flex justify-end md:pr-2">
                             <Tooltip
                                 content="Thêm"
                                 animate={{
@@ -638,7 +711,7 @@ const ManageEvents = () => {
                             >
                                 <Button
                                     className="flex items-center gap-3"
-                                    color="cyan"
+                                    color={sidenavColor}
                                     size="sm"
                                     onClick={() => {
                                         setNewEvent({
@@ -656,7 +729,10 @@ const ManageEvents = () => {
                                         setIsDialogOpen(true);
                                     }}
                                 >
-                                    <FaPlus className="w-4 h-4" strokeWidth={"2rem"} />
+                                    <FaPlus
+                                        className="w-4 h-4"
+                                        strokeWidth={"2rem"}
+                                    />
                                 </Button>
                             </Tooltip>
                         </div>
@@ -669,7 +745,11 @@ const ManageEvents = () => {
                                     type="date"
                                     label="Từ ngày"
                                     value={dateFilter.from}
-                                    onChange={(e) => setDateFilter(prev => ({...prev, from: e.target.value}))}
+                                    onChange={(e) =>
+                                        setDateFilter((prev) => ({
+                                            ...prev,
+                                            from: e.target.value,
+                                        }))}
                                     className="bg-white"
                                 />
                             </div>
@@ -679,18 +759,23 @@ const ManageEvents = () => {
                                     type="date"
                                     label="Đến ngày"
                                     value={dateFilter.to}
-                                    onChange={(e) => setDateFilter(prev => ({...prev, to: e.target.value}))}
+                                    onChange={(e) =>
+                                        setDateFilter((prev) => ({
+                                            ...prev,
+                                            to: e.target.value,
+                                        }))}
                                     className="bg-white"
                                 />
                             </div>
                         </div>
 
-                        {(searchTerm || statusFilter !== "all" || dateFilter.from || dateFilter.to) && (
-                            <div className="flex justify-center mt-4">
+                        {(searchTerm || statusFilter !== "all" ||
+                            dateFilter.from || dateFilter.to) && (
+                            <div className="flex justify-start mt-4">
                                 <Button
                                     variant="text"
                                     color="red"
-                                    className="flex items-center gap-2"
+                                    className="flex items-center gap-2 p-3"
                                     onClick={() => {
                                         setSearchTerm("");
                                         setStatusFilter("all");
@@ -704,23 +789,27 @@ const ManageEvents = () => {
                         )}
                     </div>
 
-                    <div className="flex justify-end px-4 mb-4">
+                    <div className="flex justify-end px-4 mb-4 ld:mr-4 md:mr-3">
                         <div className="flex gap-2">
                             <Button
-                                variant={activeTab === 'list' ? "gradient" : "outlined"}
-                                color="cyan"
+                                variant={activeTab === "list"
+                                    ? "gradient"
+                                    : "outlined"}
+                                color={sidenavColor}
                                 size="sm"
-                                onClick={() => setActiveTab('list')}
+                                onClick={() => setActiveTab("list")}
                                 className="flex items-center gap-2"
                             >
                                 <i className="fas fa-list text-sm"></i>
                                 Danh sách
                             </Button>
                             <Button
-                                variant={activeTab === 'calendar' ? "gradient" : "outlined"}
-                                color="cyan"
+                                variant={activeTab === "calendar"
+                                    ? "gradient"
+                                    : "outlined"}
+                                color={sidenavColor}
                                 size="sm"
-                                onClick={() => setActiveTab('calendar')}
+                                onClick={() => setActiveTab("calendar")}
                                 className="flex items-center gap-2"
                             >
                                 <i className="fas fa-calendar text-sm"></i>
@@ -729,49 +818,53 @@ const ManageEvents = () => {
                         </div>
                     </div>
 
-                    {activeTab === 'list' ? (
-                        <div className="px-4">
-                            <div className="w-full overflow-x-auto">
-                                <table className="w-full min-w-[640px] table-auto">
-                                    <thead>
-                                        <tr>
-                                            {[
-                                                "STT",
-                                                "Tên sự kiện",
-                                                "Ngày tổ chức",
-                                                "Địa điểm",
-                                                "Người phụ trách",
-                                                "Trạng thái",
-                                                "Thao tác",
-                                            ].map((el) => (
-                                                <th
-                                                    key={el}
-                                                    className="px-5 py-3 text-left border-b border-blue-gray-50"
-                                                >
-                                                    <Typography
-                                                        variant="small"
-                                                        className="text-[11px] font-bold uppercase text-blue-gray-400"
+                    {activeTab === "list"
+                        ? (
+                            <div className="px-4">
+                                <div className="w-full overflow-x-auto">
+                                    <table className="w-full min-w-[640px] table-auto">
+                                        <thead>
+                                            <tr>
+                                                {[
+                                                    "STT",
+                                                    "Tên sự kiện",
+                                                    "Ngày tổ chức",
+                                                    "Địa điểm",
+                                                    "Người phụ trách",
+                                                    "Trạng thái",
+                                                    "Thao tác",
+                                                ].map((el) => (
+                                                    <th
+                                                        key={el}
+                                                        className="px-5 py-3 text-left border-b border-blue-gray-50"
                                                     >
-                                                        {el}
-                                                    </Typography>
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {currentEvents.map(({
-                                            _id,
-                                            ten,
-                                            ngayToChuc,
-                                            thoiGianBatDau,
-                                            thoiGianKetThuc,
-                                            diaDiem,
-                                            nguoiPhuTrach,
-                                            trangThai,
-                                        }, index) => {
-                                            const className = index === currentEvents.length - 1
-                                                ? "p-4"
-                                                : "p-4 border-b border-blue-gray-50";
+                                                        <Typography
+                                                            variant="small"
+                                                            className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                                        >
+                                                            {el}
+                                                        </Typography>
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {currentEvents.map(({
+                                                _id,
+                                                ten,
+                                                ngayToChuc,
+                                                thoiGianBatDau,
+                                                thoiGianKetThuc,
+                                                diaDiem,
+                                                nguoiPhuTrach,
+                                                trangThai,
+                                            }, index) => {
+                                                const className =
+                                                    index ===
+                                                            currentEvents
+                                                                    .length - 1
+                                                        ? "p-4"
+                                                        : "p-4 border-b border-blue-gray-50";
 
                                             return (
                                                 <tr key={_id}>
@@ -926,167 +1019,245 @@ const ManageEvents = () => {
                                 </table>
                             </div>
 
-                            <div className="flex flex-col md:flex-row items-center gap-4 justify-center mt-6 mb-4 px-4">
-                                <Button
-                                    variant="text"
-                                    className="flex items-center gap-2"
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
-                                </Button>
+                                <div className="flex justify-center gap-4 mt-6 mb-4">
+                                    <Button
+                                        variant="text"
+                                        className="flex items-center gap-2"
+                                        onClick={() =>
+                                            handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                    >
+                                        <ChevronLeftIcon
+                                            strokeWidth={2}
+                                            className="h-4 w-4"
+                                        />
+                                    </Button>
 
-                                <div className="flex items-center gap-2">
-                                    {totalPages <= 5 ? (
-                                        [...Array(totalPages)].map((_, index) => (
-                                            <Button
-                                                key={index + 1}
-                                                variant={currentPage === index + 1 ? "gradient" : "text"}
-                                                color="cyan"
-                                                onClick={() => handlePageChange(index + 1)}
-                                                className="w-10 h-10"
-                                            >
-                                                {index + 1}
-                                            </Button>
-                                        ))
-                                    ) : (
-                                        <>
-                                            <Button
-                                                variant={currentPage === 1 ? "gradient" : "text"}
-                                                color="cyan"
-                                                onClick={() => handlePageChange(1)}
-                                                className="w-10 h-10"
-                                            >
-                                                1
-                                            </Button>
-
-                                            {currentPage > 3 && (
-                                                <span className="mx-2">...</span>
-                                            )}
-
-                                            {[...Array(3)].map((_, index) => {
-                                                const pageNumber = Math.min(
-                                                    Math.max(currentPage - 1 + index, 2),
-                                                    totalPages - 1
-                                                );
-                                                if (pageNumber <= 1 || pageNumber >= totalPages) return null;
-                                                return (
+                                    <div className="flex items-center gap-2">
+                                        {totalPages <= 5
+                                            ? (
+                                                [...Array(totalPages)].map((
+                                                    _,
+                                                    index,
+                                                ) => (
                                                     <Button
-                                                        key={pageNumber}
-                                                        variant={currentPage === pageNumber ? "gradient" : "text"}
-                                                        color="cyan"
-                                                        onClick={() => handlePageChange(pageNumber)}
-                                                        className="w-10 h-10"
+                                                        key={index + 1}
+                                                        variant={currentPage ===
+                                                                index + 1
+                                                            ? "gradient"
+                                                            : "text"}
+                                                        color={sidenavColor}
+                                                        onClick={() =>
+                                                            handlePageChange(
+                                                                index + 1,
+                                                            )}
+                                                        className="w-10"
                                                     >
-                                                        {pageNumber}
+                                                        <span className="flex justify-center">{index + 1}</span>
                                                     </Button>
-                                                );
-                                            })}
+                                                ))
+                                            )
+                                            : (
+                                                <>
+                                                    <Button
+                                                        variant={currentPage ===
+                                                                1
+                                                            ? "gradient"
+                                                            : "text"}
+                                                        color={sidenavColor}
+                                                        onClick={() =>
+                                                            handlePageChange(1)}
+                                                        className="w-10"
+                                                    >
+                                                        <span className="flex justify-center">1</span>
+                                                    </Button>
 
-                                            {currentPage < totalPages - 2 && (
-                                                <span className="mx-2">...</span>
+                                                    {currentPage > 3 && (
+                                                        <span className="mx-2">
+                                                            ...
+                                                        </span>
+                                                    )}
+
+                                                    {[...Array(3)].map(
+                                                        (_, index) => {
+                                                            const pageNumber =
+                                                                Math.min(
+                                                                    Math.max(
+                                                                        currentPage -
+                                                                            1 +
+                                                                            index,
+                                                                        2,
+                                                                    ),
+                                                                    totalPages -
+                                                                        1,
+                                                                );
+                                                            if (
+                                                                pageNumber <=
+                                                                    1 ||
+                                                                pageNumber >=
+                                                                    totalPages
+                                                            ) return null;
+                                                            return (
+                                                                <Button
+                                                                    key={pageNumber}
+                                                                    variant={currentPage ===
+                                                                            pageNumber
+                                                                        ? "gradient"
+                                                                        : "text"}
+                                                                    color={sidenavColor}
+                                                                    onClick={() =>
+                                                                        handlePageChange(
+                                                                            pageNumber,
+                                                                        )}
+                                                                    className="w-10"
+                                                                >
+                                                                    <span className="flex justify-center">{pageNumber}</span>
+                                                                </Button>
+                                                            );
+                                                        },
+                                                    )}
+
+                                                    {currentPage <
+                                                            totalPages - 2 && (
+                                                        <span className="mx-2">
+                                                            ...
+                                                        </span>
+                                                    )}
+
+                                                    <Button
+                                                        variant={currentPage ===
+                                                                totalPages
+                                                            ? "gradient"
+                                                            : "text"}
+                                                        color={sidenavColor}
+                                                        onClick={() =>
+                                                            handlePageChange(
+                                                                totalPages,
+                                                            )}
+                                                        className="w-10"
+                                                    >
+                                                        <span className="flex justify-center">{totalPages}</span>
+                                                    </Button>
+                                                </>
                                             )}
+                                    </div>
 
-                                            <Button
-                                                variant={currentPage === totalPages ? "gradient" : "text"}
-                                                color="cyan"
-                                                onClick={() => handlePageChange(totalPages)}
-                                                className="w-10 h-10"
-                                            >
-                                                {totalPages}
-                                            </Button>
-                                        </>
-                                    )}
+                                    <Button
+                                        variant="text"
+                                        className="flex items-center gap-2"
+                                        onClick={() =>
+                                            handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages ||
+                                            totalPages <= 1}
+                                    >
+                                        <ChevronRightIcon
+                                            strokeWidth={2}
+                                            className="h-4 w-4"
+                                        />
+                                    </Button>
                                 </div>
-
-                                <Button
-                                    variant="text"
-                                    className="flex items-center gap-2"
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
-                                </Button>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="p-4 min-h-[800px]">
-                            <style>
-                                {Object.entries(calendarCustomStyles)
-                                    .map(([selector, styles]) => `${selector} { ${styles.split(' ').map(c => `@apply ${c};`).join(' ')} }`)
-                                    .join('\n')}
-                            </style>
-                            <FullCalendar
-                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                                initialView="dayGridMonth"
-                                headerToolbar={{
-                                    left: 'prev,next today',
-                                    center: 'title',
-                                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                                }}
-                                events={getCalendarEvents}
-                                eventClick={handleEventClick}
-                                eventTimeFormat={{
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: false
-                                }}
-                                locale="vi"
-                                buttonText={{
-                                    today: 'Hôm nay',
-                                    month: 'Tháng',
-                                    week: 'Tuần',
-                                    day: 'Ngày'
-                                }}
-                                eventContent={(eventInfo) => (
-                                    <Tooltip
-                                        content={
-                                            <div className="p-2 bg-white rounded-lg shadow-lg">
-                                                <div className="font-bold text-lg mb-2 text-gray-800">
+                        )
+                        : (
+                            <div className="p-4 min-h-[800px]">
+                                <style>
+                                    {Object.entries(calendarCustomStyles)
+                                        .map(([selector, styles]) =>
+                                            `${selector} { ${
+                                                styles.split(" ").map((c) =>
+                                                    `@apply ${c};`
+                                                ).join(" ")
+                                            } }`
+                                        )
+                                        .join("\n")}
+                                </style>
+                                <FullCalendar
+                                    plugins={[
+                                        dayGridPlugin,
+                                        timeGridPlugin,
+                                        interactionPlugin,
+                                    ]}
+                                    initialView="dayGridMonth"
+                                    headerToolbar={{
+                                        left: "prev,next today",
+                                        center: "title",
+                                        right:
+                                            "dayGridMonth,timeGridWeek,timeGridDay",
+                                    }}
+                                    events={getCalendarEvents}
+                                    eventClick={handleEventClick}
+                                    eventTimeFormat={{
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        hour12: false,
+                                    }}
+                                    locale="vi"
+                                    buttonText={{
+                                        today: "Hôm nay",
+                                        month: "Tháng",
+                                        week: "Tuần",
+                                        day: "Ngày",
+                                    }}
+                                    eventContent={(eventInfo) => (
+                                        <Tooltip
+                                            content={
+                                                <div className="p-2 bg-white rounded-lg shadow-lg">
+                                                    <div className="font-bold text-lg mb-2 text-gray-800">
+                                                        {eventInfo.event.title}
+                                                    </div>
+                                                    <div className="space-y-2 text-sm text-gray-600">
+                                                        <p className="flex items-center gap-2">
+                                                            <i className="fas fa-clock">
+                                                            </i>
+                                                            {eventInfo.timeText}
+                                                        </p>
+                                                        <p className="flex items-center gap-2">
+                                                            <i className="fas fa-map-marker-alt">
+                                                            </i>
+                                                            {eventInfo.event
+                                                                .extendedProps
+                                                                .location}
+                                                        </p>
+                                                        <p className="flex items-center gap-2">
+                                                            <i className="fas fa-user">
+                                                            </i>
+                                                            {eventInfo.event
+                                                                .extendedProps
+                                                                .nguoiPhuTrach}
+                                                        </p>
+                                                        <p className="flex items-center gap-2">
+                                                            <i className="fas fa-info-circle">
+                                                            </i>
+                                                            Tr���ng thái:{" "}
+                                                            {getStatusText(
+                                                                eventInfo.event
+                                                                    .extendedProps
+                                                                    .trangThai,
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            }
+                                            animate={{
+                                                mount: { scale: 1, y: 0 },
+                                                unmount: { scale: 0, y: 25 },
+                                            }}
+                                            placement="top"
+                                            className="bg-white p-2 rounded-lg shadow-xl"
+                                        >
+                                            <div className="p-1 overflow-hidden cursor-pointer">
+                                                <div className="font-semibold text-sm truncate">
                                                     {eventInfo.event.title}
                                                 </div>
-                                                <div className="space-y-2 text-sm text-gray-600">
-                                                    <p className="flex items-center gap-2">
-                                                        <i className="fas fa-clock"></i>
-                                                        {eventInfo.timeText}
-                                                    </p>
-                                                    <p className="flex items-center gap-2">
-                                                        <i className="fas fa-map-marker-alt"></i>
-                                                        {eventInfo.event.extendedProps.location}
-                                                    </p>
-                                                    <p className="flex items-center gap-2">
-                                                        <i className="fas fa-user"></i>
-                                                        {eventInfo.event.extendedProps.nguoiPhuTrach}
-                                                    </p>
-                                                    <p className="flex items-center gap-2">
-                                                        <i className="fas fa-info-circle"></i>
-                                                        Trạng thái: {getStatusText(eventInfo.event.extendedProps.trangThai)}
-                                                    </p>
+                                                <div className="text-xs truncate">
+                                                    {eventInfo.timeText}
                                                 </div>
                                             </div>
-                                        }
-                                        animate={{
-                                            mount: { scale: 1, y: 0 },
-                                            unmount: { scale: 0, y: 25 },
-                                        }}
-                                        placement="top"
-                                        className="bg-white p-2 rounded-lg shadow-xl"
-                                    >
-                                        <div className="p-1 overflow-hidden cursor-pointer">
-                                            <div
-                                                className="font-semibold text-sm truncate"
-                                            >
-                                                {eventInfo.event.title}
-                                            </div>
-                                            <div className="text-xs truncate">
-                                                {eventInfo.timeText}
-                                            </div>
-                                        </div>
-                                    </Tooltip>
-                                )}
-                            />
-                        </div>
-                    )}
+                                        </Tooltip>
+                                    )}
+                                />
+                            </div>
+                        )}
                 </CardBody>
             </Card>
 
@@ -1099,13 +1270,19 @@ const ManageEvents = () => {
                 <DialogHeader className="text-base md:text-xl lg:text-2xl">
                     {editingEventId ? "Chỉnh sửa Sự kiện" : "Thêm Sự kiện Mới"}
                 </DialogHeader>
-                <DialogBody divider className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto max-h-[60vh] md:max-h-[70vh] p-4">
+                <DialogBody
+                    divider
+                    className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto max-h-[60vh] md:max-h-[70vh] p-4"
+                >
                     <div>
                         <Input
                             label="Tên sự kiện"
                             value={newEvent.ten}
                             onChange={(e) => {
-                                setNewEvent({ ...newEvent, ten: e.target.value });
+                                setNewEvent({
+                                    ...newEvent,
+                                    ten: e.target.value,
+                                });
                                 setErrors({ ...errors, ten: "" });
                             }}
                             error={!!errors.ten}
@@ -1123,11 +1300,15 @@ const ManageEvents = () => {
                             label="Ngày tổ chức"
                             value={newEvent.ngayToChuc}
                             onChange={(e) => {
-                                setNewEvent({ ...newEvent, ngayToChuc: e.target.value });
+                                setNewEvent({
+                                    ...newEvent,
+                                    ngayToChuc: e.target.value,
+                                });
                                 setErrors({ ...errors, ngayToChuc: "" });
                             }}
                             error={!!errors.ngayToChuc}
-                            min={new Date(Date.now() + 86400000).toISOString().split("T")[0]} // Ngày mai
+                            min={new Date(Date.now() + 86400000).toISOString()
+                                .split("T")[0]} // Ngày mai
                         />
                         {errors.ngayToChuc && (
                             <Typography color="red" className="mt-1 text-xs">
@@ -1137,12 +1318,19 @@ const ManageEvents = () => {
                     </div>
 
                     <div>
-                        <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
+                        <Typography
+                            variant="small"
+                            color="blue-gray"
+                            className="mb-2 font-medium"
+                        >
                             Thời gian bắt đầu
                         </Typography>
                         <TimePicker
                             onChange={(value) => {
-                                setNewEvent({ ...newEvent, thoiGianBatDau: value });
+                                setNewEvent({
+                                    ...newEvent,
+                                    thoiGianBatDau: value,
+                                });
                                 setErrors({ ...errors, thoiGianBatDau: "" });
                             }}
                             value={newEvent.thoiGianBatDau}
@@ -1150,7 +1338,9 @@ const ManageEvents = () => {
                             clockIcon={null}
                             format="HH:mm"
                             disableClock={true}
-                            className={errors.thoiGianBatDau ? "border-red-500" : ""}
+                            className={errors.thoiGianBatDau
+                                ? "border-red-500"
+                                : ""}
                         />
                         {errors.thoiGianBatDau && (
                             <Typography color="red" className="mt-1 text-xs">
@@ -1160,12 +1350,19 @@ const ManageEvents = () => {
                     </div>
 
                     <div>
-                        <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
+                        <Typography
+                            variant="small"
+                            color="blue-gray"
+                            className="mb-2 font-medium"
+                        >
                             Thời gian kết thúc
                         </Typography>
                         <TimePicker
                             onChange={(value) => {
-                                setNewEvent({ ...newEvent, thoiGianKetThuc: value });
+                                setNewEvent({
+                                    ...newEvent,
+                                    thoiGianKetThuc: value,
+                                });
                                 setErrors({ ...errors, thoiGianKetThuc: "" });
                             }}
                             value={newEvent.thoiGianKetThuc}
@@ -1173,7 +1370,9 @@ const ManageEvents = () => {
                             clockIcon={null}
                             format="HH:mm"
                             disableClock={true}
-                            className={errors.thoiGianKetThuc ? "border-red-500" : ""}
+                            className={errors.thoiGianKetThuc
+                                ? "border-red-500"
+                                : ""}
                         />
                         {errors.thoiGianKetThuc && (
                             <Typography color="red" className="mt-1 text-xs">
@@ -1187,12 +1386,15 @@ const ManageEvents = () => {
                             id="student-input"
                             label="Người phụ trách"
                             value={newEvent.nguoiPhuTrach}
-                            onChange={(e) => handleStudentSearch(e.target.value)}
+                            onChange={(e) =>
+                                handleStudentSearch(e.target.value)}
                             error={!!errors.nguoiPhuTrach}
                             onFocus={() => {
                                 setShowStudentDropdown(true);
                                 // Hiển thị 5 thành viên ngẫu nhiên khi focus
-                                const shuffled = [...students].sort(() => 0.5 - Math.random());
+                                const shuffled = [...students].sort(() =>
+                                    0.5 - Math.random()
+                                );
                                 setFilteredStudents(shuffled.slice(0, 5));
                             }}
                         />
@@ -1201,9 +1403,9 @@ const ManageEvents = () => {
                                 {errors.nguoiPhuTrach}
                             </Typography>
                         )}
-                        
+
                         {showStudentDropdown && filteredStudents.length > 0 && (
-                            <div 
+                            <div
                                 id="student-dropdown"
                                 className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
                             >
@@ -1211,7 +1413,8 @@ const ManageEvents = () => {
                                     <div
                                         key={student._id}
                                         className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                        onClick={() => handleSelectStudent(student)}
+                                        onClick={() =>
+                                            handleSelectStudent(student)}
                                     >
                                         <Typography className="text-sm">
                                             {student.hoTen}
@@ -1230,7 +1433,10 @@ const ManageEvents = () => {
                             label="Địa điểm tổ chức"
                             value={newEvent.diaDiem}
                             onChange={(e) => {
-                                setNewEvent({ ...newEvent, diaDiem: e.target.value });
+                                setNewEvent({
+                                    ...newEvent,
+                                    diaDiem: e.target.value,
+                                });
                                 setErrors({ ...errors, diaDiem: "" });
                             }}
                             error={!!errors.diaDiem}
@@ -1297,7 +1503,10 @@ const ManageEvents = () => {
                             label="Nội dung"
                             value={newEvent.noiDung}
                             onChange={(e) => {
-                                setNewEvent({ ...newEvent, noiDung: e.target.value });
+                                setNewEvent({
+                                    ...newEvent,
+                                    noiDung: e.target.value,
+                                });
                                 setErrors({ ...errors, noiDung: "" });
                             }}
                             error={!!errors.noiDung}
@@ -1344,79 +1553,118 @@ const ManageEvents = () => {
             >
                 <DialogHeader className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4">
                     <Typography variant="h6">Chi tiết sự kiện</Typography>
-                    <Typography 
-                        variant="small" 
+                    <Typography
+                        variant="small"
                         className={`
                             px-3 py-1 rounded-full font-bold uppercase
-                            ${detailEvent?.trangThai === 'daDuyet' && 'bg-green-500 text-white'}
-                            ${detailEvent?.trangThai === 'choDuyet' && 'bg-orange-500 text-white'}
-                            ${detailEvent?.trangThai === 'tuChoi' && 'bg-red-500 text-white'}
+                            ${
+                            detailEvent?.trangThai === "daDuyet" &&
+                            "bg-green-500 text-white"
+                        }
+                            ${
+                            detailEvent?.trangThai === "choDuyet" &&
+                            "bg-orange-500 text-white"
+                        }
+                            ${
+                            detailEvent?.trangThai === "tuChoi" &&
+                            "bg-red-500 text-white"
+                        }
                         `}
                     >
-                        {detailEvent?.trangThai === 'daDuyet' && 'Đã duyệt'}
-                        {detailEvent?.trangThai === 'choDuyet' && 'Chờ duyệt'}
-                        {detailEvent?.trangThai === 'tuChoi' && 'Đã từ chối'}
+                        {detailEvent?.trangThai === "daDuyet" && "Đã duyệt"}
+                        {detailEvent?.trangThai === "choDuyet" && "Chờ duyệt"}
+                        {detailEvent?.trangThai === "tuChoi" && "Đã từ chối"}
                     </Typography>
                 </DialogHeader>
 
                 {detailEvent && (
-                    <DialogBody divider className="overflow-y-auto max-h-[50vh] md:max-h-[65vh] p-4 md:p-6">
+                    <DialogBody
+                        divider
+                        className="overflow-y-auto max-h-[50vh] md:max-h-[65vh] p-4 md:p-6"
+                    >
                         <div className="grid gap-4 md:gap-6">
                             <div className="bg-blue-gray-50 p-4 md:p-6 rounded-lg">
                                 <div className="text-center mb-6">
-                                    <Typography variant="h4" color="blue" className="font-bold mb-2">
+                                    <Typography
+                                        variant="h4"
+                                        color="blue"
+                                        className="font-bold mb-2"
+                                    >
                                         {detailEvent.ten}
                                     </Typography>
-                                    <Typography 
-                                        variant="small" 
+                                    <Typography
+                                        variant="small"
                                         className="bg-white px-4 py-2 rounded-full text-blue-900 inline-block font-medium"
                                     >
-                                        {clubs.find(c => c._id === detailEvent.club)?.ten}
+                                        {clubs.find((c) =>
+                                            c._id === detailEvent.club
+                                        )?.ten}
                                     </Typography>
                                 </div>
 
                                 <div className="grid gap-4">
                                     <div className="bg-white p-4 rounded-lg">
-                                        <Typography className="text-sm text-gray-600 mb-2">Thời gian tổ chức</Typography>
+                                        <Typography className="text-sm text-gray-600 mb-2">
+                                            Thời gian tổ chức
+                                        </Typography>
                                         <div className="flex flex-col gap-1">
                                             <Typography className="font-medium">
-                                                {new Date(detailEvent.ngayToChuc).toLocaleDateString('vi-VN', {
-                                                    weekday: 'long',
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric'
+                                                {new Date(
+                                                    detailEvent.ngayToChuc,
+                                                ).toLocaleDateString("vi-VN", {
+                                                    weekday: "long",
+                                                    year: "numeric",
+                                                    month: "long",
+                                                    day: "numeric",
                                                 })}
                                             </Typography>
                                             <Typography className="text-blue-900">
-                                                {detailEvent.thoiGianBatDau} - {detailEvent.thoiGianKetThuc}
+                                                {detailEvent.thoiGianBatDau} -
+                                                {" "}
+                                                {detailEvent.thoiGianKetThuc}
                                             </Typography>
                                         </div>
                                     </div>
 
                                     <div className="bg-white p-4 rounded-lg">
-                                        <Typography className="text-sm text-gray-600 mb-1">Địa điểm</Typography>
-                                        <Typography className="font-medium">{detailEvent.diaDiem}</Typography>
+                                        <Typography className="text-sm text-gray-600 mb-1">
+                                            Địa điểm
+                                        </Typography>
+                                        <Typography className="font-medium">
+                                            {detailEvent.diaDiem}
+                                        </Typography>
                                     </div>
 
                                     <div className="bg-white p-4 rounded-lg">
-                                        <Typography className="text-sm text-gray-600 mb-1">Người phụ trách</Typography>
-                                        <Typography className="font-medium">{detailEvent.nguoiPhuTrach}</Typography>
+                                        <Typography className="text-sm text-gray-600 mb-1">
+                                            Người phụ trách
+                                        </Typography>
+                                        <Typography className="font-medium">
+                                            {detailEvent.nguoiPhuTrach}
+                                        </Typography>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="bg-blue-gray-50 p-4 rounded-lg">
-                                <Typography className="text-sm text-gray-600 mb-2">Nội dung sự kiện</Typography>
+                                <Typography className="text-sm text-gray-600 mb-2">
+                                    Nội dung sự kiện
+                                </Typography>
                                 <Typography className="font-medium whitespace-pre-line">
                                     {detailEvent.noiDung}
                                 </Typography>
                             </div>
 
                             <div className="bg-blue-gray-50 p-4 rounded-lg">
-                                <Typography className="text-sm text-gray-600 mb-2">Danh sách khách mời</Typography>
+                                <Typography className="text-sm text-gray-600 mb-2">
+                                    Danh sách khách mời
+                                </Typography>
                                 <div className="flex flex-wrap gap-2">
-                                    {detailEvent.khachMoi.map((guest, index) => (
-                                        <div 
+                                    {detailEvent.khachMoi.map((
+                                        guest,
+                                        index,
+                                    ) => (
+                                        <div
                                             key={index}
                                             className="bg-white px-3 py-1 rounded-full text-sm font-medium"
                                         >
@@ -1426,7 +1674,8 @@ const ManageEvents = () => {
                                 </div>
                             </div>
 
-                            {detailEvent && detailEvent.trangThai === "tuChoi" && (
+                            {detailEvent &&
+                                detailEvent.trangThai === "tuChoi" && (
                                 <div className="bg-red-50 p-4 rounded-lg border border-red-200">
                                     <Typography className="text-sm text-red-800 font-medium mb-2">
                                         Lý do từ chối
