@@ -24,9 +24,9 @@ export function Sidenav({ brandImg, brandName, routes }) {
         <aside
             className={`${sidenavTypes[sidenavType]} ${
                 openSidenav ? "translate-x-0" : "-translate-x-80"
-            } fixed inset-0 z-50 my-4 ml-4 h-[calc(100vh-32px)] w-72 rounded-xl transition-transform duration-300 xl:translate-x-0 border border-blue-gray-100`}
+            } fixed inset-0 z-50 my-4 ml-4 h-[calc(100vh-32px)] w-72 rounded-xl transition-transform duration-300 xl:translate-x-0 border border-blue-gray-100 flex flex-col`}
         >
-            <div className="relative">
+            <div className="sticky top-0">
                 <Link to="/" className="py-6 px-8 text-center">
                     <Typography
                         variant="h6"
@@ -49,7 +49,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
                     />
                 </IconButton>
             </div>
-            <div className="m-4">
+            <div className="m-4 overflow-y-auto scrollbar-hide">
                 {Array.isArray(routes) &&
                     routes.map((route, key) => (
                         <ul key={key} className="mb-4 flex flex-col gap-1">
