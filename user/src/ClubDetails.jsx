@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 
 const API_URL = "http://localhost:5500/api";
 
 const ClubDetails = () => {
-  const navigate = useNavigate();
   const { clubId } = useParams();
   const [selectedClub, setSelectedClub] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [truongBanInfo, setTruongBanInfo] = useState(null);
 
   useEffect(() => {
     const fetchClubDetails = async () => {
@@ -17,15 +17,36 @@ const ClubDetails = () => {
       try {
         const response = await axios.get(`${API_URL}/get-club/${clubId}`);
         setSelectedClub(response.data);
+
+        const truongBanResponse = await axios.get(`${API_URL}/get-account/${response.data.truongBanCLB}`);
+        setTruongBanInfo(truongBanResponse.data);
+
+        try {
+          const membersResponse = await axios.get(`${API_URL}/get-members-by-club/${response.data._id}`);
+          const membersCount = membersResponse.data && membersResponse.data.length ? membersResponse.data.length : 0;
+          const totalMembers = membersCount + 1;
+          setSelectedClub(prev => ({
+            ...prev,
+            totalMembers: totalMembers
+          }));
+        } catch (memberError) {
+          setSelectedClub(prev => ({
+            ...prev,
+            totalMembers: 1
+          }));
+        }
+
       } catch (error) {
-        console.error('Lỗi khi lấy thông tin câu lạc bộ:', error);
+        console.error('Lỗi khi lấy thông tin:', error);
         setError("Không thể tải thông tin câu lạc bộ");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchClubDetails();
+    if (clubId) {
+      fetchClubDetails();
+    }
   }, [clubId]);
 
   if (isLoading) {
@@ -36,16 +57,13 @@ const ClubDetails = () => {
     return (
       <div>
         <p>Lỗi: {error}</p>
-        <button onClick={() => navigate('/')}>Quay lại trang chủ</button>
       </div>
     );
   }
 
   if (!selectedClub) {
-    return <div>Không có thông tin câu lạc bộ.</div>;
+    return <div>Không tìm thấy thông tin câu lạc bộ.</div>;
   }
-
-  const soLuongThanhVien = selectedClub.thanhVien ? selectedClub.thanhVien.length : 0; // Đếm số lượng thành viên
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-6 font-sans">
@@ -76,7 +94,7 @@ const ClubDetails = () => {
             <tr>
               <td className="border px-4 py-2" style={{ backgroundColor: '#FCFEF6' }}>{selectedClub.linhVucHoatDong}</td>
               <td className="border px-4 py-2" style={{ backgroundColor: '#FCFEF6' }}>{new Date(selectedClub.ngayThanhLap).toLocaleDateString()}</td>
-              <td className="border px-4 py-2" style={{ backgroundColor: '#FCFEF6' }}>{soLuongThanhVien}</td> {/* Hiển thị số lượng thành viên */}
+              <td className="border px-4 py-2" style={{ backgroundColor: '#FCFEF6' }}>{selectedClub.totalMembers || 0}</td>
             </tr>
           </tbody>
         </table>
@@ -87,7 +105,7 @@ const ClubDetails = () => {
           </p>
           <p>
             <span className="font-bold" style={{ color: '#004D86' }}>Trưởng ban câu lạc bộ:</span>
-            <span className="font-medium text-black"> {selectedClub.truongBanCLB}</span>
+            <span className="font-medium text-black"> {truongBanInfo ? truongBanInfo.name : 'Đang tải...'}</span>
           </p>
         </div>
       </div>

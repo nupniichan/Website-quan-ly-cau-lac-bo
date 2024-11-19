@@ -16,7 +16,7 @@ const AdmissionStandard = () => {
                 <p className="mb-4">
                     Với số điểm hiện tại, chúng tôi có thể tự hào thông báo rằng
                     điểm chuẩn tuyển sinh vào lớp 10 năm 2024 của trường là{" "}
-                    <span className="font-bold">[22 điểm]</span>.
+                    <span className="font-bold">[28 điểm]</span>.
                 </p>
 
                 <p className="mb-4">
