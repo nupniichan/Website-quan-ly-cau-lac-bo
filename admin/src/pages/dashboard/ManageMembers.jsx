@@ -254,7 +254,6 @@ const ManageMembers = () => {
             setDetailMember(response.data);
             setIsDetailDialogOpen(true);
 
-            // Ensure clubs are loaded
             if (clubs.length === 0) {
                 await fetchClubs();
             }
@@ -270,16 +269,12 @@ const ManageMembers = () => {
 
     const filteredMembers = useMemo(() => {
         const filtered = members.filter(member => {
-            // Kiểm tra xem input có phải là MSSV không (chỉ chứa số)
-            if (/^\d+$/.test(searchTerm)) {
-                return member.maSoHocSinh.toLowerCase().includes(searchTerm.toLowerCase());
-            }
+            const searchMatch = searchTerm.toLowerCase().trim() === '' ? true :
+                /^\d+$/.test(searchTerm) 
+                    ? member.maSoHocSinh.toLowerCase().includes(searchTerm.toLowerCase())
+                    : member.hoTen.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      member.lop.toLowerCase().includes(searchTerm.toLowerCase());
             
-            // Nếu không phải MSSV, tìm theo tên hoặc lớp
-            return member.hoTen.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                   member.lop.toLowerCase().includes(searchTerm.toLowerCase());
-            
-            // Các điều kiện lọc khác giữ nguyên
             const genderMatch = genderFilter === "all" || 
                 member.gioiTinh.toLowerCase() === genderFilter.toLowerCase();
             
@@ -293,7 +288,7 @@ const ManageMembers = () => {
             const dateMatch = (!fromDate || joinDate >= fromDate) && 
                              (!toDate || joinDate <= toDate);
 
-            return genderMatch && roleMatch && dateMatch;
+            return searchMatch && genderMatch && roleMatch && dateMatch;
         });
 
         return filtered.sort((a, b) => new Date(b.ngayThamGia) - new Date(a.ngayThamGia));

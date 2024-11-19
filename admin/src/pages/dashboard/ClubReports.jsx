@@ -129,7 +129,7 @@ const ClubReports = () => {
         fetchClubs();
         fetchEvents();
         fetchReports();
-    }, []);
+    }, [fetchReports]);
 
     const handleUpdateReport = async () => {
         try {
@@ -224,11 +224,10 @@ const ClubReports = () => {
         // Tạo worksheet cho thông tin chung với border
         const generalInfo = [
             [{v: 'BÁO CÁO CÂU LẠC BỘ', s: {
-                font: { bold: true, sz: 16 },
+                font: { bold: true, sz: 16, color: { rgb: "FFFFFF" } },
                 alignment: { horizontal: "center", vertical: "center" },
                 ...commonStyle,
-                fill: { fgColor: { rgb: "4F46E5" } },
-                font: { color: { rgb: "FFFFFF" }, bold: true }
+                fill: { fgColor: { rgb: "4F46E5" } }
             }}],
             [''],
             [{v: 'THÔNG TIN CHUNG', s: {
@@ -278,11 +277,10 @@ const ClubReports = () => {
         // Tạo worksheet cho danh sách sự kiện với border
         const eventsData = [
             [{v: 'DANH SÁCH SỰ KIỆN', s: {
-                font: { bold: true, sz: 14 },
+                font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } },
                 alignment: { horizontal: "center" },
                 ...commonStyle,
-                fill: { fgColor: { rgb: "4F46E5" } },
-                font: { color: { rgb: "FFFFFF" }, bold: true }
+                fill: { fgColor: { rgb: "4F46E5" } }
             }}],
             [
                 {v: 'STT', s: {...commonStyle, font: { bold: true }}},
@@ -701,7 +699,7 @@ const ClubReports = () => {
                             ? handleUpdateReport
                             : handleAddReport}
                     >
-                        {editingReportId ? "Cập nh���t" : "Thêm"}
+                        {editingReportId ? "Cập nht" : "Thêm"}
                     </Button>
                 </DialogFooter>
             </Dialog>

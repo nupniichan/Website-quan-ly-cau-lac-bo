@@ -373,11 +373,10 @@ const ActivityReports = () => {
         // Tạo worksheet cho thông tin chung với border
         const generalInfo = [
             [{v: 'BÁO CÁO HOẠT ĐỘNG CÂU LẠC BỘ', s: {
-                font: { bold: true, sz: 16 },
                 alignment: { horizontal: "center", vertical: "center" },
                 ...commonStyle,
                 fill: { fgColor: { rgb: "4F46E5" } },
-                font: { color: { rgb: "FFFFFF" }, bold: true }
+                font: { bold: true, sz: 16, color: { rgb: "FFFFFF" } }
             }}],
             [''],
             [{v: 'THÔNG TIN CHUNG', s: {
@@ -423,11 +422,10 @@ const ActivityReports = () => {
         // Tạo worksheet cho danh sách sự kiện với border
         const eventsData = [
             [{v: 'DANH SÁCH SỰ KIỆN', s: {
-                font: { bold: true, sz: 14 },
                 alignment: { horizontal: "center" },
                 ...commonStyle,
                 fill: { fgColor: { rgb: "4F46E5" } },
-                font: { color: { rgb: "FFFFFF" }, bold: true }
+                font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } }
             }}],
             [
                 {v: 'STT', s: {...commonStyle, font: { bold: true }}},
@@ -446,11 +444,10 @@ const ActivityReports = () => {
         // Tạo worksheet cho danh sách giải thưởng với border
         const awardsData = [
             [{v: 'DANH SÁCH GIẢI THƯỞNG', s: {
-                font: { bold: true, sz: 14 },
                 alignment: { horizontal: "center" },
                 ...commonStyle,
                 fill: { fgColor: { rgb: "4F46E5" } },
-                font: { color: { rgb: "FFFFFF" }, bold: true }
+                font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } }
             }}],
             [
                 {v: 'STT', s: {...commonStyle, font: { bold: true }}},
@@ -1118,7 +1115,7 @@ const ActivityReports = () => {
 
                     <div className="relative main-staff-container">
                         <Input
-                            label="Nhân sự phụ trách"
+                            label="Nhân s phụ trách"
                             value={newReport.nhanSuPhuTrach}
                             onChange={(e) => {
                                 handleMainStaffSearch(e.target.value);
