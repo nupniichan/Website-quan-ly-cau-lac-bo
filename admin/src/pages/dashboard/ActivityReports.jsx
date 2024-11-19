@@ -792,7 +792,7 @@ const ActivityReports = () => {
                 <CardBody className="px-0 pt-0 pb-2 overflow-auto">
                     <div className="flex items-center justify-between gap-4 p-4 px-6">
                         {/* Cột trái - Tìm kiếm và bộ lọc */}
-                        <div className="w-full flex flex-col lg:flex-row items-start lg:items-center gap-4">
+                        <div className="w-full flex flex-wrap flex-col lg:flex-row items-start lg:items-center gap-4">
                             {/* Thanh tìm kiếm */}
                             <div className="w-full lg:w-96">
                                 <Input
@@ -901,7 +901,7 @@ const ActivityReports = () => {
 
                     {isLoading ? (
                         <div className="flex items-center justify-center h-64">
-                            <Spinner className="w-12 h-12" color="blue" />
+                            <Spinner className="w-12 h-12" color="pink" />
                         </div>
                     ) : filteredReports.length === 0 ? (
                         // Thêm thông báo khi không có báo cáo
@@ -911,7 +911,7 @@ const ActivityReports = () => {
                             </Typography>
                             <Button
                                 className="flex items-center gap-3"
-                                color="blue"
+                                color={sidenavColor}
                                 size="sm"
                                 onClick={openAddDialog}
                             >
@@ -919,7 +919,7 @@ const ActivityReports = () => {
                             </Button>
                         </div>
                     ) : (
-                        <>
+                        <div>
                             <div className="w-full overflow-x-auto">
                                 <table className="w-full min-w-[800px] table-auto">
                                     <thead>
@@ -1110,9 +1110,9 @@ const ActivityReports = () => {
                                         />
                                     </Button>
                                 </div>
-                            )}
-                        </>
-                    )}
+                                )}
+                            </div>
+                        )}
                 </CardBody>
             </Card>
 
@@ -1334,7 +1334,7 @@ const ActivityReports = () => {
                                 </Button>
                             </div>
                         ))}
-                        <Button color="blue" size="sm" onClick={handleAddEvent}>
+                        <Button color={sidenavColor} size="sm" onClick={handleAddEvent}>
                             Thêm sự kiện
                         </Button>
                     </div>
@@ -1455,7 +1455,7 @@ const ActivityReports = () => {
                                 </Button>
                             </div>
                         ))}
-                        <Button color="blue" size="sm" onClick={handleAddAward}>
+                        <Button color={sidenavColor} size="sm" onClick={handleAddAward}>
                             Thêm giải thưởng
                         </Button>
                     </div>

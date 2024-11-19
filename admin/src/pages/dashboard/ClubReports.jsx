@@ -27,6 +27,7 @@ import {
     XMarkIcon,
 } from "@heroicons/react/24/solid";
 import * as XLSX from 'xlsx';
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -56,6 +57,10 @@ const ClubReports = () => {
         startDate: "",
         endDate: ""
     });
+
+    // Lấy controller từ context & màu hiện tại của sidenav
+    const [controller] = useMaterialTailwindController();
+    const { sidenavColor } = controller;
 
     const filteredReports = useMemo(() => {
         return reports
@@ -340,7 +345,7 @@ const ClubReports = () => {
             <Card>
                 <CardHeader
                     variant="gradient"
-                    color="blue"
+                    color={sidenavColor}
                     className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
@@ -573,7 +578,7 @@ const ClubReports = () => {
                                         <Button
                                             key={index + 1}
                                             variant={currentPage === index + 1 ? "gradient" : "text"}
-                                            color="blue"
+                                            color={sidenavColor}
                                             onClick={() => setCurrentPage(index + 1)}
                                             className="w-10 h-10"
                                         >
@@ -855,7 +860,7 @@ const ClubReports = () => {
                     <div className="flex gap-2">
                         <Button
                             variant="outlined"
-                            color="blue"
+                            color={sidenavColor}
                             className="flex items-center gap-2"
                             onClick={() => exportToExcel(detailReport)}
                         >
@@ -875,7 +880,7 @@ const ClubReports = () => {
                         </Button>
                         <Button
                             variant="gradient"
-                            color="blue"
+                            color={sidenavColor}
                             onClick={() => setIsDetailDialogOpen(false)}
                         >
                             Đóng

@@ -301,7 +301,8 @@ const ManageEvents = () => {
 
             // Thêm kiểm tra cho sự kiện bị từ chối
             if (event.trangThai === "tuChoi") {
-                alert("Không thể sửa sự kiện đã bị từ chối!");
+                // alert("Không thể sửa sự kiện đã bị từ chối!");
+                message.warning({content: "Không thể sửa sự kiện đã bị từ chối!"});
                 return;
             }
 

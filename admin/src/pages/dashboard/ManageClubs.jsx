@@ -23,6 +23,7 @@ import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { message, notification } from "antd";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -128,6 +129,10 @@ const ManageClubs = () => {
     const [studentAccounts, setStudentAccounts] = useState([]);
     const [studentSearch, setStudentSearch] = useState("");
     const dropdownRef = useRef(null);
+
+    // Lấy controller từ context & màu hiện tại của sidenav
+    const [controller] = useMaterialTailwindController();
+    const { sidenavColor } = controller;
 
     useEffect(() => {
         fetchClubs();
@@ -489,7 +494,7 @@ const ManageClubs = () => {
             <Card>
                 <CardHeader
                     variant="gradient"
-                    color="brown"
+                    color={sidenavColor}
                     className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
@@ -588,7 +593,7 @@ const ManageClubs = () => {
                             >
                                 <Button
                                     className="flex items-center gap-3"
-                                    color="blue"
+                                    color={sidenavColor}
                                     size="sm"
                                     onClick={openAddDialog}
                                 >
@@ -632,7 +637,7 @@ const ManageClubs = () => {
                                 </Typography>
                                 <Button
                                     className="flex items-center gap-3"
-                                    color="brown"
+                                    color={sidenavColor}
                                     onClick={openAddDialog}
                                 >
                                     <FaPlus className="w-4 h-4" /> Thêm câu lạc bộ mới
@@ -914,7 +919,7 @@ const ManageClubs = () => {
                                                                     index + 1
                                                                 ? "gradient"
                                                                 : "text"}
-                                                            color="brown"
+                                                            color={sidenavColor}
                                                             onClick={() =>
                                                                 setCurrentPage(
                                                                     index + 1,
@@ -932,7 +937,7 @@ const ManageClubs = () => {
                                                                     1
                                                                 ? "gradient"
                                                                 : "text"}
-                                                            color="brown"
+                                                            color={sidenavColor}
                                                             onClick={() =>
                                                                 setCurrentPage(
                                                                     1,
@@ -974,7 +979,7 @@ const ManageClubs = () => {
                                                                                 pageNumber
                                                                             ? "gradient"
                                                                             : "text"}
-                                                                        color="brown"
+                                                                        color={sidenavColor}
                                                                         onClick={() =>
                                                                             setCurrentPage(
                                                                                 pageNumber,
@@ -1000,7 +1005,7 @@ const ManageClubs = () => {
                                                                     totalPages
                                                                 ? "gradient"
                                                                 : "text"}
-                                                            color="brown"
+                                                            color={sidenavColor}
                                                             onClick={() =>
                                                                 setCurrentPage(
                                                                     totalPages,
@@ -1157,7 +1162,7 @@ const ManageClubs = () => {
                             <Button
                                 variant="gradient"
                                 className="flex items-center gap-3 w-[10.6rem] h-[3rem]"
-                                color="brown"
+                                color={sidenavColor}
                             >
                                 <CloudArrowUpIcon className="w-5 h-5 stroke-2" />
                                 Tải logo lên
@@ -1374,7 +1379,7 @@ const ManageClubs = () => {
                 <DialogFooter>
                     <Button
                         variant="gradient"
-                        color="brown"
+                        color={sidenavColor}
                         onClick={() => setIsDetailDialogOpen(false)}
                     >
                         Đóng

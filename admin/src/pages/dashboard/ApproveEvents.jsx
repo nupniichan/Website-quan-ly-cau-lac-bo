@@ -30,6 +30,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { message, notification } from "antd";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -55,6 +56,10 @@ const ApproveEvents = () => {
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
     const [conflictingEvents, setConflictingEvents] = useState([]);
     const [eventToApprove, setEventToApprove] = useState(null);
+
+    // Lấy controller từ context & màu hiện tại của sidenav
+    const [controller] = useMaterialTailwindController();
+    const { sidenavColor } = controller;
 
     useEffect(() => {
         fetchEvents();
@@ -336,7 +341,7 @@ const ApproveEvents = () => {
             <Card>
                 <CardHeader
                     variant="gradient"
-                    color="blue"
+                    color={sidenavColor}
                     className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
@@ -427,7 +432,7 @@ const ApproveEvents = () => {
                                 variant={activeTab === "list"
                                     ? "gradient"
                                     : "outlined"}
-                                color="blue"
+                                color={sidenavColor}
                                 size="sm"
                                 onClick={() => setActiveTab("list")}
                                 className="flex items-center gap-2"
@@ -439,7 +444,7 @@ const ApproveEvents = () => {
                                 variant={activeTab === "calendar"
                                     ? "gradient"
                                     : "outlined"}
-                                color="blue"
+                                color={sidenavColor}
                                 size="sm"
                                 onClick={() => setActiveTab("calendar")}
                                 className="flex items-center gap-2"
@@ -678,7 +683,7 @@ const ApproveEvents = () => {
                                                                             <Tooltip content="Xem chi tiết">
                                                                                 <IconButton
                                                                                     variant="text"
-                                                                                    color="blue"
+                                                                                    color={sidenavColor}
                                                                                     onClick={() =>
                                                                                         openDetailDialog(
                                                                                             event
@@ -760,7 +765,7 @@ const ApproveEvents = () => {
                                                         index + 1
                                                     ? "gradient"
                                                     : "text"}
-                                                    color="blue"
+                                                    color={sidenavColor}
                                                     onClick={() =>
                                                     setCurrentPage(index + 1)}
                                                     className="w-10 h-10"
@@ -1009,7 +1014,7 @@ const ApproveEvents = () => {
                 <DialogFooter>
                     <Button
                         variant="gradient"
-                        color="blue"
+                        color={sidenavColor}
                         onClick={() => setIsDetailDialogOpen(false)}
                     >
                         Đóng

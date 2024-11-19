@@ -23,6 +23,7 @@ import {
     ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 import { message } from "antd";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -46,6 +47,10 @@ const ManageClubAccountsPR = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [searchQuery, setSearchQuery] = useState("");
+
+    // Lấy controller từ context & màu hiện tại của sidenav
+    const [controller] = useMaterialTailwindController();
+    const { sidenavColor } = controller;
 
     const isValidEmail = (email) => {
         const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -204,7 +209,7 @@ const ManageClubAccountsPR = () => {
     return (
         <div className="p-4 bg-gray-50 min-h-screen">
             <Card>
-                <CardHeader variant="gradient" color="blue" className="p-6 mb-8">
+                <CardHeader variant="gradient" color={sidenavColor} className="p-6 mb-8">
                     <Typography variant="h6" color="white">
                         Quản lý Tài khoản
                     </Typography>
@@ -225,7 +230,7 @@ const ManageClubAccountsPR = () => {
                         >
                             <Button
                                 className="flex items-center gap-3"
-                                color="blue"
+                                color={sidenavColor}
                                 size="sm"
                                 onClick={openAddDialog}
                             >
@@ -326,7 +331,7 @@ const ManageClubAccountsPR = () => {
                                                 <Button
                                                     key={index + 1}
                                                     variant={currentPage === index + 1 ? "gradient" : "text"}
-                                                    color="blue"
+                                                    color={sidenavColor}
                                                     onClick={() => handlePageChange(index + 1)}
                                                     className="w-10 h-10"
                                                 >
@@ -337,7 +342,7 @@ const ManageClubAccountsPR = () => {
                                             <>
                                                 <Button
                                                     variant={currentPage === 1 ? "gradient" : "text"}
-                                                    color="blue"
+                                                    color={sidenavColor}
                                                     onClick={() => handlePageChange(1)}
                                                     className="w-10 h-10"
                                                 >
@@ -358,7 +363,7 @@ const ManageClubAccountsPR = () => {
                                                         <Button
                                                             key={pageNumber}
                                                             variant={currentPage === pageNumber ? "gradient" : "text"}
-                                                            color="blue"
+                                                            color={sidenavColor}
                                                             onClick={() => handlePageChange(pageNumber)}
                                                             className="w-10 h-10"
                                                         >
@@ -373,7 +378,7 @@ const ManageClubAccountsPR = () => {
 
                                                 <Button
                                                     variant={currentPage === totalPages ? "gradient" : "text"}
-                                                    color="blue"
+                                                    color={sidenavColor}
                                                     onClick={() => handlePageChange(totalPages)}
                                                     className="w-10 h-10"
                                                 >

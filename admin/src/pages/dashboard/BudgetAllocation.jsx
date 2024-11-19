@@ -19,6 +19,7 @@ import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { message, notification } from "antd";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -49,6 +50,10 @@ const BudgetAllocation = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [clubSearchTerm, setClubSearchTerm] = useState("");
     const [showClubSuggestions, setShowClubSuggestions] = useState(false);
+
+    // Lấy controller từ context & màu hiện tại của sidenav
+    const [controller] = useMaterialTailwindController();
+    const { sidenavColor } = controller;
 
     useEffect(() => {
         fetchAllocations();
@@ -394,7 +399,7 @@ const BudgetAllocation = () => {
             <Card>
                 <CardHeader
                     variant="gradient"
-                    color="purple"
+                    color={sidenavColor}
                     className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
@@ -413,7 +418,7 @@ const BudgetAllocation = () => {
                         >
                             <Button
                                 className="flex items-center gap-3"
-                                color="purple"
+                                color={sidenavColor}
                                 size="sm"
                                 onClick={openAddDialog}
                             >
@@ -511,7 +516,7 @@ const BudgetAllocation = () => {
 
                     {isLoading ? (
                         <div className="flex items-center justify-center h-64">
-                            <Spinner className="w-12 h-12" color="purple" />
+                            <Spinner className="w-12 h-12" color={sidenavColor} />
                         </div>
                     ) : filteredAllocations.length === 0 ? (
                         <div className="flex items-center justify-center h-64">
@@ -719,7 +724,7 @@ const BudgetAllocation = () => {
                                             variant={currentPage === index + 1
                                                 ? "gradient"
                                                 : "text"}
-                                            color="purple"
+                                            color={sidenavColor}
                                             onClick={() =>
                                                 setCurrentPage(index + 1)}
                                             className="w-10 h-10"
@@ -734,7 +739,7 @@ const BudgetAllocation = () => {
                                             variant={currentPage === 1
                                                 ? "gradient"
                                                 : "text"}
-                                            color="purple"
+                                            color={sidenavColor}
                                             onClick={() => setCurrentPage(1)}
                                             className="w-10 h-10"
                                         >
@@ -764,7 +769,7 @@ const BudgetAllocation = () => {
                                                             pageNumber
                                                         ? "gradient"
                                                         : "text"}
-                                                    color="purple"
+                                                    color={sidenavColor}
                                                     onClick={() =>
                                                         setCurrentPage(
                                                             pageNumber,
@@ -784,7 +789,7 @@ const BudgetAllocation = () => {
                                             variant={currentPage === totalPages
                                                 ? "gradient"
                                                 : "text"}
-                                            color="purple"
+                                            color={sidenavColor}
                                             onClick={() =>
                                                 setCurrentPage(totalPages)}
                                             className="w-10 h-10"
@@ -876,7 +881,7 @@ const BudgetAllocation = () => {
                 <DialogFooter>
                     <Button
                         variant="gradient"
-                        color="purple"
+                        color={sidenavColor}
                         onClick={() => setIsDetailDialogOpen(false)}
                     >
                         Đóng
