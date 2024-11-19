@@ -467,10 +467,15 @@ const ApproveEvents = () => {
                     {activeTab === 'list' ? (
                         // List view
                         <div className="px-4">
-                            {/* Events Table */}
                             {isLoading ? (
                                 <div className="flex justify-center items-center p-8">
                                     <Spinner className="h-12 w-12" />
+                                </div>
+                            ) : filteredEvents.length === 0 ? (
+                                <div className="flex items-center justify-center h-64">
+                                    <Typography variant="h6" color="blue-gray" className="font-normal">
+                                        Hiện tại chưa có sự kiện nào từ câu lạc bộ
+                                    </Typography>
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto">
@@ -598,39 +603,41 @@ const ApproveEvents = () => {
                             )}
 
                             {/* Pagination */}
-                            <div className="flex items-center gap-4 justify-center mt-4">
-                                <Button
-                                    variant="text"
-                                    className="flex items-center gap-2"
-                                    onClick={() => setCurrentPage(currentPage - 1)}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
-                                </Button>
-                                
-                                <div className="flex items-center gap-2">
-                                    {[...Array(totalPages)].map((_, index) => (
-                                        <Button
-                                            key={index + 1}
-                                            variant={currentPage === index + 1 ? "gradient" : "text"}
-                                            color="blue"
-                                            onClick={() => setCurrentPage(index + 1)}
-                                            className="w-10 h-10"
-                                        >
-                                            {index + 1}
-                                        </Button>
-                                    ))}
-                                </div>
+                            {filteredEvents.length > 0 && (
+                                <div className="flex items-center gap-4 justify-center mt-4">
+                                    <Button
+                                        variant="text"
+                                        className="flex items-center gap-2"
+                                        onClick={() => setCurrentPage(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                    >
+                                        <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                                    </Button>
+                                    
+                                    <div className="flex items-center gap-2">
+                                        {[...Array(totalPages)].map((_, index) => (
+                                            <Button
+                                                key={index + 1}
+                                                variant={currentPage === index + 1 ? "gradient" : "text"}
+                                                color="blue"
+                                                onClick={() => setCurrentPage(index + 1)}
+                                                className="w-10 h-10"
+                                            >
+                                                {index + 1}
+                                            </Button>
+                                        ))}
+                                    </div>
 
-                                <Button
-                                    variant="text"
-                                    className="flex items-center gap-2"
-                                    onClick={() => setCurrentPage(currentPage + 1)}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
-                                </Button>
-                            </div>
+                                    <Button
+                                        variant="text"
+                                        className="flex items-center gap-2"
+                                        onClick={() => setCurrentPage(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         // Calendar view
@@ -788,12 +795,6 @@ const ApproveEvents = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <th className="border p-3 bg-gray-50 w-1/4">Ngân sách chi tiêu</th>
-                                        <td className="border p-3 font-semibold text-blue-600">
-                                            {detailEvent.nganSachChiTieu.toLocaleString()} VND
-                                        </td>
-                                    </tr>
                                     <tr>
                                         <th className="border p-3 bg-gray-50">Khách mời</th>
                                         <td className="border p-3">

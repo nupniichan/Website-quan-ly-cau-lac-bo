@@ -193,45 +193,49 @@ const ManageClubAccountsPR = () => {
 
     return (
         <div className="p-4 bg-gray-50 min-h-screen">
-            {isLoading ? (
-                <div className="flex justify-center"><Spinner /></div>
-            ) : (
-                <Card>
-                    <CardHeader variant="gradient" color="blue" className="p-6 mb-8">
-                        <Typography variant="h6" color="white">
-                            Quản lý Tài khoản
-                        </Typography>
-                    </CardHeader>
-                    <CardBody className="px-0 pt-0 pb-2 overflow-auto">
-                        <div className="flex justify-between items-center p-4 px-6 pr-10 mb-4">
-                            <div className="flex items-center gap-4">
-                                <Input
-                                    label="Tìm kiếm theo MSHS hoặc tên"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-72"
-                                />
-                            </div>
-                            <Tooltip
-                                content="Thêm Tài khoản"
-                                className="bg-gradient-to-r from-black to-transparent opacity-70"
-                            >
-                                <Button
-                                    className="flex items-center gap-3"
-                                    color="blue"
-                                    size="sm"
-                                    onClick={openAddDialog}
-                                >
-                                    <FaPlus className="w-4 h-4" />
-                                </Button>
-                            </Tooltip>
+            <Card>
+                <CardHeader variant="gradient" color="blue" className="p-6 mb-8">
+                    <Typography variant="h6" color="white">
+                        Quản lý Tài khoản
+                    </Typography>
+                </CardHeader>
+                <CardBody className="px-0 pt-0 pb-2 overflow-auto">
+                    <div className="flex justify-between items-center p-4 px-6 pr-10 mb-4">
+                        <div className="flex items-center gap-4">
+                            <Input
+                                label="Tìm kiếm theo MSHS hoặc tên"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-72"
+                            />
                         </div>
+                        <Tooltip
+                            content="Thêm Tài khoản"
+                            className="bg-gradient-to-r from-black to-transparent opacity-70"
+                        >
+                            <Button
+                                className="flex items-center gap-3"
+                                color="blue"
+                                size="sm"
+                                onClick={openAddDialog}
+                            >
+                                <FaPlus className="w-4 h-4" />
+                            </Button>
+                        </Tooltip>
+                    </div>
 
-                        {filteredAccounts.length === 0 ? (
-                            <Typography className="py-4 text-center">
-                                Không tìm thấy tài khoản nào.   
+                    {isLoading ? (
+                        <div className="flex justify-center">
+                            <Spinner />
+                        </div>
+                    ) : filteredAccounts.length === 0 ? (
+                        <div className="flex items-center justify-center h-64">
+                            <Typography variant="h6" color="blue-gray" className="font-normal">
+                                Hiện tại chưa có tài khoản nào được thêm
                             </Typography>
-                        ) : (
+                        </div>
+                    ) : (
+                        <>
                             <table className="w-full min-w-[640px] table-auto">
                                 <thead>
                                     <tr>
@@ -294,93 +298,95 @@ const ManageClubAccountsPR = () => {
                                     })}
                                 </tbody>
                             </table>
-                        )}
 
-                        <div className="flex items-center gap-4 justify-center mt-6 mb-4">
-                            <Button
-                                variant="text"
-                                className="flex items-center gap-2"
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                            >
-                                <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
-                            </Button>
+                            {totalPages > 0 && (
+                                <div className="flex items-center gap-4 justify-center mt-6 mb-4">
+                                    <Button
+                                        variant="text"
+                                        className="flex items-center gap-2"
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                    >
+                                        <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                                    </Button>
 
-                            <div className="flex items-center gap-2">
-                                {totalPages <= 5 ? (
-                                    [...Array(totalPages)].map((_, index) => (
-                                        <Button
-                                            key={index + 1}
-                                            variant={currentPage === index + 1 ? "gradient" : "text"}
-                                            color="blue"
-                                            onClick={() => handlePageChange(index + 1)}
-                                            className="w-10 h-10"
-                                        >
-                                            {index + 1}
-                                        </Button>
-                                    ))
-                                ) : (
-                                    <>
-                                        <Button
-                                            variant={currentPage === 1 ? "gradient" : "text"}
-                                            color="blue"
-                                            onClick={() => handlePageChange(1)}
-                                            className="w-10 h-10"
-                                        >
-                                            1
-                                        </Button>
-
-                                        {currentPage > 3 && (
-                                            <span className="mx-2">...</span>
-                                        )}
-
-                                        {[...Array(3)].map((_, index) => {
-                                            const pageNumber = Math.min(
-                                                Math.max(currentPage - 1 + index, 2),
-                                                totalPages - 1
-                                            );
-                                            if (pageNumber <= 1 || pageNumber >= totalPages) return null;
-                                            return (
+                                    <div className="flex items-center gap-2">
+                                        {totalPages <= 5 ? (
+                                            [...Array(totalPages)].map((_, index) => (
                                                 <Button
-                                                    key={pageNumber}
-                                                    variant={currentPage === pageNumber ? "gradient" : "text"}
+                                                    key={index + 1}
+                                                    variant={currentPage === index + 1 ? "gradient" : "text"}
                                                     color="blue"
-                                                    onClick={() => handlePageChange(pageNumber)}
+                                                    onClick={() => handlePageChange(index + 1)}
                                                     className="w-10 h-10"
                                                 >
-                                                    {pageNumber}
+                                                    {index + 1}
                                                 </Button>
-                                            );
-                                        })}
+                                            ))
+                                        ) : (
+                                            <>
+                                                <Button
+                                                    variant={currentPage === 1 ? "gradient" : "text"}
+                                                    color="blue"
+                                                    onClick={() => handlePageChange(1)}
+                                                    className="w-10 h-10"
+                                                >
+                                                    1
+                                                </Button>
 
-                                        {currentPage < totalPages - 2 && (
-                                            <span className="mx-2">...</span>
+                                                {currentPage > 3 && (
+                                                    <span className="mx-2">...</span>
+                                                )}
+
+                                                {[...Array(3)].map((_, index) => {
+                                                    const pageNumber = Math.min(
+                                                        Math.max(currentPage - 1 + index, 2),
+                                                        totalPages - 1
+                                                    );
+                                                    if (pageNumber <= 1 || pageNumber >= totalPages) return null;
+                                                    return (
+                                                        <Button
+                                                            key={pageNumber}
+                                                            variant={currentPage === pageNumber ? "gradient" : "text"}
+                                                            color="blue"
+                                                            onClick={() => handlePageChange(pageNumber)}
+                                                            className="w-10 h-10"
+                                                        >
+                                                            {pageNumber}
+                                                        </Button>
+                                                    );
+                                                })}
+
+                                                {currentPage < totalPages - 2 && (
+                                                    <span className="mx-2">...</span>
+                                                )}
+
+                                                <Button
+                                                    variant={currentPage === totalPages ? "gradient" : "text"}
+                                                    color="blue"
+                                                    onClick={() => handlePageChange(totalPages)}
+                                                    className="w-10 h-10"
+                                                >
+                                                    {totalPages}
+                                                </Button>
+                                            </>
                                         )}
+                                    </div>
 
-                                        <Button
-                                            variant={currentPage === totalPages ? "gradient" : "text"}
-                                            color="blue"
-                                            onClick={() => handlePageChange(totalPages)}
-                                            className="w-10 h-10"
-                                        >
-                                            {totalPages}
-                                        </Button>
-                                    </>
-                                )}
-                            </div>
-
-                            <Button
-                                variant="text"
-                                className="flex items-center gap-2"
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                            >
-                                Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </CardBody>
-                </Card>
-            )}
+                                    <Button
+                                        variant="text"
+                                        className="flex items-center gap-2"
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </CardBody>
+            </Card>
 
             {/* Add Account Dialog */}
             <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>

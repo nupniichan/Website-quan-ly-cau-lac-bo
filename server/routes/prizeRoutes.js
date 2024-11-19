@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const Prize = require('../models/Prize');
-const Club = require('../models/Club');  // Đảm bảo đã import model Club
+const Club = require('../models/Club');
+const Member = require('../models/Member');
 const multer = require('multer');
 const path = require('path');
 const Report = require('../models/Report');
+const mongoose = require('mongoose');
 
 // Set up multer for file upload
 const storage = multer.diskStorage({
@@ -77,26 +79,43 @@ const upload = multer({ storage: storage });
 router.post('/add-prize', upload.single('anhDatGiai'), async (req, res) => {
     try {
         const { club, ...prizeData } = req.body;
+        
+        // Log để debug
+        console.log('Request body:', req.body);
+        console.log('File:', req.file);
 
         // Validate required fields
         if (!prizeData.tenGiaiThuong || !prizeData.ngayDatGiai || !prizeData.loaiGiai || !club) {
             return res.status(400).json({ message: 'Thiếu thông tin bắt buộc' });
         }
 
-        const clubExists = await Club.findById(club);
-        if (!clubExists) {
-            return res.status(404).json({ message: 'Không tìm thấy CLB' });
+        // Kiểm tra xem giải thưởng đã tồn tại chưa
+        const existingPrize = await Prize.findOne({
+            tenGiaiThuong: prizeData.tenGiaiThuong,
+            ngayDatGiai: new Date(prizeData.ngayDatGiai),
+            thanhVienDatGiai: prizeData.thanhVienDatGiai,
+            club: club
+        });
+
+        if (existingPrize) {
+            return res.status(400).json({ message: 'Giải thưởng này đã tồn tại' });
         }
 
         const newPrize = new Prize({
             ...prizeData,
             club,
             ngayDatGiai: new Date(prizeData.ngayDatGiai),
-            anhDatGiai: req.file ? req.file.filename : undefined // Chỉ lưu tên file, không lưu đường dẫn đầy đủ
+            anhDatGiai: req.file ? req.file.filename : null,
+            thanhVienDatGiai: prizeData.thanhVienDatGiai
         });
 
-        await newPrize.save();
-        res.status(201).json(newPrize);
+        const savedPrize = await newPrize.save();
+        
+        // Populate thông tin thành viên trước khi trả về
+        const populatedPrize = await Prize.findById(savedPrize._id)
+            .populate('thanhVienDatGiai', 'hoTen');
+
+        res.status(201).json(populatedPrize);
     } catch (error) {
         console.error('Error adding prize:', error);
         res.status(400).json({ message: error.message });
@@ -126,14 +145,32 @@ router.post('/add-prize', upload.single('anhDatGiai'), async (req, res) => {
  */
 router.get('/get-prizes-by-club/:clubId', async (req, res) => {
     try {
-        const prizes = await Prize.find({ club: req.params.clubId });
+        const prizes = await Prize.find({ club: req.params.clubId })
+            .populate({
+                path: 'thanhVienDatGiai',
+                select: 'hoTen',
+                model: 'Member'
+            })
+            .sort({ ngayDatGiai: -1 });
+
+        // Log để debug
+        console.log('Prizes with members:', prizes);
 
         if (!prizes || prizes.length === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy giải thưởng cho CLB' });
+            return res.json([]);
         }
 
-        res.status(200).json(prizes);
+        // Format dữ liệu trước khi gửi về client
+        const formattedPrizes = prizes.map(prize => ({
+            ...prize.toObject(),
+            ngayDatGiai: new Date(prize.ngayDatGiai).toISOString().split('T')[0],
+            thanhVienHoTen: prize.thanhVienDatGiai?.hoTen || 
+                           (typeof prize.thanhVienDatGiai === 'string' ? prize.thanhVienDatGiai : 'N/A')
+        }));
+
+        res.status(200).json(formattedPrizes);
     } catch (error) {
+        console.error('Error fetching prizes:', error);
         res.status(500).json({ message: error.message });
     }
 });
@@ -181,13 +218,24 @@ router.get('/get-prizes', async (req, res) => {
  */
 router.get('/get-prize/:id', async (req, res) => {
     try {
-        const prize = await Prize.findById(req.params.id);
+        const prize = await Prize.findById(req.params.id)
+            .populate('thanhVienDatGiai', 'hoTen')
+            .populate('club', 'tenCLB');
 
         if (!prize) {
             return res.status(404).json({ message: 'Không tìm thấy giải thưởng' });
         }
 
-        res.status(200).json(prize);
+        // Format dữ liệu trước khi gửi về client
+        const formattedPrize = {
+            ...prize.toObject(),
+            thanhVienHoTen: prize.thanhVienDatGiai?.hoTen || 
+                           (typeof prize.thanhVienDatGiai === 'string' 
+                               ? prize.thanhVienDatGiai 
+                               : 'Không xác định')
+        };
+
+        res.status(200).json(formattedPrize);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -222,13 +270,48 @@ router.get('/get-prize/:id', async (req, res) => {
  */
 router.put('/update-prize/:id', upload.single('anhDatGiai'), async (req, res) => {
     try {
-        const { _id, ...updateData } = req.body;
-
+        const { _id, createdAt, updatedAt, __v, ...updateData } = req.body;
+        
+        // Xử lý ảnh mới nếu có
         if (req.file) {
             updateData.anhDatGiai = req.file.filename;
         }
 
-        const updatedPrize = await Prize.findByIdAndUpdate(req.params.id, updateData, { new: true });
+        // Xử lý club ID - Đảm bảo là string
+        if (updateData.club) {
+            if (Array.isArray(updateData.club)) {
+                updateData.club = updateData.club[0]; // Lấy phần tử đầu tiên nếu là mảng
+            }
+            updateData.club = new mongoose.Types.ObjectId(updateData.club);
+        }
+
+        // Xử lý thanhVienDatGiai
+        if (updateData.thanhVienDatGiai) {
+            try {
+                if (typeof updateData.thanhVienDatGiai === 'string') {
+                    updateData.thanhVienDatGiai = new mongoose.Types.ObjectId(updateData.thanhVienDatGiai);
+                } else if (updateData.thanhVienDatGiai._id) {
+                    updateData.thanhVienDatGiai = new mongoose.Types.ObjectId(updateData.thanhVienDatGiai._id);
+                }
+            } catch (error) {
+                console.error('Error converting thanhVienDatGiai:', error);
+                return res.status(400).json({ 
+                    message: 'Invalid thanhVienDatGiai format',
+                    error: error.message 
+                });
+            }
+        }
+
+        console.log('Updating prize with data:', updateData);
+
+        const updatedPrize = await Prize.findByIdAndUpdate(
+            req.params.id,
+            { $set: updateData },
+            { 
+                new: true,
+                runValidators: true
+            }
+        ).populate('thanhVienDatGiai', 'hoTen');
 
         if (!updatedPrize) {
             return res.status(404).json({ message: 'Không tìm thấy giải thưởng' });
@@ -236,7 +319,11 @@ router.put('/update-prize/:id', upload.single('anhDatGiai'), async (req, res) =>
 
         res.status(200).json(updatedPrize);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error updating prize:', error);
+        res.status(500).json({ 
+            message: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 

@@ -18,7 +18,7 @@ import {
     Typography,
 } from "@material-tailwind/react";
 import axios from "axios";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
@@ -54,6 +54,7 @@ const ManagePrizes = () => {
         endDate: ''
     });
     const [showMemberDropdown, setShowMemberDropdown] = useState(false);
+    const [memberValidationError, setMemberValidationError] = useState("");
 
     const filteredPrizes = useMemo(() => {
         return prizes.filter(prize => {
@@ -102,13 +103,21 @@ const ManagePrizes = () => {
     const fetchPrizes = async (clubId) => {
         setIsLoading(true);
         try {
-            const response = await axios.get(
-                `${API_URL}/get-prizes-by-club/${clubId}`,
-            );
-            setPrizes(response.data);
+            const response = await axios.get(`${API_URL}/get-prizes-by-club/${clubId}`);
+            if (response.data) {
+                console.log('Response data:', response.data);
+
+                const formattedPrizes = response.data.map(prize => ({
+                    ...prize,
+                    ngayDatGiai: new Date(prize.ngayDatGiai).toISOString().split('T')[0],
+                    thanhVienHoTen: prize.thanhVienDatGiai?.hoTen || 
+                                   (typeof prize.thanhVienDatGiai === 'string' ? prize.thanhVienDatGiai : 'N/A')
+                }));
+                setPrizes(formattedPrizes);
+            }
         } catch (error) {
             console.error("Error fetching prizes:", error);
-            alert("Lỗi khi tải danh sách giải thưởng");
+            setPrizes([]);
         } finally {
             setIsLoading(false);
         }
@@ -129,46 +138,33 @@ const ManagePrizes = () => {
         if (!validateForm()) return;
         
         try {
-            if (!managedClub) {
-                throw new Error("Managed club information is not available");
-            }
-
-            const prizeData = {
-                ...newPrize,
-                club: managedClub._id,
-                anhDatGiai: newPrize.anhDatGiai
-                    ? newPrize.anhDatGiai.name
-                    : null, // Send file name or null
-            };
-
-            // If using FormData (for file upload)
             const formData = new FormData();
-            Object.keys(prizeData).forEach((key) => {
-                if (key === "anhDatGiai" && prizeData[key] instanceof File) {
-                    formData.append("anhDatGiai", prizeData[key]);
+            
+            // Thêm các trường dữ liệu vào formData
+            Object.keys(newPrize).forEach(key => {
+                if (key === 'anhDatGiai' && newPrize[key] instanceof File) {
+                    formData.append('anhDatGiai', newPrize[key]);
                 } else {
-                    formData.append(key, prizeData[key]);
+                    formData.append(key, newPrize[key]);
                 }
             });
+            
+            // Thêm club ID
+            formData.append('club', managedClub._id);
 
             const response = await axios.post(
                 `${API_URL}/add-prize`,
                 formData,
                 {
-                    headers: { "Content-Type": "multipart/form-data" },
-                },
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                }
             );
 
             setIsDialogOpen(false);
             fetchPrizes(managedClub._id);
         } catch (error) {
-            console.error("Error adding prize:", error);
-            alert(
-                `Lỗi khi thêm giải thưởng: ${
-                    error.response?.data?.message || error.message ||
-                    "Không xác định"
-                }`,
-            );
+            console.error('Error adding prize:', error);
+            alert(`Lỗi khi thêm giải thưởng: ${error.response?.data?.message || error.message}`);
         }
     };
 
@@ -177,44 +173,55 @@ const ManagePrizes = () => {
 
         try {
             const formData = new FormData();
-            Object.keys(newPrize).forEach((key) => {
+            
+            // Loại bỏ các trường không cần thiết
+            const { _id, createdAt, updatedAt, __v, ...prizeData } = newPrize;
+
+            // Thêm các trường dữ liệu vào formData
+            Object.keys(prizeData).forEach((key) => {
                 if (key === "anhDatGiai") {
-                    if (
-                        newPrize.anhDatGiai &&
-                        newPrize.anhDatGiai instanceof File
-                    ) {
-                        formData.append("anhDatGiai", newPrize.anhDatGiai);
+                    if (prizeData.anhDatGiai instanceof File) {
+                        formData.append("anhDatGiai", prizeData.anhDatGiai);
                     }
-                } else if (key !== "club") { // Không thêm trường 'club' vào formData
-                    formData.append(key, newPrize[key]);
+                } else if (key === 'club') {
+                    // Đảm bảo club ID là string
+                    formData.append('club', managedClub._id.toString());
+                } else if (key === 'thanhVienDatGiai') {
+                    // Xử lý thanhVienDatGiai
+                    const memberId = typeof prizeData.thanhVienDatGiai === 'object' 
+                        ? prizeData.thanhVienDatGiai._id 
+                        : prizeData.thanhVienDatGiai;
+                    formData.append('thanhVienDatGiai', memberId);
+                } else {
+                    formData.append(key, prizeData[key]);
                 }
             });
-            // Thêm club ID riêng biệt
-            formData.append("club", managedClub._id);
 
             const response = await axios.put(
                 `${API_URL}/update-prize/${editingPrizeId}`,
                 formData,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
-                },
+                }
             );
+
             setIsDialogOpen(false);
             setEditingPrizeId(null);
             fetchPrizes(managedClub._id);
+            alert('Cập nhật giải thưởng thành công!');
         } catch (error) {
             console.error("Error updating prize:", error);
             alert(
                 `Lỗi khi cập nhật giải thưởng: ${
                     error.response?.data?.message || error.message ||
                     "Không xác định"
-                }`,
+                }`
             );
         }
     };
 
     const handleDeletePrize = async (prizeId) => {
-        if (window.confirm("Bạn có chắc chắn muốn xóa giải thưởng này?")) {
+        if (window.confirm("Bạn có chắc chắn muốn x��a giải thưởng này?")) {
             try {
                 // Kiểm tra xem giải thưởng có trong báo cáo không
                 const checkResponse = await axios.get(`${API_URL}/check-prize-in-reports/${prizeId}`);
@@ -256,10 +263,21 @@ const ManagePrizes = () => {
     const openEditDialog = (id) => {
         const prizeToEdit = prizes.find((prize) => prize._id === id);
         if (prizeToEdit) {
+            // Tìm thông tin thành viên
+            const member = members.find(m => 
+                m._id === (typeof prizeToEdit.thanhVienDatGiai === 'string' 
+                    ? prizeToEdit.thanhVienDatGiai 
+                    : prizeToEdit.thanhVienDatGiai?._id)
+            );
+
             setNewPrize({
                 ...prizeToEdit,
-                anhDatGiai: null, // We'll keep the file input empty, but display the current image separately
+                anhDatGiai: null, // Giữ input file trống
             });
+            
+            // Set giá trị tìm kiếm thành viên
+            setMemberSearch(member ? member.hoTen : '');
+            
             setCurrentImage(
                 prizeToEdit.anhDatGiai
                     ? `${API_URL}/uploads/${prizeToEdit.anhDatGiai}`
@@ -274,7 +292,15 @@ const ManagePrizes = () => {
     const openDetailDialog = (id) => {
         const prizeDetail = prizes.find((prize) => prize._id === id);
         if (prizeDetail) {
-            setDetailPrize(prizeDetail);
+            // Tìm thông tin thành viên
+            const memberName = prizeDetail.thanhVienDatGiai?.hoTen || 
+                              members.find(m => m._id === prizeDetail.thanhVienDatGiai)?._id || 
+                              'Không xác định';
+
+            setDetailPrize({
+                ...prizeDetail,
+                thanhVienHoTen: memberName // Thêm tên thành viên vào object
+            });
             setIsDetailDialogOpen(true);
         }
     };
@@ -306,6 +332,43 @@ const ManagePrizes = () => {
         setCurrentPage(pageNumber);
     };
 
+    const handleMemberSearch = (searchTerm) => {
+        setMemberSearch(searchTerm);
+        setShowMemberDropdown(true);
+        setMemberValidationError("");
+        setErrors(prev => ({ ...prev, thanhVienDatGiai: "" }));
+        
+        // Nếu input trống, hiển thị 5 thành viên ngẫu nhiên
+        if (searchTerm.trim() === '') {
+            const shuffled = [...members].sort(() => 0.5 - Math.random());
+            setFilteredMembers(shuffled.slice(0, 5));
+            return;
+        }
+
+        // Nếu có nhập text, lọc theo tên
+        const filtered = members.filter(member => 
+            member.hoTen.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            member.mssv?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setFilteredMembers(filtered.slice(0, 5));
+    };
+
+    const validateMember = () => {
+        const selectedMemberId = newPrize.thanhVienDatGiai;
+        
+        // Kiểm tra xem thành viên có tồn tại trong danh sách không
+        const isValidMember = members.some(member => 
+            member._id === selectedMemberId || 
+            (typeof selectedMemberId === 'object' && member._id === selectedMemberId._id)
+        );
+        
+        if (!isValidMember) {
+            setMemberValidationError("Vui lòng chọn thành viên từ danh sách câu lạc bộ");
+            return false;
+        }
+        return true;
+    };
+
     const validateForm = () => {
         const newErrors = {};
         const today = new Date();
@@ -330,47 +393,30 @@ const ManagePrizes = () => {
 
         if (!newPrize.thanhVienDatGiai) {
             newErrors.thanhVienDatGiai = "Vui lòng chọn thành viên đạt giải";
+        } else if (!validateMember()) {
+            newErrors.thanhVienDatGiai = memberValidationError;
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleMemberSearch = (searchTerm) => {
-        setMemberSearch(searchTerm);
-        setShowMemberDropdown(true);
-        
-        // Nếu input trống, hiển thị 5 thành viên ngẫu nhiên
-        if (searchTerm.trim() === '') {
-            const shuffled = [...members].sort(() => 0.5 - Math.random());
-            setFilteredMembers(shuffled.slice(0, 5));
-            return;
-        }
-
-        // Nếu có nhập text, lọc theo tên
-        const filtered = members.filter(member => 
-            member.hoTen.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        setFilteredMembers(filtered.slice(0, 5));
-    };
+    // Thêm refs để xử lý click outside
+    const dropdownRef = useRef(null);
+    const inputRef = useRef(null);
 
     // Thêm useEffect để xử lý click outside
     useEffect(() => {
         const handleClickOutside = (event) => {
-            const dropdown = document.getElementById('member-dropdown');
-            const input = document.getElementById('member-input');
-            
-            if (dropdown && input && 
-                !dropdown.contains(event.target) && 
-                !input.contains(event.target)) {
+            if (dropdownRef.current && 
+                !dropdownRef.current.contains(event.target) && 
+                !inputRef.current.contains(event.target)) {
                 setShowMemberDropdown(false);
             }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     return (
@@ -401,7 +447,7 @@ const ManagePrizes = () => {
                                 <div className="relative w-full sm:w-40">
                                     <Input
                                         type="date"
-                                        label="Từ ngày"
+                                        label="T ngày"
                                         value={dateFilter.startDate}
                                         onChange={(e) => setDateFilter(prev => ({
                                             ...prev,
@@ -476,247 +522,240 @@ const ManagePrizes = () => {
                         </div>
                     )}
 
-                    {isLoading
-                        ? (
-                            <div className="flex items-center justify-center h-64">
-                                <Spinner className="w-16 h-16 text-blue-500/10" />
-                            </div>
-                        )
-                        : (
-                            <>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full min-w-[640px] table-auto">
-                                        <thead>
-                                            <tr>
-                                                {[
-                                                    "STT",
-                                                    "Tên giải thưởng",
-                                                    "Ngày đạt giải",
-                                                    "Loại giải",
-                                                    "Thành viên đạt giải",
-                                                    "Thao tác",
-                                                ].map((el) => (
-                                                    <th
-                                                        key={el}
-                                                        className="px-5 py-3 text-left border-b border-blue-gray-50"
+                    {isLoading ? (
+                        <div className="flex items-center justify-center h-64">
+                            <Spinner className="w-16 h-16 text-blue-500/10" />
+                        </div>
+                    ) : filteredPrizes.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-64 gap-4">
+                            <Typography variant="h6" color="blue-gray">
+                                {searchTerm || dateFilter.startDate || dateFilter.endDate
+                                    ? "Không tìm thấy giải thưởng nào phù hợp với điều kiện tìm kiếm"
+                                    : "Chưa có giải thưởng nào trong hệ thống"}
+                            </Typography>
+                            <Button
+                                className="flex items-center gap-3"
+                                color="blue"
+                                onClick={openAddDialog}
+                            >
+                                <FaPlus className="w-4 h-4" /> Thêm giải thưởng mới
+                            </Button>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="overflow-x-auto">
+                                <table className="w-full min-w-[640px] table-auto">
+                                    <thead>
+                                        <tr>
+                                            {[
+                                                "STT",
+                                                "Tên giải thưởng",
+                                                "Ngày đạt giải",
+                                                "Loại giải",
+                                                "Thành viên đạt giải",
+                                                "Thao tác",
+                                            ].map((el) => (
+                                                <th
+                                                    key={el}
+                                                    className="px-5 py-3 text-left border-b border-blue-gray-50"
+                                                >
+                                                    <Typography
+                                                        variant="small"
+                                                        className="text-[11px] font-bold uppercase text-blue-gray-400"
                                                     >
-                                                        <Typography
-                                                            variant="small"
-                                                            className="text-[11px] font-bold uppercase text-blue-gray-400"
-                                                        >
-                                                            {el}
+                                                        {el}
+                                                    </Typography>
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {currentPrizes.map((prize, index) => {
+                                            const className = `py-3 px-5 ${
+                                                index === currentPrizes.length - 1
+                                                    ? ""
+                                                    : "border-b border-blue-gray-50"
+                                            }`;
+
+                                            return (
+                                                <tr key={prize._id}>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {indexOfFirstItem + index + 1}
                                                         </Typography>
-                                                    </th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {currentPrizes.map(
-                                                (
-                                                    {
-                                                        _id,
-                                                        tenGiaiThuong,
-                                                        ngayDatGiai,
-                                                        loaiGiai,
-                                                        thanhVienDatGiai,
-                                                    },
-                                                    index,
-                                                ) => {
-                                                    const className = `py-3 px-5 ${
-                                                        index === currentPrizes.length - 1
-                                                            ? ""
-                                                            : "border-b border-blue-gray-50"
-                                                    }`;
-
-                                                    // Format ngày thành dd/mm/yyyy
-                                                    const formatDate = (dateString) => {
-                                                        const date = new Date(dateString);
-                                                        return date.toLocaleDateString('vi-VN', {
-                                                            day: '2-digit',
-                                                            month: '2-digit',
-                                                            year: 'numeric'
-                                                        });
-                                                    };
-
-                                                    return (
-                                                        <tr key={_id}>
-                                                            <td className={className}>
-                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {indexOfFirstItem + index + 1}
-                                                                </Typography>
-                                                            </td>
-                                                            <td className={className}>
-                                                                <Tooltip
-                                                                    content={tenGiaiThuong}
-                                                                    animate={{
-                                                                        mount: { scale: 1, y: 0 },
-                                                                        unmount: { scale: 0, y: 25 },
-                                                                    }}
-                                                                    className="bg-black bg-opacity-80"
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Tooltip
+                                                            content={prize.tenGiaiThuong}
+                                                            animate={{
+                                                                mount: { scale: 1, y: 0 },
+                                                                unmount: { scale: 0, y: 25 },
+                                                            }}
+                                                            className="bg-black bg-opacity-80"
+                                                        >
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {prize.tenGiaiThuong.length > 30 
+                                                                    ? `${prize.tenGiaiThuong.substring(0, 30)}...` 
+                                                                    : prize.tenGiaiThuong}
+                                                            </Typography>
+                                                        </Tooltip>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {new Date(prize.ngayDatGiai).toLocaleDateString('vi-VN')}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {prize.loaiGiai}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {prize.thanhVienDatGiai?.hoTen || 
+                                                             (typeof prize.thanhVienDatGiai === 'string' ? 
+                                                              members.find(m => m._id === prize.thanhVienDatGiai)?.hoTen : 'N/A')}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <div className="flex items-center gap-2">
+                                                            <Tooltip
+                                                                content="Xem"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                            >
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="blue"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openDetailDialog(
+                                                                            prize._id,
+                                                                        )}
                                                                 >
-                                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                        {tenGiaiThuong.length > 30 ? `${tenGiaiThuong.substring(0, 30)}...` : tenGiaiThuong}
-                                                                    </Typography>
-                                                                </Tooltip>
-                                                            </td>
-                                                            <td className={className}>
-                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {formatDate(ngayDatGiai)}
-                                                                </Typography>
-                                                            </td>
-                                                            <td className={className}>
-                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {loaiGiai}
-                                                                </Typography>
-                                                            </td>
-                                                            <td className={className}>
-                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {members.find((m) =>
-                                                                        m._id ===
-                                                                            thanhVienDatGiai
-                                                                    )?.hoTen || "N/A"}
-                                                                </Typography>
-                                                            </td>
-                                                            <td className={className}>
-                                                                <div className="flex items-center gap-2">
-                                                                    <Tooltip
-                                                                        content="Xem"
-                                                                        animate={{
-                                                                            mount: {
-                                                                                scale:
-                                                                                    1,
-                                                                                y: 0,
-                                                                            },
-                                                                            unmount: {
-                                                                                scale:
-                                                                                    0,
-                                                                                y: 25,
-                                                                            },
-                                                                        }}
-                                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                                    >
-                                                                        <Button
-                                                                            size="sm"
-                                                                            color="blue"
-                                                                            className="flex items-center gap-2"
-                                                                            onClick={() =>
-                                                                                openDetailDialog(
-                                                                                    _id,
-                                                                                )}
-                                                                        >
-                                                                            <EyeIcon
-                                                                                strokeWidth={2}
-                                                                                className="w-4 h-4"
-                                                                            />
-                                                                        </Button>
-                                                                    </Tooltip>
-                                                                    <Tooltip
-                                                                        content="Sửa"
-                                                                        animate={{
-                                                                            mount: {
-                                                                                scale:
-                                                                                    1,
-                                                                                y: 0,
-                                                                            },
-                                                                            unmount: {
-                                                                                scale:
-                                                                                    0,
-                                                                                y: 25,
-                                                                            },
-                                                                        }}
-                                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                                    >
-                                                                        <Button
-                                                                            size="sm"
-                                                                            color="green"
-                                                                            className="flex items-center gap-2"
-                                                                            onClick={() =>
-                                                                                openEditDialog(
-                                                                                    _id,
-                                                                                )}
-                                                                        >
-                                                                            <PencilIcon
-                                                                                strokeWidth={2}
-                                                                                className="w-4 h-4"
-                                                                            />
-                                                                        </Button>
-                                                                    </Tooltip>
-                                                                    <Tooltip
-                                                                        content="Xóa"
-                                                                        animate={{
-                                                                            mount: {
-                                                                                scale:
-                                                                                    1,
-                                                                                y: 0,
-                                                                            },
-                                                                            unmount: {
-                                                                                scale:
-                                                                                    0,
-                                                                                y: 25,
-                                                                            },
-                                                                        }}
-                                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                                    >
-                                                                        <Button
-                                                                            size="sm"
-                                                                            color="red"
-                                                                            className="flex items-center gap-2"
-                                                                            onClick={() =>
-                                                                                handleDeletePrize(
-                                                                                    _id,
-                                                                                )}
-                                                                        >
-                                                                            <TrashIcon
-                                                                                strokeWidth={2}
-                                                                                className="w-4 h-4"
-                                                                            />
-                                                                        </Button>
-                                                                    </Tooltip>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                },
-                                            )}
-                                        </tbody>
-                                    </table>
+                                                                    <EyeIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content="Sửa"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                            >
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="green"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openEditDialog(
+                                                                            prize._id,
+                                                                        )}
+                                                                >
+                                                                    <PencilIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content="Xóa"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                            >
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="red"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        handleDeletePrize(
+                                                                            prize._id,
+                                                                        )}
+                                                                >
+                                                                    <TrashIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center gap-4 justify-center mt-4 px-4">
+                                <Button
+                                    variant="text"
+                                    className="flex items-center gap-2"
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                                </Button>
+                                
+                                <div className="flex items-center gap-2 overflow-x-auto py-2">
+                                    {[...Array(totalPages)].map((_, index) => (
+                                        <Button
+                                            key={index + 1}
+                                            variant={currentPage === index + 1 ? "gradient" : "text"}
+                                            color="blue"
+                                            onClick={() => handlePageChange(index + 1)}
+                                            className="w-10 h-10 min-w-[2.5rem]"
+                                        >
+                                            {index + 1}
+                                        </Button>
+                                    ))}
                                 </div>
 
-                                <div className="flex flex-col sm:flex-row items-center gap-4 justify-center mt-4 px-4">
-                                    <Button
-                                        variant="text"
-                                        className="flex items-center gap-2"
-                                        onClick={() => handlePageChange(currentPage - 1)}
-                                        disabled={currentPage === 1}
-                                    >
-                                        <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
-                                    </Button>
-                                    
-                                    <div className="flex items-center gap-2 overflow-x-auto py-2">
-                                        {[...Array(totalPages)].map((_, index) => (
-                                            <Button
-                                                key={index + 1}
-                                                variant={currentPage === index + 1 ? "gradient" : "text"}
-                                                color="blue"
-                                                onClick={() => handlePageChange(index + 1)}
-                                                className="w-10 h-10 min-w-[2.5rem]"
-                                            >
-                                                {index + 1}
-                                            </Button>
-                                        ))}
-                                    </div>
-
-                                    <Button
-                                        variant="text"
-                                        className="flex items-center gap-2"
-                                        onClick={() => handlePageChange(currentPage + 1)}
-                                        disabled={currentPage === totalPages}
-                                    >
-                                        Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </>
-                        )}
+                                <Button
+                                    variant="text"
+                                    className="flex items-center gap-2"
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </>
+                    )}
                 </CardBody>
             </Card>
 
@@ -725,6 +764,7 @@ const ManagePrizes = () => {
                 open={isDialogOpen}
                 handler={() => setIsDialogOpen(false)}
                 size="lg"
+                className="overflow-visible"
             >
                 <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
                     {editingPrizeId
@@ -796,51 +836,67 @@ const ManagePrizes = () => {
                         )}
                     </div>
 
-                    <div className="relative">
+                    <div className="relative mb-4">
                         <Input
+                            ref={inputRef}
                             id="member-input"
-                            label="Tìm thành viên"
+                            type="text"
+                            label="Thành viên đạt giải"
                             value={memberSearch}
                             onChange={(e) => handleMemberSearch(e.target.value)}
-                            error={!!errors.thanhVienDatGiai}
                             onFocus={() => {
                                 setShowMemberDropdown(true);
-                                // Hiển thị 5 thành viên ngẫu nhiên khi focus
                                 const shuffled = [...members].sort(() => 0.5 - Math.random());
                                 setFilteredMembers(shuffled.slice(0, 5));
                             }}
+                            error={!!errors.thanhVienDatGiai || !!memberValidationError}
+                            className="pr-10"
                         />
-                        {errors.thanhVienDatGiai && (
-                            <Typography color="red" className="mt-1 text-xs">
-                                {errors.thanhVienDatGiai}
-                            </Typography>
+                        
+                        {showMemberDropdown && (
+                            <div 
+                                ref={dropdownRef}
+                                className="absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {filteredMembers.length > 0 ? (
+                                    filteredMembers.map((member) => (
+                                        <div
+                                            key={member._id}
+                                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                            onClick={() => {
+                                                setNewPrize(prev => ({
+                                                    ...prev,
+                                                    thanhVienDatGiai: member._id
+                                                }));
+                                                setMemberSearch(member.hoTen);
+                                                setShowMemberDropdown(false);
+                                                setMemberValidationError("");
+                                                setErrors(prev => ({ ...prev, thanhVienDatGiai: "" }));
+                                            }}
+                                        >
+                                            <div className="text-sm font-medium">
+                                                {member.hoTen}
+                                            </div>
+                                            {member.mssv && (
+                                                <div className="text-xs text-gray-600">
+                                                    MSSV: {member.mssv}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="px-4 py-2 text-gray-500 text-sm">
+                                        Không tìm thấy thành viên phù hợp
+                                    </div>
+                                )}
+                            </div>
                         )}
                         
-                        {showMemberDropdown && filteredMembers.length > 0 && (
-                            <div 
-                                id="member-dropdown"
-                                className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
-                            >
-                                {filteredMembers.map((member) => (
-                                    <div
-                                        key={member._id}
-                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                        onClick={() => {
-                                            setNewPrize({
-                                                ...newPrize,
-                                                thanhVienDatGiai: member._id
-                                            });
-                                            setMemberSearch(member.hoTen);
-                                            setShowMemberDropdown(false);
-                                            setErrors({ ...errors, thanhVienDatGiai: "" });
-                                        }}
-                                    >
-                                        <Typography className="text-sm font-medium">
-                                            {member.hoTen}
-                                        </Typography>
-                                    </div>
-                                ))}
-                            </div>
+                        {(errors.thanhVienDatGiai || memberValidationError) && (
+                            <Typography variant="small" color="red" className="mt-1">
+                                {errors.thanhVienDatGiai || memberValidationError}
+                            </Typography>
                         )}
                     </div>
 
@@ -856,7 +912,7 @@ const ManagePrizes = () => {
                         <Button
                             variant="gradient"
                             className="flex items-center gap-3 w-[10.6rem]"
-                            color= "blue"
+                            color="blue"
                         >
                             <CloudArrowUpIcon className="w-5 h-5 stroke-2" />
                             Upload Image
@@ -864,31 +920,45 @@ const ManagePrizes = () => {
                                 type="file"
                                 accept="image/*"
                                 onChange={handleImageChange}
-                                className="absolute inset-0 w-full h-full opacity-0"
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             />
                         </Button>
-                        <div className="grid grid-cols-2 font-normal">
+                        <div className="grid gap-4">
                             {editingPrizeId && currentImage && (
-                                <>
-                                    <p><strong>Ảnh hiện tại:</strong></p>
-                                    <img
-                                        src={currentImage}
-                                        alt="Ảnh đạt giải hiện tại"
-                                        className="h-auto max-w-full mt-2"
-                                        style={{ maxHeight: "100px" }}
-                                    />
-                                </>
+                                <div className="bg-blue-gray-50 p-4 rounded">
+                                    <Typography className="text-gray-700 text-sm font-medium mb-2">
+                                        Ảnh hiện tại:
+                                    </Typography>
+                                    <div className="relative group">
+                                        <img
+                                            src={currentImage}
+                                            alt="Ảnh đạt giải hiện tại"
+                                            className="w-full h-auto rounded-lg object-contain max-h-[200px]"
+                                        />
+                                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 rounded-lg flex items-center justify-center">
+                                            <Button
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                                variant="text"
+                                                color="white"
+                                                onClick={() => window.open(currentImage, '_blank')}
+                                            >
+                                                <EyeIcon className="h-6 w-6" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
                             )}
                             {previewImage && (
-                                <>
-                                    <p><strong>Ảnh mới:</strong></p>
+                                <div className="bg-blue-gray-50 p-4 rounded">
+                                    <Typography className="text-gray-700 text-sm font-medium mb-2">
+                                        Ảnh mới:
+                                    </Typography>
                                     <img
                                         src={previewImage}
                                         alt="Ảnh đạt giải mới"
-                                        className="h-auto max-w-full mt-2"
-                                        style={{ maxHeight: "100px" }}
+                                        className="w-full h-auto rounded-lg object-contain max-h-[200px]"
                                     />
-                                </>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -951,7 +1021,13 @@ const ManagePrizes = () => {
 
                                     <div className="text-center bg-white p-3 rounded">
                                         <Typography className="font-medium">
-                                            Đạt bởi: {members.find((m) => m._id === detailPrize.thanhVienDatGiai)?.hoTen || "N/A"}
+                                            Đạt bởi: {detailPrize.thanhVienDatGiai?.hoTen || 
+                                                     members.find(m => 
+                                                         m._id === (typeof detailPrize.thanhVienDatGiai === 'string' 
+                                                             ? detailPrize.thanhVienDatGiai 
+                                                             : detailPrize.thanhVienDatGiai?._id
+                                                         )
+                                                     )?.hoTen || 'Không xác định'}
                                         </Typography>
                                     </div>
                                 </div>
@@ -986,17 +1062,22 @@ const ManagePrizes = () => {
                                         </Typography>
                                     </div>
 
-                                    {detailPrize.anhDatGiai && (
+                                    {detailPrize?.anhDatGiai && (
                                         <div className="bg-blue-gray-50 p-4 rounded">
                                             <Typography className="text-gray-700 text-sm font-medium mb-2">
                                                 Ảnh đạt giải
                                             </Typography>
-                                            <img
-                                                src={`${API_URL}/uploads/${detailPrize.anhDatGiai}`}
-                                                alt="Ảnh đạt giải"
-                                                className="w-full h-auto rounded-lg object-cover"
-                                                style={{ maxHeight: "300px" }}
-                                            />
+                                            <div className="relative group">
+                                                <img
+                                                    src={`${API_URL}/uploads/${detailPrize.anhDatGiai}`}
+                                                    alt="Ảnh đạt giải"
+                                                    className="w-full h-auto rounded-lg object-contain max-h-[300px]"
+                                                    onError={(e) => {
+                                                        console.error('Image load error:', e);
+                                                        e.target.style.display = 'none';
+                                                    }}
+                                                />
+                                            </div>
                                         </div>
                                     )}
 

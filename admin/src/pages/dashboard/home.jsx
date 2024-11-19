@@ -156,43 +156,76 @@ export function Home() {
                 setRole(userRole);
                 
                 const endpoint = userRole === 'student' 
-                    ? `${baseURL}/api/dashboard/student/${userId}`
-                    : `${baseURL}/api/dashboard/teacher`;
-                console.log('Calling endpoint:', endpoint);
+                    ? `/api/dashboard/student/${userId}`
+                    : `/api/dashboard/teacher`;
                 
                 const response = await axios.get(endpoint);
-                console.log('Response data:', response.data);
-                setUserData(response.data);
+                let dashboardData = response.data;
+
+                if (userRole === 'manager') {
+                    try {
+                        // Fetch tất cả học sinh (accounts)
+                        const studentsResponse = await axios.get('/api/students');
+                        const totalStudents = studentsResponse.data.length;
+
+                        // Fetch tất cả thành viên CLB (members)
+                        const membersResponse = await axios.get('/api/get-members');
+                        const totalMembers = membersResponse.data.length;
+
+                        // Tính tổng số học sinh tham gia (accounts + members)
+                        const totalParticipants = totalStudents + totalMembers;
+
+                        // Cập nhật tổng số trong dashboard data
+                        dashboardData = {
+                            ...dashboardData,
+                            totalStudents: totalParticipants, // Tổng số học sinh tham gia
+                            totalMembers: totalMembers // Tổng số thành viên CLB
+                        };
+                    } catch (error) {
+                        console.error('Error fetching data:', error);
+                    }
+                } else if (userRole === 'student' && dashboardData.managedClubs?.length > 0) {
+                    try {
+                        const clubId = dashboardData.managedClubs[0]._id;
+                        const membersResponse = await axios.get(`/api/get-members-by-club/${clubId}`);
+                        const totalMembers = membersResponse.data.length;
+                        dashboardData.totalMembers = totalMembers + 1;
+                    } catch (error) {
+                        console.error('Error fetching club members:', error);
+                    }
+                }
+
+                setUserData(dashboardData);
                 
+                // Cập nhật các biểu đồ dựa trên role
                 if (userRole === 'student') {
                     setEventChartData(prev => ({
                         ...prev,
                         datasets: [{
                             ...prev.datasets[0],
-                            data: response.data.eventStats
+                            data: dashboardData.eventStats
                         }]
                     }));
                     setAwardsChartData(prev => ({
                         ...prev,
                         datasets: [{
                             ...prev.datasets[0],
-                            data: response.data.awardStats
+                            data: dashboardData.awardStats
                         }]
                     }));
                 } else {
-                    console.log('Setting school data...');
                     setSchoolEventsData(prev => ({
                         ...prev,
                         datasets: [{
                             ...prev.datasets[0],
-                            data: response.data.schoolEventStats
+                            data: dashboardData.schoolEventStats
                         }]
                     }));
                     setSchoolAwardsData(prev => ({
                         ...prev,
                         datasets: [{
                             ...prev.datasets[0],
-                            data: response.data.schoolAwardsStats
+                            data: dashboardData.schoolAwardsStats
                         }]
                     }));
                 }

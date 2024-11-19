@@ -511,325 +511,329 @@ const ManageClubs = () => {
                     )}
 
                     <div className="overflow-auto lg:max-h-[56vh] md:max-h-[75vh] sm:max-h-[85vh]">
-                        {isLoading
-                            ? (
-                                <div className="flex items-center justify-center h-64">
-                                    <Spinner
-                                        className="w-12 h-12"
-                                        color="brown"
-                                    />
-                                </div>
-                            )
-                            : clubs.length === 0
-                            ? (
-                                <Typography className="py-4 text-center">
-                                    Chưa có câu lạc bộ nào.
+                        {isLoading ? (
+                            <div className="flex items-center justify-center h-64">
+                                <Spinner className="w-12 h-12" color="brown" />
+                            </div>
+                        ) : filteredClubs.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-64 gap-4">
+                                <Typography variant="h6" color="blue-gray">
+                                    {searchTerm || dateFilter.startDate || dateFilter.endDate || fieldFilter
+                                        ? "Không tìm thấy câu lạc bộ nào phù hợp với điều kiện tìm kiếm"
+                                        : "Chưa có câu lạc bộ nào trong hệ thống"}
                                 </Typography>
-                            )
-                            : (
-                                <>
-                                    <table className="w-full min-w-[640px] table-auto">
-                                        <thead>
-                                            <tr>
-                                                {[
-                                                    "STT",
-                                                    "Logo",
-                                                    "Tên CLB",
-                                                    "Lĩnh vực hoạt động",
-                                                    "Ngày thành lập",
-                                                    "Giáo viên phụ trách",
-                                                    "Trưởng ban CLB",
-                                                    "Tình trạng",
-                                                    "Thao tác",
-                                                ].map((el) => (
-                                                    <th
-                                                        key={el}
-                                                        className="px-5 py-3 text-left border-b border-blue-gray-50"
+                                <Button
+                                    className="flex items-center gap-3"
+                                    color="brown"
+                                    onClick={openAddDialog}
+                                >
+                                    <FaPlus className="w-4 h-4" /> Thêm câu lạc bộ mới
+                                </Button>
+                            </div>
+                        ) : (
+                            <>
+                                <table className="w-full min-w-[640px] table-auto">
+                                    <thead>
+                                        <tr>
+                                            {[
+                                                "STT",
+                                                "Logo",
+                                                "Tên CLB",
+                                                "Lĩnh vực hoạt động",
+                                                "Ngày thành lập",
+                                                "Giáo viên phụ trách",
+                                                "Trưởng ban CLB",
+                                                "Tình trạng",
+                                                "Thao tác",
+                                            ].map((el) => (
+                                                <th
+                                                    key={el}
+                                                    className="px-5 py-3 text-left border-b border-blue-gray-50"
+                                                >
+                                                    <Typography
+                                                        variant="small"
+                                                        className="text-[11px] font-bold uppercase text-blue-gray-400"
                                                     >
-                                                        <Typography
-                                                            variant="small"
-                                                            className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                                        {el}
+                                                    </Typography>
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {currentClubs.map(
+                                            ({ clubId, ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, truongBanCLB, logo, tinhTrang }, key) => {
+                                                const className = `py-3 px-5 ${
+                                                    key === currentClubs.length - 1
+                                                        ? ""
+                                                        : "border-b border-blue-gray-50"
+                                                }`;
+
+                                                return (
+                                                    <tr key={clubId}>
+                                                        <td className={className}>
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {(currentPage - 1) * itemsPerPage + key + 1}
+                                                            </Typography>
+                                                        </td>
+                                                        <td className={className}>
+                                                            <img
+                                                                src={logo
+                                                                    ? `${API_URL}/${logo}`
+                                                                    : "/img/default-club-logo.png"}
+                                                                alt={ten}
+                                                                className="object-cover w-10 h-10 rounded-full"
+                                                                onError={(
+                                                                    e,
+                                                                ) => {
+                                                                    e.target
+                                                                        .onerror =
+                                                                            null;
+                                                                    e.target
+                                                                        .src =
+                                                                            "/img/default-club-logo.png";
+                                                                }}
+                                                            />
+                                                        </td>
+                                                        <td
+                                                            className={className}
                                                         >
-                                                            {el}
-                                                        </Typography>
-                                                    </th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {currentClubs.map(
-                                                ({ clubId, ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, truongBanCLB, logo, tinhTrang }, key) => {
-                                                    const className = `py-3 px-5 ${
-                                                        key === currentClubs.length - 1
-                                                            ? ""
-                                                            : "border-b border-blue-gray-50"
-                                                    }`;
-
-                                                    return (
-                                                        <tr key={clubId}>
-                                                            <td className={className}>
-                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {(currentPage - 1) * itemsPerPage + key + 1}
-                                                                </Typography>
-                                                            </td>
-                                                            <td className={className}>
-                                                                <img
-                                                                    src={logo
-                                                                        ? `${API_URL}/${logo}`
-                                                                        : "/img/default-club-logo.png"}
-                                                                    alt={ten}
-                                                                    className="object-cover w-10 h-10 rounded-full"
-                                                                    onError={(
-                                                                        e,
-                                                                    ) => {
-                                                                        e.target
-                                                                            .onerror =
-                                                                                null;
-                                                                        e.target
-                                                                            .src =
-                                                                                "/img/default-club-logo.png";
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {ten}
+                                                            </Typography>
+                                                        </td>
+                                                        <td
+                                                            className={className}
+                                                        >
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {linhVucHoatDong}
+                                                            </Typography>
+                                                        </td>
+                                                        <td
+                                                            className={className}
+                                                        >
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {formatDate(ngayThanhLap)}
+                                                            </Typography>
+                                                        </td>
+                                                        <td
+                                                            className={className}
+                                                        >
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {giaoVienPhuTrach}
+                                                            </Typography>
+                                                        </td>
+                                                        <td
+                                                            className={className}
+                                                        >
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {studentAccounts.find(s => s.userId === truongBanCLB)?.name || truongBanCLB}
+                                                            </Typography>
+                                                        </td>
+                                                        <td className={className}>
+                                                            <Typography 
+                                                                className={`text-xs font-semibold ${
+                                                                    tinhTrang === "Còn hoạt động" 
+                                                                        ? "text-green-600" 
+                                                                        : "text-red-600"
+                                                                }`}
+                                                            >
+                                                                {tinhTrang || "Còn hoạt động"}
+                                                            </Typography>
+                                                        </td>
+                                                        <td
+                                                            className={className}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <Tooltip
+                                                                    content="Xem"
+                                                                    animate={{
+                                                                        mount: {
+                                                                            scale:
+                                                                                1,
+                                                                            y: 0,
+                                                                        },
+                                                                        unmount:
+                                                                            {
+                                                                                scale:
+                                                                                    0,
+                                                                                y: 25,
+                                                                            },
                                                                     }}
-                                                                />
-                                                            </td>
-                                                            <td
-                                                                className={className}
-                                                            >
-                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {ten}
-                                                                </Typography>
-                                                            </td>
-                                                            <td
-                                                                className={className}
-                                                            >
-                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {linhVucHoatDong}
-                                                                </Typography>
-                                                            </td>
-                                                            <td
-                                                                className={className}
-                                                            >
-                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {formatDate(ngayThanhLap)}
-                                                                </Typography>
-                                                            </td>
-                                                            <td
-                                                                className={className}
-                                                            >
-                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {giaoVienPhuTrach}
-                                                                </Typography>
-                                                            </td>
-                                                            <td
-                                                                className={className}
-                                                            >
-                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {studentAccounts.find(s => s.userId === truongBanCLB)?.name || truongBanCLB}
-                                                                </Typography>
-                                                            </td>
-                                                            <td className={className}>
-                                                                <Typography 
-                                                                    className={`text-xs font-semibold ${
-                                                                        tinhTrang === "Còn hoạt động" 
-                                                                            ? "text-green-600" 
-                                                                            : "text-red-600"
-                                                                    }`}
+                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                                 >
-                                                                    {tinhTrang || "Còn hoạt động"}
-                                                                </Typography>
-                                                            </td>
-                                                            <td
-                                                                className={className}
-                                                            >
-                                                                <div className="flex items-center gap-2">
-                                                                    <Tooltip
-                                                                        content="Xem"
-                                                                        animate={{
-                                                                            mount: {
+                                                                    <Button
+                                                                        size="sm"
+                                                                        color="blue"
+                                                                        className="flex items-center gap-2"
+                                                                        onClick={() =>
+                                                                            openDetailDialog(
+                                                                                clubId,
+                                                                            )}
+                                                                    >
+                                                                        <EyeIcon
+                                                                            strokeWidth={2}
+                                                                            className="w-4 h-4"
+                                                                        />
+                                                                        {" "}
+                                                                    </Button>
+                                                                </Tooltip>
+                                                                <Tooltip
+                                                                    content="Sửa"
+                                                                    animate={{
+                                                                        mount: {
+                                                                            scale:
+                                                                                1,
+                                                                            y: 0,
+                                                                        },
+                                                                        unmount:
+                                                                            {
                                                                                 scale:
-                                                                                    1,
-                                                                                y: 0,
-                                                                            },
-                                                                            unmount:
-                                                                                {
-                                                                                    scale:
-                                                                                        0,
+                                                                                    0,
                                                                                     y: 25,
                                                                                 },
-                                                                        }}
-                                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                                    }}
+                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                                >
+                                                                    <Button
+                                                                        size="sm"
+                                                                        color="green"
+                                                                        className="flex items-center gap-2"
+                                                                        onClick={() =>
+                                                                            openEditDialog(
+                                                                                clubId,
+                                                                            )}
                                                                     >
-                                                                        <Button
-                                                                            size="sm"
-                                                                            color="blue"
-                                                                            className="flex items-center gap-2"
-                                                                            onClick={() =>
-                                                                                openDetailDialog(
-                                                                                    clubId,
-                                                                                )}
-                                                                        >
-                                                                            <EyeIcon
-                                                                                strokeWidth={2}
-                                                                                className="w-4 h-4"
-                                                                            />
-                                                                            {" "}
-                                                                        </Button>
-                                                                    </Tooltip>
-                                                                    <Tooltip
-                                                                        content="Sửa"
-                                                                        animate={{
-                                                                            mount: {
+                                                                        <PencilIcon
+                                                                            strokeWidth={2}
+                                                                            className="w-4 h-4"
+                                                                        />
+                                                                        {" "}
+                                                                    </Button>
+                                                                </Tooltip>
+                                                                <Tooltip
+                                                                    content="Xoá"
+                                                                    animate={{
+                                                                        mount: {
+                                                                            scale:
+                                                                                1,
+                                                                            y: 0,
+                                                                        },
+                                                                        unmount:
+                                                                            {
                                                                                 scale:
-                                                                                    1,
-                                                                                y: 0,
-                                                                            },
-                                                                            unmount:
-                                                                                {
-                                                                                    scale:
-                                                                                        0,
+                                                                                    0,
                                                                                     y: 25,
                                                                                 },
-                                                                        }}
-                                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                                    }}
+                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                                >
+                                                                    <Button
+                                                                        size="sm"
+                                                                        color="red"
+                                                                        className="flex items-center gap-2"
+                                                                        onClick={() =>
+                                                                            handleDeleteClub(
+                                                                                clubId,
+                                                                            )}
                                                                     >
-                                                                        <Button
-                                                                            size="sm"
-                                                                            color="green"
-                                                                            className="flex items-center gap-2"
-                                                                            onClick={() =>
-                                                                                openEditDialog(
-                                                                                    clubId,
-                                                                                )}
-                                                                        >
-                                                                            <PencilIcon
-                                                                                strokeWidth={2}
-                                                                                className="w-4 h-4"
-                                                                            />
-                                                                            {" "}
-                                                                        </Button>
-                                                                    </Tooltip>
-                                                                    <Tooltip
-                                                                        content="Xoá"
-                                                                        animate={{
-                                                                            mount: {
-                                                                                scale:
-                                                                                    1,
-                                                                                y: 0,
-                                                                            },
-                                                                            unmount:
-                                                                                {
-                                                                                    scale:
-                                                                                        0,
-                                                                                    y: 25,
-                                                                                },
-                                                                        }}
-                                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                                    >
-                                                                        <Button
-                                                                            size="sm"
-                                                                            color="red"
-                                                                            className="flex items-center gap-2"
-                                                                            onClick={() =>
-                                                                                handleDeleteClub(
-                                                                                    clubId,
-                                                                                )}
-                                                                        >
-                                                                            <TrashIcon
-                                                                                strokeWidth={2}
-                                                                                className="w-4 h-4"
-                                                                            />
-                                                                            {" "}
-                                                                        </Button>
-                                                                    </Tooltip>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
+                                                                        <TrashIcon
+                                                                            strokeWidth={2}
+                                                                            className="w-4 h-4"
+                                                                        />
+                                                                        {" "}
+                                                                    </Button>
+                                                                </Tooltip>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            }
+                                        )}
+                                    </tbody>
+                                </table>
+
+                                {/* Thêm phân trang */}
+                                <div className="flex items-center gap-4 justify-center mt-6 mb-4">
+                                    <Button
+                                        variant="text"
+                                        className="flex items-center gap-2"
+                                        onClick={() => setCurrentPage(prev => prev - 1)}
+                                        disabled={currentPage === 1}
+                                    >
+                                        <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                                    </Button>
+
+                                    <div className="flex items-center gap-2">
+                                        {totalPages <= 5 ? (
+                                            [...Array(totalPages)].map((_, index) => (
+                                                <Button
+                                                    key={index + 1}
+                                                    variant={currentPage === index + 1 ? "gradient" : "text"}
+                                                    color="brown"
+                                                    onClick={() => setCurrentPage(index + 1)}
+                                                    className="w-10 h-10"
+                                                >
+                                                    {index + 1}
+                                                </Button>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <Button
+                                                    variant={currentPage === 1 ? "gradient" : "text"}
+                                                    color="brown"
+                                                    onClick={() => setCurrentPage(1)}
+                                                    className="w-10 h-10"
+                                                >
+                                                    1
+                                                </Button>
+
+                                                {currentPage > 3 && <span className="mx-2">...</span>}
+
+                                                {[...Array(3)].map((_, index) => {
+                                                    const pageNumber = Math.min(
+                                                        Math.max(currentPage - 1 + index, 2),
+                                                        totalPages - 1
                                                     );
-                                                }
-                                            )}
-                                        </tbody>
-                                    </table>
+                                                    if (pageNumber <= 1 || pageNumber >= totalPages) return null;
+                                                    return (
+                                                        <Button
+                                                            key={pageNumber}
+                                                            variant={currentPage === pageNumber ? "gradient" : "text"}
+                                                            color="brown"
+                                                            onClick={() => setCurrentPage(pageNumber)}
+                                                            className="w-10 h-10"
+                                                        >
+                                                            {pageNumber}
+                                                        </Button>
+                                                    );
+                                                })}
 
-                                    {/* Thêm phân trang */}
-                                    <div className="flex items-center gap-4 justify-center mt-6 mb-4">
-                                        <Button
-                                            variant="text"
-                                            className="flex items-center gap-2"
-                                            onClick={() => setCurrentPage(prev => prev - 1)}
-                                            disabled={currentPage === 1}
-                                        >
-                                            <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
-                                        </Button>
+                                                {currentPage < totalPages - 2 && <span className="mx-2">...</span>}
 
-                                        <div className="flex items-center gap-2">
-                                            {totalPages <= 5 ? (
-                                                [...Array(totalPages)].map((_, index) => (
-                                                    <Button
-                                                        key={index + 1}
-                                                        variant={currentPage === index + 1 ? "gradient" : "text"}
-                                                        color="brown"
-                                                        onClick={() => setCurrentPage(index + 1)}
-                                                        className="w-10 h-10"
-                                                    >
-                                                        {index + 1}
-                                                    </Button>
-                                                ))
-                                            ) : (
-                                                <>
-                                                    <Button
-                                                        variant={currentPage === 1 ? "gradient" : "text"}
-                                                        color="brown"
-                                                        onClick={() => setCurrentPage(1)}
-                                                        className="w-10 h-10"
-                                                    >
-                                                        1
-                                                    </Button>
-
-                                                    {currentPage > 3 && <span className="mx-2">...</span>}
-
-                                                    {[...Array(3)].map((_, index) => {
-                                                        const pageNumber = Math.min(
-                                                            Math.max(currentPage - 1 + index, 2),
-                                                            totalPages - 1
-                                                        );
-                                                        if (pageNumber <= 1 || pageNumber >= totalPages) return null;
-                                                        return (
-                                                            <Button
-                                                                key={pageNumber}
-                                                                variant={currentPage === pageNumber ? "gradient" : "text"}
-                                                                color="brown"
-                                                                onClick={() => setCurrentPage(pageNumber)}
-                                                                className="w-10 h-10"
-                                                            >
-                                                                {pageNumber}
-                                                            </Button>
-                                                        );
-                                                    })}
-
-                                                    {currentPage < totalPages - 2 && <span className="mx-2">...</span>}
-
-                                                    <Button
-                                                        variant={currentPage === totalPages ? "gradient" : "text"}
-                                                        color="brown"
-                                                        onClick={() => setCurrentPage(totalPages)}
-                                                        className="w-10 h-10"
-                                                    >
-                                                        {totalPages}
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </div>
-
-                                        <Button
-                                            variant="text"
-                                            className="flex items-center gap-2"
-                                            onClick={() => setCurrentPage(prev => prev + 1)}
-                                            disabled={currentPage === totalPages}
-                                        >
-                                            Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
-                                        </Button>
+                                                <Button
+                                                    variant={currentPage === totalPages ? "gradient" : "text"}
+                                                    color="brown"
+                                                    onClick={() => setCurrentPage(totalPages)}
+                                                    className="w-10 h-10"
+                                                >
+                                                    {totalPages}
+                                                </Button>
+                                            </>
+                                        )}
                                     </div>
-                                </>
-                            )}
+
+                                    <Button
+                                        variant="text"
+                                        className="flex items-center gap-2"
+                                        onClick={() => setCurrentPage(prev => prev + 1)}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </CardBody>
             </Card>
@@ -1066,7 +1070,7 @@ const ManageClubs = () => {
                                                 <th className="border p-3 bg-gray-50">Tình trạng</th>
                                                 <td className="border p-3">
                                                     <span className={`font-semibold ${
-                                                        detailClub.tinhTrang === "Còn hoạt động" 
+                                                        detailClub.tinhTrang === "Còn hoạt đ��ng" 
                                                             ? "text-green-600" 
                                                             : "text-red-600"
                                                     }`}>

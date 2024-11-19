@@ -162,4 +162,14 @@ router.get('/check-account-clubs/:userId', async (req, res) => {
     }
 });
 
+// Thêm route mới để lấy tất cả học sinh
+router.get('/students', async (req, res) => {
+    try {
+        const students = await Account.find({ role: 'student' });
+        res.json(students);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching students', error: error.message });
+    }
+});
+
 module.exports = router;

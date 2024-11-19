@@ -77,6 +77,7 @@ const ActivityReports = () => {
         eventIndex: -1,
         awardIndex: -1
     });
+    const [memberValidationError, setMemberValidationError] = useState("");
 
     useEffect(() => {
         const managedClubsString = localStorage.getItem("managedClubs");
@@ -545,51 +546,26 @@ const ActivityReports = () => {
     };
 
     const validateForm = () => {
-        const newErrors = {};
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        // Validate tên báo cáo
+        const errors = {};
+        
         if (!newReport.tenBaoCao?.trim()) {
-            newErrors.tenBaoCao = "Vui lòng nhập tên báo cáo";
+            errors.tenBaoCao = "Vui lòng nhập tên báo cáo";
         }
-
-        // Chỉ validate ngày báo cáo khi thêm mới
-        if (!editingReportId) {
-            if (!newReport.ngayBaoCao) {
-                newErrors.ngayBaoCao = "Vui lòng chọn ngày báo cáo";
-            } else {
-                const reportDate = new Date(newReport.ngayBaoCao);
-                reportDate.setHours(0, 0, 0, 0);
-                if (reportDate.getTime() !== today.getTime()) {
-                    newErrors.ngayBaoCao = "Ngày báo cáo phải là ngày hiện tại";
-                }
-            }
+        
+        if (!newReport.ngayBaoCao) {
+            errors.ngayBaoCao = "Vui lòng chọn ngày báo cáo";
         }
-
-        // Validate nhân sự phụ trách
+        
         if (!newReport.nhanSuPhuTrach?.trim()) {
-            newErrors.nhanSuPhuTrach = "Vui lòng nhập nhân sự phụ trách";
+            errors.nhanSuPhuTrach = "Vui lòng chọn nhân sự phụ trách";
+        } else if (!validateMainStaff()) {
+            errors.nhanSuPhuTrach = memberValidationError;
         }
+        
+        // ... các validate khác nếu có ...
 
-        // Validate tổng ngân sách chi tiêu
-        const budget = Number(newReport.tongNganSachChiTieu);
-        if (isNaN(budget) || budget < 0) {
-            newErrors.tongNganSachChiTieu = "Tổng ngân sách không được âm";
-        } else if (budget > 100000000) {
-            newErrors.tongNganSachChiTieu = "Tổng ngân sách không được vượt quá 100 triệu";
-        }
-
-        // Validate tổng thu
-        const revenue = Number(newReport.tongThu);
-        if (isNaN(revenue) || revenue < 0) {
-            newErrors.tongThu = "Tổng thu không được âm";
-        } else if (revenue > 100000000) {
-            newErrors.tongThu = "Tổng thu không được vượt quá 100 triệu";
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        setErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     // Reset trang khi thay đổi tìm kiếm hoặc bộ lọc
@@ -649,14 +625,12 @@ const ActivityReports = () => {
             ...newReport,
             nhanSuPhuTrach: value
         });
-        setShowMainStaffDropdown(true);
         
-        if (value.trim() === '') {
-            setFilteredStudents(students);
-            return;
-        }
-
-        const filtered = students.filter(student => 
+        // Reset lỗi khi người dùng nhập
+        setMemberValidationError("");
+        
+        // Lọc danh sách sinh viên dựa trên giá trị tìm kiếm
+        const filtered = students.filter((student) =>
             student.hoTen.toLowerCase().includes(value.toLowerCase()) ||
             student.mssv.toLowerCase().includes(value.toLowerCase())
         );
@@ -669,6 +643,21 @@ const ActivityReports = () => {
             nhanSuPhuTrach: student.hoTen
         });
         setShowMainStaffDropdown(false);
+        setMemberValidationError("");
+    };
+
+    // Thêm hàm validate nhân sự phụ trách
+    const validateMainStaff = () => {
+        const selectedStaff = newReport.nhanSuPhuTrach;
+        const isValidStaff = students.some(
+            student => student.hoTen.toLowerCase() === selectedStaff.toLowerCase()
+        );
+        
+        if (!isValidStaff) {
+            setMemberValidationError("Vui lòng chọn nhân sự từ danh sách thành viên câu lạc bộ");
+            return false;
+        }
+        return true;
     };
 
     useEffect(() => {
@@ -720,7 +709,7 @@ const ActivityReports = () => {
                     </Typography>
                 </CardHeader>
 
-                <CardBody className="px-0 pt-0 pb-2 overflow-auto">
+                <CardBody className="px-0 pt-0 pb-2">
                     <div className="flex flex-wrap items-center justify-between gap-4 p-4 px-6">
                         {/* Cột trái - Tìm kiếm và bộ lọc */}
                         <div className="flex flex-wrap items-center gap-4">
@@ -812,7 +801,22 @@ const ActivityReports = () => {
 
                     {isLoading ? (
                         <div className="flex items-center justify-center h-64">
-                            <Spinner className="w-16 h-16 text-blue-500/10" />
+                            <Spinner className="w-12 h-12" color="blue" />
+                        </div>
+                    ) : filteredReports.length === 0 ? (
+                        // Thêm thông báo khi không có báo cáo
+                        <div className="flex flex-col items-center justify-center h-64 gap-4">
+                            <Typography variant="h6" color="blue-gray" className="font-normal">
+                                Hiện tại chưa có báo cáo nào
+                            </Typography>
+                            <Button
+                                className="flex items-center gap-3"
+                                color="blue"
+                                size="sm"
+                                onClick={openAddDialog}
+                            >
+                                <FaPlus className="w-4 h-4" /> Thêm báo cáo mới
+                            </Button>
                         </div>
                     ) : (
                         <>
@@ -965,96 +969,41 @@ const ActivityReports = () => {
                                 </tbody>
                             </table>
 
-                            {/* Thêm phân trang */}
-                            <div className="flex items-center gap-4 justify-center mt-6 mb-4">
-                                <Button
-                                    variant="text"
-                                    className="flex items-center gap-2"
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
-                                </Button>
+                            {/* Phân trang */}
+                            {totalPages > 1 && (
+                                <div className="flex items-center justify-center gap-4 mt-6">
+                                    <Button
+                                        variant="text"
+                                        className="flex items-center gap-2"
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                    >
+                                        <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                                    </Button>
 
-                                <div className="flex items-center gap-2">
-                                    {totalPages <= 5 ? (
-                                        // Hiển thị tất cả các trang nếu tổng số trang <= 5
-                                        [...Array(totalPages)].map((_, index) => (
-                                            <Button
-                                                key={index + 1}
-                                                variant={currentPage === index + 1 ? "gradient" : "text"}
-                                                color="blue"
-                                                onClick={() => handlePageChange(index + 1)}
-                                                className="w-10 h-10"
+                                    <div className="flex items-center gap-2">
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                            <IconButton
+                                                key={page}
+                                                variant={currentPage === page ? "filled" : "text"}
+                                                color={currentPage === page ? "blue" : "gray"}
+                                                onClick={() => handlePageChange(page)}
                                             >
-                                                {index + 1}
-                                            </Button>
-                                        ))
-                                    ) : (
-                                        // Hiển thị phân trang với dấu ... nếu tổng số trang > 5
-                                        <>
-                                            {/* Trang đầu */}
-                                            <Button
-                                                variant={currentPage === 1 ? "gradient" : "text"}
-                                                color="blue"
-                                                onClick={() => handlePageChange(1)}
-                                                className="w-10 h-10"
-                                            >
-                                                1
-                                            </Button>
+                                                {page}
+                                            </IconButton>
+                                        ))}
+                                    </div>
 
-                                            {/* Dấu ... bên trái */}
-                                            {currentPage > 3 && (
-                                                <span className="mx-2">...</span>
-                                            )}
-
-                                            {/* Các trang ở giữa */}
-                                            {[...Array(3)].map((_, index) => {
-                                                const pageNumber = Math.min(
-                                                    Math.max(currentPage - 1 + index, 2),
-                                                    totalPages - 1
-                                                );
-                                                if (pageNumber <= 1 || pageNumber >= totalPages) return null;
-                                                return (
-                                                    <Button
-                                                        key={pageNumber}
-                                                        variant={currentPage === pageNumber ? "gradient" : "text"}
-                                                        color="blue"
-                                                        onClick={() => handlePageChange(pageNumber)}
-                                                        className="w-10 h-10"
-                                                    >
-                                                        {pageNumber}
-                                                    </Button>
-                                                );
-                                            })}
-
-                                            {/* Dấu ... bên phải */}
-                                            {currentPage < totalPages - 2 && (
-                                                <span className="mx-2">...</span>
-                                            )}
-
-                                            {/* Trang cuối */}
-                                            <Button
-                                                variant={currentPage === totalPages ? "gradient" : "text"}
-                                                color="blue"
-                                                onClick={() => handlePageChange(totalPages)}
-                                                className="w-10 h-10"
-                                            >
-                                                {totalPages}
-                                            </Button>
-                                        </>
-                                    )}
+                                    <Button
+                                        variant="text"
+                                        className="flex items-center gap-2"
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                    </Button>
                                 </div>
-
-                                <Button
-                                    variant="text"
-                                    className="flex items-center gap-2"
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
-                                </Button>
-                            </div>
+                            )}
                         </>
                     )}
                 </CardBody>
@@ -1115,7 +1064,7 @@ const ActivityReports = () => {
 
                     <div className="relative main-staff-container">
                         <Input
-                            label="Nhân s phụ trách"
+                            label="Nhân sự phụ trách"
                             value={newReport.nhanSuPhuTrach}
                             onChange={(e) => {
                                 handleMainStaffSearch(e.target.value);
@@ -1125,29 +1074,35 @@ const ActivityReports = () => {
                                 setShowMainStaffDropdown(true);
                                 setFilteredStudents(students);
                             }}
-                            error={!!errors.nhanSuPhuTrach}
+                            error={!!errors.nhanSuPhuTrach || !!memberValidationError}
                         />
                         {showMainStaffDropdown && (
                             <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                {filteredStudents.slice(0, 5).map((student) => (
-                                    <div
-                                        key={student._id}
-                                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                        onClick={() => handleSelectMainStaff(student)}
-                                    >
-                                        <Typography className="text-sm">
-                                            {student.hoTen}
-                                        </Typography>
-                                        <Typography className="text-xs text-gray-600">
-                                            MSHS: {student.mssv}
-                                        </Typography>
+                                {filteredStudents.length > 0 ? (
+                                    filteredStudents.slice(0, 5).map((student) => (
+                                        <div
+                                            key={student._id}
+                                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                            onClick={() => handleSelectMainStaff(student)}
+                                        >
+                                            <Typography className="text-sm">
+                                                {student.hoTen}
+                                            </Typography>
+                                            <Typography className="text-xs text-gray-600">
+                                                MSHS: {student.mssv}
+                                            </Typography>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="px-4 py-2 text-gray-500">
+                                        Không tìm thấy thành viên phù hợp
                                     </div>
-                                ))}
+                                )}
                             </div>
                         )}
-                        {errors.nhanSuPhuTrach && (
+                        {(errors.nhanSuPhuTrach || memberValidationError) && (
                             <Typography color="red" className="mt-1 text-xs">
-                                {errors.nhanSuPhuTrach}
+                                {errors.nhanSuPhuTrach || memberValidationError}
                             </Typography>
                         )}
                     </div>

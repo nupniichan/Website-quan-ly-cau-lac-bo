@@ -443,6 +443,12 @@ const ClubReports = () => {
                         <div className="flex items-center justify-center h-64 mt-14">
                             <Spinner className="w-16 h-16 text-blue-500/10" />
                         </div>
+                    ) : filteredReports.length === 0 ? (
+                        <div className="flex items-center justify-center h-64">
+                            <Typography variant="h6" color="blue-gray" className="font-normal">
+                                Không có báo cáo từ câu lạc bộ
+                            </Typography>
+                        </div>
                     ) : (
                         <>
                             <table className="w-full min-w-[640px] table-auto mt-5">
@@ -750,26 +756,24 @@ const ClubReports = () => {
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr>
-                                        <th colSpan="4" className="bg-blue-50 p-2 text-left text-lg font-bold text-blue-900">
+                                        <th colSpan="3" className="bg-blue-50 p-2 text-left text-lg font-bold text-blue-900">
                                             Danh sách sự kiện
                                         </th>
                                     </tr>
                                     <tr className="bg-gray-50">
-                                        <th className="border p-2">Tên sự kiện</th>
-                                        <th className="border p-2">Người phụ trách</th>
-                                        <th className="border p-2">Ngày tổ chức</th>
-                                        <th className="border p-2">Địa điểm</th>
+                                        <th className="border p-2 text-center">Tên sự kiện</th>
+                                        <th className="border p-2 text-center">Người phụ trách</th>
+                                        <th className="border p-2 text-center">Ngày tổ chức</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {detailReport.danhSachSuKien.map((event) => (
                                         <tr key={event._id}>
-                                            <td className="border p-2">{event.tenSuKien}</td>
-                                            <td className="border p-2">{event.nguoiPhuTrach}</td>
-                                            <td className="border p-2">
+                                            <td className="border p-2 text-center">{event.tenSuKien}</td>
+                                            <td className="border p-2 text-center">{event.nguoiPhuTrach}</td>
+                                            <td className="border p-2 text-center">
                                                 {formatDate(event.ngayToChuc)}
                                             </td>
-                                            <td className="border p-2">{event.diaDiem}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -779,26 +783,24 @@ const ClubReports = () => {
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr>
-                                        <th colSpan="4" className="bg-blue-50 p-2 text-left text-lg font-bold text-blue-900">
+                                        <th colSpan="3" className="bg-blue-50 p-2 text-left text-lg font-bold text-blue-900">
                                             Danh sách giải thưởng
                                         </th>
                                     </tr>
                                     <tr className="bg-gray-50">
-                                        <th className="border p-2">Tên giải thưởng</th>
-                                        <th className="border p-2">Loi giải</th>
-                                        <th className="border p-2">Ngày đạt giải</th>
-                                        <th className="border p-2">Thành viên đạt giải</th>
+                                        <th className="border p-2 text-center">Tên giải</th>
+                                        <th className="border p-2 text-center">Người nhận giải</th>
+                                        <th className="border p-2 text-center">Ngày nhận giải</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {detailReport.danhSachGiaiThuong?.map((prize) => (
+                                    {detailReport.danhSachGiai?.map((prize) => (
                                         <tr key={prize._id}>
-                                            <td className="border p-2">{prize.tenGiaiThuong}</td>
-                                            <td className="border p-2">{prize.loaiGiai}</td>
-                                            <td className="border p-2">
-                                                {formatDate(prize.ngayDatGiai)}
+                                            <td className="border p-2 text-center">{prize.tenGiai}</td>
+                                            <td className="border p-2 text-center">{prize.nguoiNhanGiai}</td>
+                                            <td className="border p-2 text-center">
+                                                {formatDate(prize.ngayNhanGiai)}
                                             </td>
-                                            <td className="border p-2">{prize.thanhVienDatGiai}</td>
                                         </tr>
                                     ))}
                                 </tbody>

@@ -52,6 +52,12 @@ const ManageBudget = () => {
     const [students, setStudents] = useState([]);
     const [filteredStudents, setFilteredStudents] = useState([]);
     const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+    const [currentBudget, setCurrentBudget] = useState(0);
+    const [monthlyStats, setMonthlyStats] = useState(null);
+    const [selectedMonth, setSelectedMonth] = useState(() => {
+        const today = new Date();
+        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    });
 
     useEffect(() => {
         const managedClubsString = localStorage.getItem("managedClubs");
@@ -83,8 +89,10 @@ const ManageBudget = () => {
     useEffect(() => {
         if (club?._id) {
             fetchMembersByClub(club._id);
+            fetchCurrentBudget(club._id);
+            fetchMonthlyStats(club._id, selectedMonth);
         }
-    }, [club]);
+    }, [club, selectedMonth]);
 
     const fetchBudgets = async (clubId) => {
         setIsLoading(true);
@@ -120,6 +128,24 @@ const ManageBudget = () => {
             setStudents(formattedMembers);
         } catch (error) {
             console.error("Error fetching members:", error);
+        }
+    };
+
+    const fetchCurrentBudget = async (clubId) => {
+        try {
+            const response = await axios.get(`${API_URL}/get-club-budget/${clubId}`);
+            setCurrentBudget(response.data.budget);
+        } catch (error) {
+            console.error('Error fetching current budget:', error);
+        }
+    };
+
+    const fetchMonthlyStats = async (clubId, month) => {
+        try {
+            const response = await axios.get(`${API_URL}/get-monthly-stats/${clubId}/${month}`);
+            setMonthlyStats(response.data);
+        } catch (error) {
+            console.error('Error fetching monthly stats:', error);
         }
     };
 
@@ -164,12 +190,12 @@ const ManageBudget = () => {
             newErrors.khoanChiTieu = "Khoản chi tiêu không được vượt quá 100 triệu";
         }
 
-        // Validate nguồn thu
+        // Validate tổng thu
         const revenue = Number(newBudget.nguonThu);
         if (isNaN(revenue) || revenue < 0) {
-            newErrors.nguonThu = "Nguồn thu không được âm";
+            newErrors.nguonThu = "Tổng thu không được âm";
         } else if (revenue > 100000000) {
-            newErrors.nguonThu = "Nguồn thu không được vượt quá 100 triệu";
+            newErrors.nguonThu = "Tổng thu không được vượt quá 100 triệu";
         }
 
         // Validate ngày
@@ -230,6 +256,8 @@ const ManageBudget = () => {
             setIsDialogOpen(false);
             setEditingBudgetId(null);
             fetchBudgets(club._id);
+            fetchCurrentBudget(club._id);
+            fetchMonthlyStats(club._id, selectedMonth);
         } catch (error) {
             console.error("Error updating budget:", error);
             alert(
@@ -246,7 +274,9 @@ const ManageBudget = () => {
                 await axios.delete(
                     `${API_URL}/delete-budget/${budgetId}/${club._id}`,
                 );
-                setBudgets(budgets.filter((b) => b._id !== budgetId));
+                fetchBudgets(club._id);
+                fetchCurrentBudget(club._id);
+                fetchMonthlyStats(club._id, selectedMonth);
             } catch (error) {
                 console.error("Error deleting budget:", error);
                 alert(
@@ -294,7 +324,7 @@ const ManageBudget = () => {
         }
     };
 
-    // Tính toán budgets cho trang hiện tại
+    // Tnh toán budgets cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentBudgets = budgets.slice(indexOfFirstItem, indexOfLastItem);
@@ -358,11 +388,64 @@ const ManageBudget = () => {
                     </Typography>
                 </CardHeader>
                 <CardBody className="px-0 pt-0 pb-2">
-                    <div className="flex flex-wrap items-center justify-between gap-4 p-4 px-6">
-                        {/* Cột trái - Tìm kiếm và bộ lọc */}
-                        <div className="flex flex-wrap items-center gap-4">
-                            {/* Thanh tìm kiếm */}
-                            <div className="w-72">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-6">
+                        <Card className="bg-gradient-to-br from-blue-500 to-blue-600">
+                            <CardBody className="p-4">
+                                <Typography variant="h6" color="white" className="mb-2">
+                                    Ngân sách hiện tại
+                                </Typography>
+                                <Typography variant="h4" color="white">
+                                    {currentBudget.toLocaleString('vi-VN')} đồng
+                                </Typography>
+                            </CardBody>
+                        </Card>
+
+                        <Card className="bg-gradient-to-br from-green-500 to-green-600">
+                            <CardBody className="p-4">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                                    <Typography variant="h6" color="white" className="mb-2 md:mb-0">
+                                        Ngân sách tháng
+                                    </Typography>
+                                    <Input
+                                        type="month"
+                                        value={selectedMonth}
+                                        onChange={(e) => setSelectedMonth(e.target.value)}
+                                        className="!text-white"
+                                        containerProps={{
+                                            className: "min-w-[120px]"
+                                        }}
+                                        labelProps={{
+                                            className: "hidden"
+                                        }}
+                                    />
+                                </div>
+                                {monthlyStats && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <Typography color="white" className="text-sm">
+                                                Tổng thu
+                                            </Typography>
+                                            <Typography color="white" className="text-lg font-bold">
+                                                {monthlyStats.totalRevenue.toLocaleString('vi-VN')} đồng
+                                            </Typography>
+                                        </div>
+                                        <div>
+                                            <Typography color="white" className="text-sm">
+                                                Tổng chi tiêu
+                                            </Typography>
+                                            <Typography color="white" className="text-lg font-bold">
+                                                {monthlyStats.totalExpense.toLocaleString('vi-VN')} đồng
+                                            </Typography>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardBody>
+                        </Card>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 md:px-6">
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                            <div className="w-full md:w-72">
                                 <Input
                                     label="Tìm kiếm theo tên ngân sách"
                                     icon={<i className="fas fa-search" />}
@@ -371,9 +454,8 @@ const ManageBudget = () => {
                                 />
                             </div>
 
-                            {/* Bộ lọc ngày */}
-                            <div className="flex items-center gap-2">
-                                <div>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                                <div className="w-full sm:w-auto">
                                     <Input
                                         type="date"
                                         label="Từ ngày"
@@ -386,7 +468,7 @@ const ManageBudget = () => {
                                         }
                                     />
                                 </div>
-                                <div>
+                                <div className="w-full sm:w-auto">
                                     <Input
                                         type="date"
                                         label="Đến ngày"
@@ -400,7 +482,6 @@ const ManageBudget = () => {
                                     />
                                 </div>
 
-                                {/* Nút reset bộ lọc */}
                                 {(dateFilter.startDate || dateFilter.endDate || searchTerm) && (
                                     <Button
                                         variant="text"
@@ -417,33 +498,13 @@ const ManageBudget = () => {
                             </div>
                         </div>
 
-                        {/* Cột phải - Nút thêm */}
-                        <div>
-                            <Tooltip
-                                content="Thêm"
-                                animate={{
-                                    mount: { scale: 1, y: 0 },
-                                    unmount: { scale: 0, y: 25 },
-                                }}
-                                className="bg-gradient-to-r from-black to-transparent opacity-70"
-                            >
+                        <div className="w-full md:w-auto">
+                            <Tooltip content="Thêm">
                                 <Button
-                                    className="flex items-center gap-3"
+                                    className="flex items-center gap-3 w-full md:w-auto"
                                     color="blue"
                                     size="sm"
-                                    onClick={() => {
-                                        setNewBudget({
-                                            ten: "",
-                                            khoanChiTieu: "",
-                                            nguonThu: "",
-                                            ngay: "",
-                                            thanhVienChiuTrachNhiem: "",
-                                            noiDung: "",
-                                            club: "",
-                                        });
-                                        setEditingBudgetId(null);
-                                        setIsDialogOpen(true);
-                                    }}
+                                    onClick={openAddDialog}
                                 >
                                     <FaPlus className="w-4 h-4" strokeWidth={"2rem"} />
                                 </Button>
@@ -451,9 +512,8 @@ const ManageBudget = () => {
                         </div>
                     </div>
 
-                    {/* Hiển thị kết quả tìm kiếm và lọc */}
                     {(searchTerm || dateFilter.startDate || dateFilter.endDate) && (
-                        <div className="px-6 mb-4">
+                        <div className="px-4 md:px-6 mb-4">
                             <Typography variant="small" color="blue-gray">
                                 Tìm thấy {filteredBudgets.length} kết quả
                                 {searchTerm && ` cho "${searchTerm}"`}
@@ -467,275 +527,291 @@ const ManageBudget = () => {
                         <div className="flex items-center justify-center h-64">
                             <Spinner className="w-12 h-12" color="blue" />
                         </div>
+                    ) : filteredBudgets.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-64 gap-4">
+                            <Typography variant="h6" color="blue-gray" className="font-normal">
+                                Hiện tại không có ngân sách nào
+                            </Typography>
+                            <Button
+                                className="flex items-center gap-3"
+                                color="blue"
+                                size="sm"
+                                onClick={openAddDialog}
+                            >
+                                <FaPlus className="w-4 h-4" /> Thêm ngân sách mới
+                            </Button>
+                        </div>
                     ) : (
-                        // Cập nhật phần hiển thị bảng để sử dụng filteredBudgets
-                        <table className="w-full min-w-[640px] table-auto">
-                            <thead>
-                                <tr>
-                                    {[
-                                        "STT",
-                                        "Tên ngân sách",
-                                        "Khoản chi tiêu",
-                                        "Tổng thu",
-                                        "Ngày",
-                                        "Thành viên chịu trách nhiệm",
-                                        "Thao tác",
-                                    ].map((el) => (
-                                        <th
-                                            key={el}
-                                            className="px-5 py-3 text-left border-b border-blue-gray-50"
-                                        >
-                                            <Typography
-                                                variant="small"
-                                                className="text-[11px] font-bold uppercase text-blue-gray-400"
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[640px] table-auto">
+                                <thead>
+                                    <tr>
+                                        {[
+                                            "STT",
+                                            "Tên ngân sách",
+                                            "Khoản chi tiêu",
+                                            "Tổng thu",
+                                            "Ngày",
+                                            "Thành viên chịu trách nhiệm",
+                                            "Thao tác",
+                                        ].map((el) => (
+                                            <th
+                                                key={el}
+                                                className="px-5 py-3 text-left border-b border-blue-gray-50"
                                             >
-                                                {el}
-                                            </Typography>
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredBudgets
-                                    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                                    .map(({ _id, ten, khoanChiTieu, nguonThu, ngay, thanhVienChiuTrachNhiem }, index) => {
-                                        const className = "p-4";
-                                        return (
-                                            <tr key={_id}>
-                                                <td className={className}>
-                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                        {(currentPage - 1) * itemsPerPage + index + 1}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                        {ten}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                        {khoanChiTieu
-                                                            .toLocaleString()}
-                                                        {" "}
-                                                        VND
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                        {nguonThu
-                                                            .toLocaleString()}
-                                                        {" "}
-                                                        VND
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                        {new Date(ngay).toLocaleDateString('vi-VN', {
-                                                            day: '2-digit',
-                                                            month: '2-digit',
-                                                            year: 'numeric'
-                                                        })}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                        {thanhVienChiuTrachNhiem}
-                                                    </Typography>
-                                                </td>
-                                                <td className={className}>
-                                                    <div className="flex items-center gap-2">
-                                                        <Tooltip
-                                                            content="Xem"
-                                                            animate={{
-                                                                mount: {
-                                                                    scale:
-                                                                        1,
-                                                                    y: 0,
-                                                                },
-                                                                unmount: {
-                                                                    scale:
-                                                                        0,
-                                                                    y: 25,
-                                                                },
-                                                            }}
-                                                            className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                        >
-                                                            <Button
-                                                                size="sm"
-                                                                color="blue"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    openDetailDialog(
-                                                                        _id,
-                                                                    )}
+                                                <Typography
+                                                    variant="small"
+                                                    className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                                >
+                                                    {el}
+                                                </Typography>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredBudgets
+                                        .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                                        .map(({ _id, ten, khoanChiTieu, nguonThu, ngay, thanhVienChiuTrachNhiem }, index) => {
+                                            const className = "p-4";
+                                            return (
+                                                <tr key={_id}>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {(currentPage - 1) * itemsPerPage + index + 1}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {ten}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {khoanChiTieu
+                                                                .toLocaleString()}
+                                                            {" "}
+                                                            VND
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {nguonThu
+                                                                .toLocaleString()}
+                                                            {" "}
+                                                            VND
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {new Date(ngay).toLocaleDateString('vi-VN', {
+                                                                day: '2-digit',
+                                                                month: '2-digit',
+                                                                year: 'numeric'
+                                                            })}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                            {thanhVienChiuTrachNhiem}
+                                                        </Typography>
+                                                    </td>
+                                                    <td className={className}>
+                                                        <div className="flex items-center gap-2">
+                                                            <Tooltip
+                                                                content="Xem"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
-                                                                <EyeIcon
-                                                                    strokeWidth={2}
-                                                                    className="w-4 h-4"
-                                                                />
-                                                            </Button>
-                                                        </Tooltip>
-                                                        <Tooltip
-                                                            content="Sửa"
-                                                            animate={{
-                                                                mount: {
-                                                                    scale:
-                                                                        1,
-                                                                    y: 0,
-                                                                },
-                                                                unmount: {
-                                                                    scale:
-                                                                        0,
-                                                                    y: 25,
-                                                                },
-                                                            }}
-                                                            className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                        >
-                                                            <Button
-                                                                size="sm"
-                                                                color="green"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    openEditDialog(
-                                                                        _id,
-                                                                    )}
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="blue"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openDetailDialog(
+                                                                            _id,
+                                                                        )}
+                                                                >
+                                                                    <EyeIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content="Sửa"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
-                                                                <PencilIcon
-                                                                    strokeWidth={2}
-                                                                    className="w-4 h-4"
-                                                                />
-                                                            </Button>
-                                                        </Tooltip>
-                                                        <Tooltip
-                                                            content="Xóa"
-                                                            animate={{
-                                                                mount: {
-                                                                    scale:
-                                                                        1,
-                                                                    y: 0,
-                                                                },
-                                                                unmount: {
-                                                                    scale:
-                                                                        0,
-                                                                    y: 25,
-                                                                },
-                                                            }}
-                                                            className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                        >
-                                                            <Button
-                                                                size="sm"
-                                                                color="red"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() =>
-                                                                    handleDeleteBudget(
-                                                                        _id,
-                                                                    )}
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="green"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        openEditDialog(
+                                                                            _id,
+                                                                        )}
+                                                                >
+                                                                    <PencilIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip
+                                                                content="Xóa"
+                                                                animate={{
+                                                                    mount: {
+                                                                        scale:
+                                                                            1,
+                                                                        y: 0,
+                                                                    },
+                                                                    unmount: {
+                                                                        scale:
+                                                                            0,
+                                                                        y: 25,
+                                                                    },
+                                                                }}
+                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                             >
-                                                                <TrashIcon
-                                                                    strokeWidth={2}
-                                                                    className="w-4 h-4"
-                                                                />
-                                                            </Button>
-                                                        </Tooltip>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                            </tbody>
-                        </table>
+                                                                <Button
+                                                                    size="sm"
+                                                                    color="red"
+                                                                    className="flex items-center gap-2"
+                                                                    onClick={() =>
+                                                                        handleDeleteBudget(
+                                                                            _id,
+                                                                        )}
+                                                                >
+                                                                    <TrashIcon
+                                                                        strokeWidth={2}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
 
-                    {/* Thêm phân trang */}
-                    <div className="flex items-center gap-4 justify-center mt-6 mb-4">
-                        <Button
-                            variant="text"
-                            className="flex items-center gap-2"
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                        >
-                            <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
-                        </Button>
+                    {filteredBudgets.length > 0 && (
+                        <div className="flex flex-col sm:flex-row items-center gap-4 justify-center mt-6 mb-4 px-4">
+                            <Button
+                                variant="text"
+                                className="flex items-center gap-2"
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                            >
+                                <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                            </Button>
 
-                        <div className="flex items-center gap-2">
-                            {totalPages <= 5 ? (
-                                // Hiển thị tất cả các trang nếu tổng số trang <= 5
-                                [...Array(totalPages)].map((_, index) => (
-                                    <Button
-                                        key={index + 1}
-                                        variant={currentPage === index + 1 ? "gradient" : "text"}
-                                        color="blue"
-                                        onClick={() => handlePageChange(index + 1)}
-                                        className="w-10 h-10"
-                                    >
-                                        {index + 1}
-                                    </Button>
-                                ))
-                            ) : (
-                                // Hiển thị phân trang với dấu ... nếu tổng số trang > 5
-                                <>
-                                    {/* Trang đầu */}
-                                    <Button
-                                        variant={currentPage === 1 ? "gradient" : "text"}
-                                        color="blue"
-                                        onClick={() => handlePageChange(1)}
-                                        className="w-10 h-10"
-                                    >
-                                        1
-                                    </Button>
+                            <div className="flex items-center gap-2 overflow-x-auto">
+                                {totalPages <= 5 ? (
+                                    // Hiển thị tất cả các trang nếu tổng số trang <= 5
+                                    [...Array(totalPages)].map((_, index) => (
+                                        <Button
+                                            key={index + 1}
+                                            variant={currentPage === index + 1 ? "gradient" : "text"}
+                                            color="blue"
+                                            onClick={() => handlePageChange(index + 1)}
+                                            className="w-10 h-10"
+                                        >
+                                            {index + 1}
+                                        </Button>
+                                    ))
+                                ) : (
+                                    // Hiển thị phân trang với dấu ... nếu tổng số trang > 5
+                                    <>
+                                        {/* Trang đầu */}
+                                        <Button
+                                            variant={currentPage === 1 ? "gradient" : "text"}
+                                            color="blue"
+                                            onClick={() => handlePageChange(1)}
+                                            className="w-10 h-10"
+                                        >
+                                            1
+                                        </Button>
 
-                                    {/* Dấu ... bên trái */}
-                                    {currentPage > 3 && (
-                                        <span className="mx-2">...</span>
-                                    )}
+                                        {/* Dấu ... bên trái */}
+                                        {currentPage > 3 && (
+                                            <span className="mx-2">...</span>
+                                        )}
 
-                                    {/* Các trang ở giữa */}
-                                    {[...Array(3)].map((_, index) => {
-                                        const pageNumber = Math.min(
-                                            Math.max(currentPage - 1 + index, 2),
-                                            totalPages - 1
-                                        );
-                                        if (pageNumber <= 1 || pageNumber >= totalPages) return null;
-                                        return (
-                                            <Button
-                                                key={pageNumber}
-                                                variant={currentPage === pageNumber ? "gradient" : "text"}
-                                                color="blue"
-                                                onClick={() => handlePageChange(pageNumber)}
-                                                className="w-10 h-10"
-                                            >
-                                                {pageNumber}
-                                            </Button>
-                                        );
-                                    })}
+                                        {/* Các trang ở giữa */}
+                                        {[...Array(3)].map((_, index) => {
+                                            const pageNumber = Math.min(
+                                                Math.max(currentPage - 1 + index, 2),
+                                                totalPages - 1
+                                            );
+                                            if (pageNumber <= 1 || pageNumber >= totalPages) return null;
+                                            return (
+                                                <Button
+                                                    key={pageNumber}
+                                                    variant={currentPage === pageNumber ? "gradient" : "text"}
+                                                    color="blue"
+                                                    onClick={() => handlePageChange(pageNumber)}
+                                                    className="w-10 h-10"
+                                                >
+                                                    {pageNumber}
+                                                </Button>
+                                            );
+                                        })}
 
-                                    {/* Dấu ... bên phải */}
-                                    {currentPage < totalPages - 2 && (
-                                        <span className="mx-2">...</span>
-                                    )}
+                                        {/* Dấu ... bên phải */}
+                                        {currentPage < totalPages - 2 && (
+                                            <span className="mx-2">...</span>
+                                        )}
 
-                                    {/* Trang cuối */}
-                                    <Button
-                                        variant={currentPage === totalPages ? "gradient" : "text"}
-                                        color="blue"
-                                        onClick={() => handlePageChange(totalPages)}
-                                        className="w-10 h-10"
-                                    >
-                                        {totalPages}
-                                    </Button>
-                                </>
-                            )}
+                                        {/* Trang cuối */}
+                                        <Button
+                                            variant={currentPage === totalPages ? "gradient" : "text"}
+                                            color="blue"
+                                            onClick={() => handlePageChange(totalPages)}
+                                            className="w-10 h-10"
+                                        >
+                                            {totalPages}
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
+
+                            <Button
+                                variant="text"
+                                className="flex items-center gap-2"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                            >
+                                Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                            </Button>
                         </div>
-
-                        <Button
-                            variant="text"
-                            className="flex items-center gap-2"
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                        >
-                            Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
-                        </Button>
-                    </div>
+                    )}
                 </CardBody>
             </Card>
 
@@ -748,7 +824,7 @@ const ManageBudget = () => {
                 <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
                     {editingBudgetId
                         ? "Chỉnh sửa Ngân sách"
-                        : "Thêm Ngân sách Mới"}
+                        : "Thêm ngân sách mới"}
                 </DialogHeader>
                 <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[80vh] sm:max-h-[47vh]">
                     <div>
@@ -792,7 +868,7 @@ const ManageBudget = () => {
                     <div>
                         <Input
                             type="number"
-                            label="Nguồn thu"
+                            label="Tổng thu"
                             value={newBudget.nguonThu}
                             onChange={(e) => {
                                 setNewBudget({
@@ -955,7 +1031,7 @@ const ManageBudget = () => {
                                             <Typography className="text-sm text-gray-600 mb-2">Tổng quan tài chính</Typography>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="text-center">
-                                                    <Typography className="text-sm text-green-600 mb-1">Nguồn thu</Typography>
+                                                    <Typography className="text-sm text-green-600 mb-1">Tổng thu</Typography>
                                                     <Typography className="text-xl font-bold text-green-600">
                                                         {detailBudget.nguonThu.toLocaleString('vi-VN')} đ
                                                     </Typography>
@@ -1000,7 +1076,7 @@ const ManageBudget = () => {
                                     </div>
 
                                     <div className="bg-blue-gray-50 p-4 rounded-lg">
-                                        <Typography className="text-sm text-gray-600 mb-2">Người chịu trách nhiệm</Typography>
+                                        <Typography className="text-sm text-gray-600 mb-2">Ngư���i chịu trách nhiệm</Typography>
                                         <Typography className="font-medium">
                                             {detailBudget.thanhVienChiuTrachNhiem}
                                         </Typography>

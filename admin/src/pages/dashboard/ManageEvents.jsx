@@ -77,7 +77,6 @@ const ManageEvents = () => {
         thoiGianKetThuc: "00:00",
         diaDiem: "",
         noiDung: "",
-        nganSachChiTieu: 0,
         nguoiPhuTrach: "",
         khachMoi: [],
         club: "",
@@ -467,12 +466,6 @@ const ManageEvents = () => {
             newErrors.noiDung = "Vui lòng nhập nội dung";
         }
 
-        // Validate ngân sách chi tiêu
-        const budget = Number(newEvent.nganSachChiTieu);
-        if (isNaN(budget) || budget < 0) {
-            newErrors.nganSachChiTieu = "Ngân sách chi tiêu không được âm";
-        }
-
         // Validate người phụ trách
         if (!newEvent.nguoiPhuTrach?.trim()) {
             newErrors.nguoiPhuTrach = "Vui lòng nhập người phụ trách";
@@ -649,7 +642,6 @@ const ManageEvents = () => {
                                             thoiGianKetThuc: "00:00",
                                             diaDiem: "",
                                             noiDung: "",
-                                            nganSachChiTieu: 0,
                                             nguoiPhuTrach: "",
                                             khachMoi: [],
                                             club: "",
@@ -1059,7 +1051,7 @@ const ManageEvents = () => {
                                                     </p>
                                                     <p className="flex items-center gap-2">
                                                         <i className="fas fa-info-circle"></i>
-                                                        Tr���ng thái: {getStatusText(eventInfo.event.extendedProps.trangThai)}
+                                                        Trng thái: {getStatusText(eventInfo.event.extendedProps.trangThai)}
                                                     </p>
                                                 </div>
                                             </div>
@@ -1177,24 +1169,6 @@ const ManageEvents = () => {
                         {errors.thoiGianKetThuc && (
                             <Typography color="red" className="mt-1 text-xs">
                                 {errors.thoiGianKetThuc}
-                            </Typography>
-                        )}
-                    </div>
-
-                    <div>
-                        <Input
-                            type="number"
-                            label="Ngân sách chi tiêu"
-                            value={newEvent.nganSachChiTieu}
-                            onChange={(e) => {
-                                setNewEvent({ ...newEvent, nganSachChiTieu: e.target.value });
-                                setErrors({ ...errors, nganSachChiTieu: "" });
-                            }}
-                            error={!!errors.nganSachChiTieu}
-                        />
-                        {errors.nganSachChiTieu && (
-                            <Typography color="red" className="mt-1 text-xs">
-                                {errors.nganSachChiTieu}
                             </Typography>
                         )}
                     </div>
@@ -1426,13 +1400,6 @@ const ManageEvents = () => {
                                 <Typography className="text-sm text-gray-600 mb-2">Nội dung sự kiện</Typography>
                                 <Typography className="font-medium whitespace-pre-line">
                                     {detailEvent.noiDung}
-                                </Typography>
-                            </div>
-
-                            <div className="bg-blue-gray-50 p-4 rounded-lg">
-                                <Typography className="text-sm text-gray-600 mb-2">Ngân sách chi tiêu</Typography>
-                                <Typography className="font-medium text-blue-900">
-                                    {detailEvent.nganSachChiTieu?.toLocaleString('vi-VN')} đồng
                                 </Typography>
                             </div>
 

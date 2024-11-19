@@ -111,7 +111,7 @@ const ManageMembers = () => {
             setMembers(response.data);
         } catch (error) {
             console.error("Error fetching members:", error);
-            alert("Lỗi khi tải danh sách thành viên");
+            // alert("Lỗi khi tải danh sách thành viên");
         } finally {
             setIsLoading(false);
         }
@@ -238,11 +238,11 @@ const ManageMembers = () => {
             setIsDialogOpen(true);
         } catch (error) {
             console.error("Error fetching member details:", error);
-            alert(
-                `Lỗi khi lấy thông tin thành viên: ${
-                    error.response?.data?.message || "Không xác định"
-                }`,
-            );
+            // alert(
+            //     `Lỗi khi lấy thông tin thành viên: ${
+            //         error.response?.data?.message || "Không xác định"
+            //     }`,
+            // );
         }
     };
 
