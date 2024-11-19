@@ -166,13 +166,13 @@ const ManageBudget = () => {
         setFilteredStudents(filtered.slice(0, 5));
     };
 
-    const handleSelectStudent = (student) => {
+    const handleSelectStudent = async (student) => {
         setNewBudget({ ...newBudget, thanhVienChiuTrachNhiem: student.hoTen });
         setShowStudentDropdown(false);
         setErrors({ ...errors, thanhVienChiuTrachNhiem: "" });
     };
 
-    const validateForm = () => {
+    const validateForm = async () => {
         const newErrors = {};
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -213,6 +213,19 @@ const ManageBudget = () => {
         // Validate thành viên chịu trách nhiệm
         if (!newBudget.thanhVienChiuTrachNhiem?.trim()) {
             newErrors.thanhVienChiuTrachNhiem = "Vui lòng nhập thành viên chịu trách nhiệm";
+        } else {
+            try {
+                const response = await axios.get(
+                    `${API_URL}/check-member/${club._id}/${encodeURIComponent(newBudget.thanhVienChiuTrachNhiem)}`
+                );
+                
+                if (!response.data.isMember) {
+                    newErrors.thanhVienChiuTrachNhiem = response.data.message;
+                }
+            } catch (error) {
+                console.error("Error checking member:", error);
+                newErrors.thanhVienChiuTrachNhiem = "Không thể kiểm tra thành viên";
+            }
         }
 
         // Validate nội dung
@@ -225,7 +238,8 @@ const ManageBudget = () => {
     };
 
     const handleAddBudget = async () => {
-        if (!validateForm()) return;
+        const isValid = await validateForm();
+        if (!isValid) return;
 
         try {
             if (!club) {
@@ -246,7 +260,8 @@ const ManageBudget = () => {
     };
 
     const handleUpdateBudget = async () => {
-        if (!validateForm()) return;
+        const isValid = await validateForm();
+        if (!isValid) return;
 
         try {
             await axios.put(

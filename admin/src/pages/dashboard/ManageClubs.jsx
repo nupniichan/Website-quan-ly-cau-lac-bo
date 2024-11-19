@@ -26,7 +26,7 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 const API_URL = "http://localhost:5500/api";
 
 // Thêm hàm validate chung
-const validateClubData = (clubData) => {
+const validateClubData = async (clubData, editingClubId) => {
     // Kiểm tra các trường bắt buộc không được null hoặc rỗng
     const requiredFields = [
         { key: "ten", label: "Tên CLB" },
@@ -55,6 +55,31 @@ const validateClubData = (clubData) => {
 
     if (ngayThanhLap > today) {
         throw new Error("Ngày thành lập không được là ngày tương lai");
+    }
+
+    try {
+        // Kiểm tra tài khoản trưởng ban có tồn tại
+        const accountResponse = await axios.get(`${API_URL}/get-accounts`);
+        const accountExists = accountResponse.data.some(
+            account => account.userId === clubData.truongBanCLB && account.role === 'student'
+        );
+        
+        if (!accountExists) {
+            throw new Error("Tài khoản trưởng ban CLB không tồn tại hoặc không phải là học sinh");
+        }
+
+        // Kiểm tra xem account đã quản lý câu lạc bộ nào chưa
+        const clubResponse = await axios.get(`${API_URL}/get-clubs`);
+        const existingClub = clubResponse.data.find(
+            club => club.truongBanCLB === clubData.truongBanCLB && club.clubId !== editingClubId
+        );
+        
+        if (existingClub) {
+            throw new Error(`Tài khoản này đã là trưởng ban của câu lạc bộ "${existingClub.ten}"`);
+        }
+    } catch (error) {
+        if (error.message) throw error;
+        throw new Error("Lỗi khi kiểm tra thông tin trưởng ban CLB");
     }
 };
 
@@ -135,10 +160,19 @@ const ManageClubs = () => {
 
     // Thêm hàm lọc students
     const getFilteredStudents = (searchValue) => {
-        return studentAccounts.filter(student =>
-            student.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-            student.userId.toLowerCase().includes(searchValue.toLowerCase())
-        );
+        // Lọc ra các account đã là trưởng ban của các CLB khác
+        const existingLeaders = clubs
+            .filter(club => club.clubId !== editingClubId) // Bỏ qua CLB đang edit
+            .map(club => club.truongBanCLB);
+
+        return studentAccounts
+            .filter(student => 
+                // Lọc theo tên và mã số
+                (student.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+                student.userId.toLowerCase().includes(searchValue.toLowerCase())) &&
+                // Loại bỏ các account đã là trưởng ban
+                !existingLeaders.includes(student.userId)
+            );
     };
 
     const fetchClubs = async () => {
@@ -155,7 +189,7 @@ const ManageClubs = () => {
 
     const handleAddClub = async () => {
         try {
-            validateClubData(newClub);
+            await validateClubData(newClub, null);
 
             const formData = new FormData();
             Object.keys(newClub).forEach((key) => {
@@ -195,7 +229,7 @@ const ManageClubs = () => {
 
     const handleUpdateClub = async () => {
         try {
-            validateClubData(newClub);
+            await validateClubData(newClub, editingClubId);
 
             const formData = new FormData();
             Object.keys(newClub).forEach((key) => {
@@ -1070,7 +1104,7 @@ const ManageClubs = () => {
                                                 <th className="border p-3 bg-gray-50">Tình trạng</th>
                                                 <td className="border p-3">
                                                     <span className={`font-semibold ${
-                                                        detailClub.tinhTrang === "Còn hoạt đ��ng" 
+                                                        detailClub.tinhTrang === "Còn hoạt đng" 
                                                             ? "text-green-600" 
                                                             : "text-red-600"
                                                     }`}>

@@ -372,7 +372,7 @@ const ManagePrizes = () => {
     const validateForm = () => {
         const newErrors = {};
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
         
         if (!newPrize.tenGiaiThuong?.trim()) {
             newErrors.tenGiaiThuong = "Vui lòng nhập tên giải thưởng";
@@ -381,8 +381,8 @@ const ManagePrizes = () => {
         if (!newPrize.ngayDatGiai) {
             newErrors.ngayDatGiai = "Vui lòng chọn ngày đạt giải";
         } else {
-            const prizeDate = new Date(newPrize.ngayDatGiai);
-            if (prizeDate > today) {
+            // So sánh chuỗi ngày theo định dạng YYYY-MM-DD
+            if (newPrize.ngayDatGiai > todayStr) {
                 newErrors.ngayDatGiai = "Ngày đạt giải không thể là ngày tương lai";
             }
         }

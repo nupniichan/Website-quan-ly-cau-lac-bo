@@ -268,6 +268,12 @@ const ManageEvents = () => {
                 alert("Không thể sửa sự kiện đã được duyệt!");
                 return;
             }
+            
+            // Thêm kiểm tra cho sự kiện bị từ chối
+            if (event.trangThai === "tuChoi") {
+                alert("Không thể sửa sự kiện đã bị từ chối!");
+                return;
+            }
 
             setErrors({});
             setNewEvent({
@@ -860,7 +866,13 @@ const ManageEvents = () => {
                                                                 </Button>
                                                             </Tooltip>
                                                             <Tooltip
-                                                                content={trangThai === "daDuyet" ? "Không thể sửa sự kiện đã duyệt" : "Sửa"}
+                                                                content={
+                                                                    trangThai === "daDuyet" 
+                                                                        ? "Không thể sửa sự kiện đã duyệt" 
+                                                                        : trangThai === "tuChoi"
+                                                                        ? "Không thể sửa sự kiện đã bị từ chối"
+                                                                        : "Sửa"
+                                                                }
                                                                 animate={{
                                                                     mount: { scale: 1, y: 0 },
                                                                     unmount: { scale: 0, y: 25 },
@@ -871,11 +883,8 @@ const ManageEvents = () => {
                                                                     size="sm"
                                                                     color="green"
                                                                     className="flex items-center gap-2"
-                                                                    onClick={() =>
-                                                                        openEditDialog(
-                                                                            _id,
-                                                                        )}
-                                                                    disabled={trangThai === "daDuyet"}
+                                                                    onClick={() => openEditDialog(_id)}
+                                                                    disabled={trangThai === "daDuyet" || trangThai === "tuChoi"}
                                                                 >
                                                                     <PencilIcon
                                                                         strokeWidth={2}
@@ -1051,7 +1060,7 @@ const ManageEvents = () => {
                                                     </p>
                                                     <p className="flex items-center gap-2">
                                                         <i className="fas fa-info-circle"></i>
-                                                        Trng thái: {getStatusText(eventInfo.event.extendedProps.trangThai)}
+                                                        Trạng thái: {getStatusText(eventInfo.event.extendedProps.trangThai)}
                                                     </p>
                                                 </div>
                                             </div>

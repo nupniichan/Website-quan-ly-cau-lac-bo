@@ -46,6 +46,11 @@ const ManageClubAccountsPR = () => {
     const itemsPerPage = 10;
     const [searchQuery, setSearchQuery] = useState("");
 
+    const isValidEmail = (email) => {
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(email);
+    };
+
     useEffect(() => {
         fetchAccounts();
     }, []);
@@ -69,15 +74,16 @@ const ManageClubAccountsPR = () => {
 
         // Validation
         const errors = {};
-        if (!newAccount.userId) errors.userId = "Vui lòng nhập Mã số sinh viên";
+        if (!newAccount.userId) errors.userId = "Vui lòng nhập Mã số học sinh";
         if (!newAccount.name) errors.name = "Vui lòng nhập Họ và tên";
         if (!newAccount.email) errors.email = "Vui lòng nhập Email";
+        else if (!isValidEmail(newAccount.email)) errors.email = "Email không hợp lệ";
         if (!newAccount.password) errors.password = "Vui lòng nhập Mật khẩu";
 
         const accountExists = accounts.some(
             (account) => account.userId === newAccount.userId
         );
-        if (accountExists) errors.userId = "Mã số sinh viên đã tồn tại";
+        if (accountExists) errors.userId = "Mã số học sinh đã tồn tại";
 
         setValidationErrors(errors);
         if (Object.keys(errors).length > 0) return;
@@ -154,9 +160,10 @@ const ManageClubAccountsPR = () => {
         
         // Validation
         const errors = {};
-        if (!editAccount.userId) errors.userId = "Vui lòng nhập Mã số sinh viên";
+        if (!editAccount.userId) errors.userId = "Vui lòng nhập Mã số học sinh";
         if (!editAccount.name) errors.name = "Vui lòng nhập Họ và tên";
         if (!editAccount.email) errors.email = "Vui lòng nhập Email";
+        else if (!isValidEmail(editAccount.email)) errors.email = "Email không hợp lệ";
 
         setEditValidationErrors(errors);
         if (Object.keys(errors).length > 0) return;

@@ -1170,7 +1170,7 @@ const ActivityReports = () => {
                                         </Typography>
                                         <Input
                                             type="date"
-                                            value={event.ngayToChuc || ''}
+                                            value={formatDateForInput(event.ngayToChuc) || ''}
                                             disabled={true}
                                             className="!border !border-blue-gray-100 !bg-white"
                                             labelProps={{
@@ -1255,7 +1255,7 @@ const ActivityReports = () => {
                                         </Typography>
                                         <Input
                                             type="date"
-                                            value={award.ngayNhanGiai}
+                                            value={formatDateForInput(award.ngayNhanGiai) || ''}
                                             disabled
                                             className="!border !border-blue-gray-100 !bg-white"
                                             labelProps={{
