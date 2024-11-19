@@ -12,6 +12,7 @@ import {
     DialogBody,
     DialogFooter,
     DialogHeader,
+    IconButton,
     Input, Spinner,
     Textarea,
     Tooltip,
@@ -629,7 +630,7 @@ const ActivityReports = () => {
         // Reset lỗi khi người dùng nhập
         setMemberValidationError("");
         
-        // Lọc danh sách sinh viên dựa trên giá trị tìm kiếm
+        // Lọc danh sách học sinh dựa trên giá trị tìm kiếm
         const filtered = students.filter((student) =>
             student.hoTen.toLowerCase().includes(value.toLowerCase()) ||
             student.mssv.toLowerCase().includes(value.toLowerCase())
@@ -1170,7 +1171,7 @@ const ActivityReports = () => {
                                         </Typography>
                                         <Input
                                             type="date"
-                                            value={formatDateForInput(event.ngayToChuc) || ''}
+                                            value={event.ngayToChuc || ''}
                                             disabled={true}
                                             className="!border !border-blue-gray-100 !bg-white"
                                             labelProps={{
@@ -1255,7 +1256,7 @@ const ActivityReports = () => {
                                         </Typography>
                                         <Input
                                             type="date"
-                                            value={formatDateForInput(award.ngayNhanGiai) || ''}
+                                            value={award.ngayNhanGiai}
                                             disabled
                                             className="!border !border-blue-gray-100 !bg-white"
                                             labelProps={{
