@@ -712,9 +712,9 @@ const ActivityReports = () => {
                 <CardBody className="px-0 pt-0 pb-2">
                     <div className="flex flex-wrap items-center justify-between gap-4 p-4 px-6">
                         {/* Cột trái - Tìm kiếm và bộ lọc */}
-                        <div className="flex flex-wrap items-center gap-4">
+                        <div className="w-full flex flex-col lg:flex-row items-start lg:items-center gap-4">
                             {/* Thanh tìm kiếm */}
-                            <div className="w-96">
+                            <div className="w-full lg:w-96">
                                 <Input
                                     label="Tìm kiếm theo tên báo cáo hoặc nhân sự phụ trách"
                                     icon={<i className="fas fa-search" />}
@@ -724,8 +724,8 @@ const ActivityReports = () => {
                             </div>
 
                             {/* Bộ lọc ngày */}
-                            <div className="flex items-center gap-2">
-                                <div>
+                            <div className="w-full lg:w-auto flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                                <div className="w-full sm:w-auto">
                                     <Input
                                         type="date"
                                         label="Từ ngày"
@@ -738,7 +738,7 @@ const ActivityReports = () => {
                                         }
                                     />
                                 </div>
-                                <div>
+                                <div className="w-full sm:w-auto">
                                     <Input
                                         type="date"
                                         label="Đến ngày"
@@ -766,7 +766,7 @@ const ActivityReports = () => {
                         </div>
 
                         {/* Cột phải - Nút thêm */}
-                        <div>
+                        <div className="w-full lg:w-auto flex justify-end">
                             <Tooltip
                                 content="Thêm"
                                 animate={{
@@ -820,154 +820,156 @@ const ActivityReports = () => {
                         </div>
                     ) : (
                         <>
-                            <table className="w-full min-w-[640px] table-auto">
-                                <thead>
-                                    <tr>
-                                        {[
-                                            "STT",
-                                            "Tên báo cáo",
-                                            "Ngày báo cáo",
-                                            "Nhân sự phụ trách",
-                                            "Thao tác",
-                                        ].map((el) => (
-                                            <th
-                                                key={el}
-                                                className="px-5 py-3 text-left border-b border-blue-gray-50"
-                                            >
-                                                <Typography
-                                                    variant="small"
-                                                    className="text-[11px] font-bold uppercase text-blue-gray-400"
+                            <div className="w-full overflow-x-auto">
+                                <table className="w-full min-w-[800px] table-auto">
+                                    <thead>
+                                        <tr>
+                                            {[
+                                                { id: "stt", label: "STT", width: "w-[5%]" },
+                                                { id: "ten", label: "Tên báo cáo", width: "w-[30%]" },
+                                                { id: "ngay", label: "Ngày báo cáo", width: "w-[20%]" },
+                                                { id: "nhansu", label: "Nhân sự phụ trách", width: "w-[25%]" },
+                                                { id: "thaotac", label: "Thao tác", width: "w-[20%]" }
+                                            ].map(({ id, label, width }) => (
+                                                <th
+                                                    key={id}
+                                                    className={`${width} px-2 md:px-5 py-2 md:py-3 text-left border-b border-blue-gray-50`}
                                                 >
-                                                    {el}
-                                                </Typography>
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {currentReports.map(
-                                        ({
-                                            _id,
-                                            tenBaoCao,
-                                            ngayBaoCao,
-                                            nhanSuPhuTrach,
-                                        }, key) => {
-                                            const className = `py-3 px-5 ${
-                                                key === currentReports.length - 1
-                                                    ? ""
-                                                    : "border-b border-blue-gray-50"
-                                            }`;
+                                                    <Typography
+                                                        variant="small"
+                                                        className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                                    >
+                                                        {label}
+                                                    </Typography>
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {currentReports.map(
+                                            ({
+                                                _id,
+                                                tenBaoCao,
+                                                ngayBaoCao,
+                                                nhanSuPhuTrach,
+                                            }, key) => {
+                                                const className = `py-3 px-5 ${
+                                                    key === currentReports.length - 1
+                                                        ? ""
+                                                        : "border-b border-blue-gray-50"
+                                                }`;
 
-                                            return (
-                                                <tr key={_id}>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {indexOfFirstItem + key + 1}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Tooltip
-                                                            content={tenBaoCao}
-                                                            animate={{
-                                                                mount: { scale: 1, y: 0 },
-                                                                unmount: { scale: 0, y: 25 },
-                                                            }}
-                                                            className="bg-black bg-opacity-80"
-                                                        >
+                                                return (
+                                                    <tr key={_id}>
+                                                        <td className={`${className} w-[5%]`}>
                                                             <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                {truncateText(tenBaoCao, 30)}
+                                                                {indexOfFirstItem + key + 1}
                                                             </Typography>
-                                                        </Tooltip>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {formatDateVN(ngayBaoCao)}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                            {nhanSuPhuTrach}
-                                                        </Typography>
-                                                    </td>
-                                                    <td className={className}>
-                                                        <div className="flex items-center gap-2">
+                                                        </td>
+                                                        <td className={`${className} w-[30%]`}>
                                                             <Tooltip
-                                                                content="Xem"
+                                                                content={tenBaoCao}
                                                                 animate={{
                                                                     mount: { scale: 1, y: 0 },
                                                                     unmount: { scale: 0, y: 25 },
                                                                 }}
-                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                                className="bg-black bg-opacity-80"
                                                             >
-                                                                <Button
-                                                                    size="sm"
-                                                                    color="blue"
-                                                                    className="flex items-center gap-2"
-                                                                    onClick={() =>
-                                                                        openDetailDialog(
-                                                                            _id,
-                                                                        )}
-                                                                >
-                                                                    <EyeIcon
-                                                                        strokeWidth={2}
-                                                                        className="w-4 h-4"
-                                                                    />
-                                                                </Button>
+                                                                <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                    {truncateText(tenBaoCao, 30)}
+                                                                </Typography>
                                                             </Tooltip>
-                                                            <Tooltip
-                                                                content="Sửa"
-                                                                animate={{
-                                                                    mount: { scale: 1, y: 0 },
-                                                                    unmount: { scale: 0, y: 25 },
-                                                                }}
-                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                            >
-                                                                <Button
-                                                                    size="sm"
-                                                                    color="green"
-                                                                    className="flex items-center gap-2"
-                                                                    onClick={() =>
-                                                                        openEditDialog(
-                                                                            _id,
-                                                                        )}
+                                                        </td>
+                                                        <td className={`${className} w-[20%]`}>
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {formatDateVN(ngayBaoCao)}
+                                                            </Typography>
+                                                        </td>
+                                                        <td className={`${className} w-[25%]`}>
+                                                            <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                                {nhanSuPhuTrach}
+                                                            </Typography>
+                                                        </td>
+                                                        <td className={`${className} w-[20%]`}>
+                                                            <div className="flex items-center gap-2">
+                                                                <Tooltip
+                                                                    content="Xem"
+                                                                    animate={{
+                                                                        mount: { scale: 1, y: 0 },
+                                                                        unmount: { scale: 0, y: 25 },
+                                                                    }}
+                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                                 >
-                                                                    <PencilIcon
-                                                                        strokeWidth={2}
-                                                                        className="w-4 h-4"
-                                                                    />
-                                                                </Button>
-                                                            </Tooltip>
-                                                            <Tooltip
-                                                                content="Xóa"
-                                                                animate={{
-                                                                    mount: { scale: 1, y: 0 },
-                                                                    unmount: { scale: 0, y: 25 },
-                                                                }}
-                                                                className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                            >
-                                                                <Button
-                                                                    size="sm"
-                                                                    color="red"
-                                                                    className="flex items-center gap-2"
-                                                                    onClick={() =>
-                                                                        handleDeleteReport(
-                                                                            _id,
-                                                                        )}
+                                                                    <Button
+                                                                        size="sm"
+                                                                        color="blue"
+                                                                        className="flex items-center gap-2"
+                                                                        onClick={() =>
+                                                                            openDetailDialog(
+                                                                                _id,
+                                                                            )}
+                                                                    >
+                                                                        <EyeIcon
+                                                                            strokeWidth={2}
+                                                                            className="w-4 h-4"
+                                                                        />
+                                                                    </Button>
+                                                                </Tooltip>
+                                                                <Tooltip
+                                                                    content="Sửa"
+                                                                    animate={{
+                                                                        mount: { scale: 1, y: 0 },
+                                                                        unmount: { scale: 0, y: 25 },
+                                                                    }}
+                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                                 >
-                                                                    <TrashIcon
-                                                                        strokeWidth={2}
-                                                                        className="w-4 h-4"
-                                                                    />
-                                                                </Button>
-                                                            </Tooltip>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        },
-                                    )}
-                                </tbody>
-                            </table>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        color="green"
+                                                                        className="flex items-center gap-2"
+                                                                        onClick={() =>
+                                                                            openEditDialog(
+                                                                                _id,
+                                                                            )}
+                                                                    >
+                                                                        <PencilIcon
+                                                                            strokeWidth={2}
+                                                                            className="w-4 h-4"
+                                                                        />
+                                                                    </Button>
+                                                                </Tooltip>
+                                                                <Tooltip
+                                                                    content="Xóa"
+                                                                    animate={{
+                                                                        mount: { scale: 1, y: 0 },
+                                                                        unmount: { scale: 0, y: 25 },
+                                                                    }}
+                                                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                                >
+                                                                    <Button
+                                                                        size="sm"
+                                                                        color="red"
+                                                                        className="flex items-center gap-2"
+                                                                        onClick={() =>
+                                                                            handleDeleteReport(
+                                                                                _id,
+                                                                            )}
+                                                                    >
+                                                                        <TrashIcon
+                                                                            strokeWidth={2}
+                                                                            className="w-4 h-4"
+                                                                        />
+                                                                    </Button>
+                                                                </Tooltip>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            },
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
 
                             {/* Phân trang */}
                             {totalPages > 1 && (

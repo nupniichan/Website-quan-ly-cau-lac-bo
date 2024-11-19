@@ -822,169 +822,181 @@ const ManageBudget = () => {
                 size="lg"
             >
                 <DialogHeader className="lg:text-2xl md:text-xl sm:text-base">
-                    {editingBudgetId
-                        ? "Chỉnh sửa Ngân sách"
-                        : "Thêm ngân sách mới"}
+                    {editingBudgetId ? "Chỉnh sửa Ngân sách" : "Thêm ngân sách mới"}
                 </DialogHeader>
-                <DialogBody divider className="grid grid-cols-2 gap-4 overflow-y-auto lg:max-h-[80vh] sm:max-h-[47vh]">
-                    <div>
-                        <Input
-                            label="Tên ngân sách"
-                            value={newBudget.ten}
-                            onChange={(e) => {
-                                setNewBudget({ ...newBudget, ten: e.target.value });
-                                setErrors({ ...errors, ten: "" });
-                            }}
-                            error={!!errors.ten}
-                        />
-                        {errors.ten && (
-                            <Typography color="red" className="mt-1 text-xs">
-                                {errors.ten}
-                            </Typography>
-                        )}
-                    </div>
+                <DialogBody divider className="overflow-y-auto max-h-[calc(100vh-200px)] p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Tên ngân sách */}
+                        <div className="col-span-1 md:col-span-2">
+                            <Input
+                                label="Tên ngân sách"
+                                value={newBudget.ten}
+                                onChange={(e) => {
+                                    setNewBudget({ ...newBudget, ten: e.target.value });
+                                    setErrors({ ...errors, ten: "" });
+                                }}
+                                error={!!errors.ten}
+                            />
+                            {errors.ten && (
+                                <Typography color="red" className="mt-1 text-xs">
+                                    {errors.ten}
+                                </Typography>
+                            )}
+                        </div>
 
-                    <div>
-                        <Input
-                            type="number"
-                            label="Khoản chi tiêu"
-                            value={newBudget.khoanChiTieu}
-                            onChange={(e) => {
-                                setNewBudget({
-                                    ...newBudget,
-                                    khoanChiTieu: e.target.value,
-                                });
-                                setErrors({ ...errors, khoanChiTieu: "" });
-                            }}
-                            error={!!errors.khoanChiTieu}
-                        />
-                        {errors.khoanChiTieu && (
-                            <Typography color="red" className="mt-1 text-xs">
-                                {errors.khoanChiTieu}
-                            </Typography>
-                        )}
-                    </div>
+                        {/* Khoản chi tiêu */}
+                        <div>
+                            <Input
+                                type="number"
+                                label="Khoản chi tiêu"
+                                value={newBudget.khoanChiTieu}
+                                onChange={(e) => {
+                                    setNewBudget({
+                                        ...newBudget,
+                                        khoanChiTieu: e.target.value,
+                                    });
+                                    setErrors({ ...errors, khoanChiTieu: "" });
+                                }}
+                                error={!!errors.khoanChiTieu}
+                                containerProps={{
+                                    className: "min-w-[100px]"
+                                }}
+                            />
+                            {errors.khoanChiTieu && (
+                                <Typography color="red" className="mt-1 text-xs">
+                                    {errors.khoanChiTieu}
+                                </Typography>
+                            )}
+                        </div>
 
-                    <div>
-                        <Input
-                            type="number"
-                            label="Tổng thu"
-                            value={newBudget.nguonThu}
-                            onChange={(e) => {
-                                setNewBudget({
-                                    ...newBudget,
-                                    nguonThu: e.target.value,
-                                });
-                                setErrors({ ...errors, nguonThu: "" });
-                            }}
-                            error={!!errors.nguonThu}
-                        />
-                        {errors.nguonThu && (
-                            <Typography color="red" className="mt-1 text-xs">
-                                {errors.nguonThu}
-                            </Typography>
-                        )}
-                    </div>
+                        {/* Tổng thu */}
+                        <div>
+                            <Input
+                                type="number"
+                                label="Tổng thu"
+                                value={newBudget.nguonThu}
+                                onChange={(e) => {
+                                    setNewBudget({
+                                        ...newBudget,
+                                        nguonThu: e.target.value,
+                                    });
+                                    setErrors({ ...errors, nguonThu: "" });
+                                }}
+                                error={!!errors.nguonThu}
+                                containerProps={{
+                                    className: "min-w-[100px]"
+                                }}
+                            />
+                            {errors.nguonThu && (
+                                <Typography color="red" className="mt-1 text-xs">
+                                    {errors.nguonThu}
+                                </Typography>
+                            )}
+                        </div>
 
-                    <div>
-                        <Input
-                            type="date"
-                            label="Ngày"
-                            value={newBudget.ngay}
-                            onChange={(e) => {
-                                setNewBudget({
-                                    ...newBudget,
-                                    ngay: e.target.value,
-                                });
-                                setErrors({ ...errors, ngay: "" });
-                            }}
-                            error={!!errors.ngay}
-                            max={new Date().toISOString().split("T")[0]}
-                        />
-                        {errors.ngay && (
-                            <Typography color="red" className="mt-1 text-xs">
-                                {errors.ngay}
-                            </Typography>
-                        )}
-                    </div>
+                        {/* Ngày */}
+                        <div>
+                            <Input
+                                type="date"
+                                label="Ngày"
+                                value={newBudget.ngay}
+                                onChange={(e) => {
+                                    setNewBudget({
+                                        ...newBudget,
+                                        ngay: e.target.value,
+                                    });
+                                    setErrors({ ...errors, ngay: "" });
+                                }}
+                                error={!!errors.ngay}
+                                max={new Date().toISOString().split("T")[0]}
+                                containerProps={{
+                                    className: "min-w-[100px]"
+                                }}
+                            />
+                            {errors.ngay && (
+                                <Typography color="red" className="mt-1 text-xs">
+                                    {errors.ngay}
+                                </Typography>
+                            )}
+                        </div>
 
-                    <div className="relative">
-                        <Input
-                            id="student-input"
-                            label="Thành viên chịu trách nhiệm"
-                            value={newBudget.thanhVienChiuTrachNhiem}
-                            onChange={(e) => handleStudentSearch(e.target.value)}
-                            error={!!errors.thanhVienChiuTrachNhiem}
-                            onFocus={() => {
-                                setShowStudentDropdown(true);
-                                const shuffled = [...students].sort(() => 0.5 - Math.random());
-                                setFilteredStudents(shuffled.slice(0, 5));
-                            }}
-                        />
-                        {errors.thanhVienChiuTrachNhiem && (
-                            <Typography color="red" className="mt-1 text-xs">
-                                {errors.thanhVienChiuTrachNhiem}
-                            </Typography>
-                        )}
-                        
-                        {showStudentDropdown && filteredStudents.length > 0 && (
-                            <div 
-                                id="student-dropdown"
-                                className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
-                            >
-                                {filteredStudents.map((student) => (
-                                    <div
-                                        key={student._id}
-                                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                        onClick={() => handleSelectStudent(student)}
-                                    >
-                                        <Typography className="text-sm">
-                                            {student.hoTen}
-                                        </Typography>
-                                        <Typography className="text-xs text-gray-600">
-                                            MSHS: {student.mssv}
-                                        </Typography>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                        {/* Thành viên chịu trách nhiệm */}
+                        <div className="relative">
+                            <Input
+                                id="student-input"
+                                label="Thành viên chịu trách nhiệm"
+                                value={newBudget.thanhVienChiuTrachNhiem}
+                                onChange={(e) => handleStudentSearch(e.target.value)}
+                                error={!!errors.thanhVienChiuTrachNhiem}
+                                onFocus={() => {
+                                    setShowStudentDropdown(true);
+                                    const shuffled = [...students].sort(() => 0.5 - Math.random());
+                                    setFilteredStudents(shuffled.slice(0, 5));
+                                }}
+                            />
+                            {errors.thanhVienChiuTrachNhiem && (
+                                <Typography color="red" className="mt-1 text-xs">
+                                    {errors.thanhVienChiuTrachNhiem}
+                                </Typography>
+                            )}
+                            
+                            {showStudentDropdown && filteredStudents.length > 0 && (
+                                <div 
+                                    id="student-dropdown"
+                                    className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-y-auto"
+                                >
+                                    {filteredStudents.map((student) => (
+                                        <div
+                                            key={student._id}
+                                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                            onClick={() => handleSelectStudent(student)}
+                                        >
+                                            <Typography className="text-sm">
+                                                {student.hoTen}
+                                            </Typography>
+                                            <Typography className="text-xs text-gray-600">
+                                                MSHS: {student.mssv}
+                                            </Typography>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
 
-                    <div>
-                        <Input
-                            label="Nội dung"
-                            value={newBudget.noiDung}
-                            onChange={(e) => {
-                                setNewBudget({
-                                    ...newBudget,
-                                    noiDung: e.target.value,
-                                });
-                                setErrors({ ...errors, noiDung: "" });
-                            }}
-                            error={!!errors.noiDung}
-                        />
-                        {errors.noiDung && (
-                            <Typography color="red" className="mt-1 text-xs">
-                                {errors.noiDung}
-                            </Typography>
-                        )}
+                        {/* Nội dung */}
+                        <div className="col-span-1 md:col-span-2">
+                            <Input
+                                label="Nội dung"
+                                value={newBudget.noiDung}
+                                onChange={(e) => {
+                                    setNewBudget({
+                                        ...newBudget,
+                                        noiDung: e.target.value,
+                                    });
+                                    setErrors({ ...errors, noiDung: "" });
+                                }}
+                                error={!!errors.noiDung}
+                            />
+                            {errors.noiDung && (
+                                <Typography color="red" className="mt-1 text-xs">
+                                    {errors.noiDung}
+                                </Typography>
+                            )}
+                        </div>
                     </div>
                 </DialogBody>
-                <DialogFooter>
+                <DialogFooter className="space-x-2">
                     <Button
                         variant="text"
                         color="red"
                         onClick={() => setIsDialogOpen(false)}
-                        className="mr-1"
                     >
                         Hủy
                     </Button>
                     <Button
                         variant="gradient"
                         color="green"
-                        onClick={editingBudgetId
-                            ? handleUpdateBudget
-                            : handleAddBudget}
+                        onClick={editingBudgetId ? handleUpdateBudget : handleAddBudget}
                     >
                         {editingBudgetId ? "Cập nhật" : "Thêm"}
                     </Button>
@@ -1076,7 +1088,7 @@ const ManageBudget = () => {
                                     </div>
 
                                     <div className="bg-blue-gray-50 p-4 rounded-lg">
-                                        <Typography className="text-sm text-gray-600 mb-2">Ngư���i chịu trách nhiệm</Typography>
+                                        <Typography className="text-sm text-gray-600 mb-2">Người chịu trách nhiệm</Typography>
                                         <Typography className="font-medium">
                                             {detailBudget.thanhVienChiuTrachNhiem}
                                         </Typography>
