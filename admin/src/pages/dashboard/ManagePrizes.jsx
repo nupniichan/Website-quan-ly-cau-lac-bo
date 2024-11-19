@@ -21,6 +21,8 @@ import axios from "axios";
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
+import { message, notification } from "antd";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -50,20 +52,30 @@ const ManagePrizes = () => {
     const [filteredMembers, setFilteredMembers] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [dateFilter, setDateFilter] = useState({
-        startDate: '',
-        endDate: ''
+        startDate: "",
+        endDate: "",
     });
     const [showMemberDropdown, setShowMemberDropdown] = useState(false);
     const [memberValidationError, setMemberValidationError] = useState("");
+    // Lấy controller từ context & màu hiện tại của sidenav
+    const [controller] = useMaterialTailwindController();
+    const { sidenavColor } = controller;
 
     const filteredPrizes = useMemo(() => {
-        return prizes.filter(prize => {
-            const matchesSearch = prize.tenGiaiThuong.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                members.find(m => m._id === prize.thanhVienDatGiai)?.hoTen.toLowerCase().includes(searchTerm.toLowerCase());
+        return prizes.filter((prize) => {
+            const matchesSearch =
+                prize.tenGiaiThuong.toLowerCase().includes(
+                    searchTerm.toLowerCase(),
+                ) ||
+                members.find((m) => m._id === prize.thanhVienDatGiai)?.hoTen
+                    .toLowerCase().includes(searchTerm.toLowerCase());
 
             const prizeDate = new Date(prize.ngayDatGiai);
-            const matchesDateRange = (!dateFilter.startDate || prizeDate >= new Date(dateFilter.startDate)) &&
-                (!dateFilter.endDate || prizeDate <= new Date(dateFilter.endDate));
+            const matchesDateRange =
+                (!dateFilter.startDate ||
+                    prizeDate >= new Date(dateFilter.startDate)) &&
+                (!dateFilter.endDate ||
+                    prizeDate <= new Date(dateFilter.endDate));
 
             return matchesSearch && matchesDateRange;
         });
@@ -83,15 +95,17 @@ const ManagePrizes = () => {
                 }
             } catch (error) {
                 console.error("Error parsing managed clubs data:", error);
-                alert(
-                    "Không thể tải thông tin câu lạc bộ. Vui lòng đăng nhập lại.",
-                );
+                // alert(
+                //     "Không thể tải thông tin câu lạc bộ. Vui lòng đăng nhập lại.",
+                // );
+                message.error({content: "Không thể tải thông tin câu lạc bộ. Vui lòng đăng nhập lại."});
             }
         } else {
             console.error("No managed clubs data found");
-            alert(
-                "Không tìm thấy thông tin câu lạc bộ. Vui lòng đăng nhập lại.",
-            );
+            // alert(
+            //     "Không tìm thấy thông tin câu lạc bộ. Vui lòng đăng nhập lại.",
+            // );
+            message.error({content: "Không tìm thấy thông tin câu lạc bộ. Vui lòng đăng nhập lại."});
         }
         setIsLoading(false);
     }, []);
@@ -117,7 +131,8 @@ const ManagePrizes = () => {
             }
         } catch (error) {
             console.error("Error fetching prizes:", error);
-            setPrizes([]);
+            // setPrizes([]);
+            message.error({content: "Lỗi khi tải danh sách giải thưởng"});
         } finally {
             setIsLoading(false);
         }
@@ -136,7 +151,7 @@ const ManagePrizes = () => {
 
     const handleAddPrize = async () => {
         if (!validateForm()) return;
-        
+
         try {
             const formData = new FormData();
             
@@ -163,8 +178,17 @@ const ManagePrizes = () => {
             setIsDialogOpen(false);
             fetchPrizes(managedClub._id);
         } catch (error) {
-            console.error('Error adding prize:', error);
-            alert(`Lỗi khi thêm giải thưởng: ${error.response?.data?.message || error.message}`);
+            console.error("Error adding prize:", error);
+            // alert(
+            //     `Lỗi khi thêm giải thưởng: ${
+            //         error.response?.data?.message || error.message ||
+            //         "Không xác định"
+            //     }`,
+            // );
+            notification.error({
+                message: "Lỗi khi thêm giải thưởng",
+                description: error.response?.data?.message || error.message || "Không xác định",
+            })
         }
     };
 
@@ -211,12 +235,16 @@ const ManagePrizes = () => {
             alert('Cập nhật giải thưởng thành công!');
         } catch (error) {
             console.error("Error updating prize:", error);
-            alert(
-                `Lỗi khi cập nhật giải thưởng: ${
-                    error.response?.data?.message || error.message ||
-                    "Không xác định"
-                }`
-            );
+            // alert(
+            //     `Lỗi khi cập nhật giải thưởng: ${
+            //         error.response?.data?.message || error.message ||
+            //         "Không xác định"
+            //     }`,
+            // );
+            notification.error({
+                message: "Lỗi khi cập nhật giải thưởng",
+                description: error.response?.data?.message || error.message || "Không xác định",
+            })
         }
     };
 
@@ -224,10 +252,15 @@ const ManagePrizes = () => {
         if (window.confirm("Bạn có chắc chắn muốn xóa giải thưởng này?")) {
             try {
                 // Kiểm tra xem giải thưởng có trong báo cáo không
-                const checkResponse = await axios.get(`${API_URL}/check-prize-in-reports/${prizeId}`);
-                
+                const checkResponse = await axios.get(
+                    `${API_URL}/check-prize-in-reports/${prizeId}`,
+                );
+
                 if (checkResponse.data.exists) {
-                    alert("Không thể xóa giải thưởng này vì nó đã được sử dụng trong báo cáo!");
+                    // alert(
+                    //     "Không thể xóa giải thưởng này vì nó đã được sử dụng trong báo cáo!",
+                    // );
+                    message.warning({content: "Không thể xóa giải thưởng này vì nó đã được sử dụng trong báo cáo!"});
                     return;
                 }
 
@@ -237,11 +270,15 @@ const ManagePrizes = () => {
                 fetchPrizes(managedClub._id);
             } catch (error) {
                 console.error("Error deleting prize:", error);
-                alert(
-                    `Lỗi khi xóa giải thưởng: ${
-                        error.response?.data?.message || "Không xác định"
-                    }`,
-                );
+                // alert(
+                //     `Lỗi khi xóa giải thưởng: ${
+                //         error.response?.data?.message || "Không xác định"
+                //     }`,
+                // );
+                notification.error({
+                    message: "Lỗi khi xóa giải thưởng",
+                    description: error.response?.data?.message || "Không xác định",
+                })
             }
         }
     };
@@ -324,7 +361,10 @@ const ManagePrizes = () => {
     // Tính toán prizes cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentPrizes = filteredPrizes.slice(indexOfFirstItem, indexOfLastItem);
+    const currentPrizes = filteredPrizes.slice(
+        indexOfFirstItem,
+        indexOfLastItem,
+    );
     const totalPages = Math.ceil(filteredPrizes.length / itemsPerPage);
 
     // Thêm hàm để xử lý chuyển trang
@@ -424,7 +464,7 @@ const ManagePrizes = () => {
             <Card>
                 <CardHeader
                     variant="gradient"
-                    color="blue"
+                    color={sidenavColor}
                     className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
@@ -432,20 +472,24 @@ const ManagePrizes = () => {
                     </Typography>
                 </CardHeader>
 
-                <CardBody className="px-0 pt-0 pb-2">
-                    <div className="flex flex-col p-4 px-6 gap-4">
-                        <div className="flex flex-col lg:flex-row gap-4 w-full">
-                            <div className="w-full lg:w-1/3">
+                <CardBody className="px-0 pt-0 pb-2 overflow-auto">
+                    <div className="flex items-center justify-between gap-4 p-4 px-6">
+                        <div className="flex flex-wrap items-center gap-4">
+                            <div className="w-full sm:w-96">
                                 <Input
-                                    label="Tìm kiếm theo tên giải hoặc người đạt giải"
+                                    label={
+                                        <span className="overflow-hidden whitespace-nowrap text-ellipsis">
+                                            Tìm theo tên giải / người đạt giải
+                                        </span>
+                                    }
                                     icon={<i className="fas fa-search" />}
                                     value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onChange={(e) =>
+                                        setSearchTerm(e.target.value)}
                                 />
                             </div>
-
-                            <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-                                <div className="w-full sm:w-40">
+                            <div className="flex flex-col items-start w-full gap-4 sm:flex-row sm:items-center sm:w-auto">
+                                <div className="relative w-full sm:w-40">
                                     <Input
                                         type="date"
                                         label="Từ ngày"
@@ -465,10 +509,11 @@ const ManagePrizes = () => {
                                         type="date"
                                         label="Đến ngày"
                                         value={dateFilter.endDate}
-                                        onChange={(e) => setDateFilter(prev => ({
-                                            ...prev,
-                                            endDate: e.target.value
-                                        }))}
+                                        onChange={(e) =>
+                                            setDateFilter((prev) => ({
+                                                ...prev,
+                                                endDate: e.target.value,
+                                            }))}
                                         min={dateFilter.startDate}
                                         max={new Date().toISOString().split('T')[0]}
                                         containerProps={{
@@ -488,41 +533,53 @@ const ManagePrizes = () => {
                                 )}
                             </div>
 
-                            <div className="w-full sm:w-auto lg:ml-auto">
-                                <Tooltip
-                                    content="Thêm"
-                                    animate={{
-                                        mount: { scale: 1, y: 0 },
-                                        unmount: { scale: 0, y: 25 },
-                                    }}
-                                    className="bg-gradient-to-r from-black to-transparent opacity-70"
+                        <div className="w-full sm:w-auto">
+                            <Tooltip
+                                content="Thêm"
+                                animate={{
+                                    mount: { scale: 1, y: 0 },
+                                    unmount: { scale: 0, y: 25 },
+                                }}
+                                className="bg-gradient-to-r from-black to-transparent opacity-70"
+                            >
+                                <Button
+                                    className="flex items-center justify-center w-full gap-3 sm:w-auto"
+                                    color={sidenavColor}
+                                    size="sm"
+                                    onClick={openAddDialog}
                                 >
-                                    <Button
-                                        className="flex items-center gap-3 w-full sm:w-auto justify-center"
-                                        color="blue"
-                                        size="sm"
-                                        onClick={openAddDialog}
-                                    >
-                                        <FaPlus className="w-4 h-4" strokeWidth={"2rem"} />
-                                    </Button>
-                                </Tooltip>
-                            </div>
+                                    <FaPlus
+                                        className="w-4 h-4"
+                                        strokeWidth={"2rem"}
+                                    />
+                                </Button>
+                            </Tooltip>
                         </div>
+                    </div>
 
-                        {(searchTerm || dateFilter.startDate || dateFilter.endDate) && (
-                            <div className="mt-2">
-                                <Typography variant="small" color="blue-gray">
-                                    Tìm thấy {filteredPrizes.length} kết quả
-                                    {searchTerm && ` cho từ khóa "${searchTerm}"`}
-                                    {dateFilter.startDate && ` từ ngày ${new Date(dateFilter.startDate).toLocaleDateString('vi-VN')}`}
-                                    {dateFilter.endDate && ` đến ngày ${new Date(dateFilter.endDate).toLocaleDateString('vi-VN')}`}
-                                </Typography>
-                            </div>
-                        )}
+                    {(searchTerm || dateFilter.startDate ||
+                        dateFilter.endDate) && (
+                        <div className="px-6 mb-4">
+                            <Typography variant="small" color="blue-gray">
+                                Tìm thấy {filteredPrizes.length} kết quả
+                                {searchTerm && ` cho từ khóa "${searchTerm}"`}
+                                {dateFilter.startDate &&
+                                    ` từ ngày ${
+                                        new Date(dateFilter.startDate)
+                                            .toLocaleDateString("vi-VN")
+                                    }`}
+                                {dateFilter.endDate &&
+                                    ` đến ngày ${
+                                        new Date(dateFilter.endDate)
+                                            .toLocaleDateString("vi-VN")
+                                    }`}
+                            </Typography>
+                        </div>
+                    )}
 
                         {isLoading ? (
                             <div className="flex items-center justify-center h-64">
-                                <Spinner className="w-16 h-16 text-blue-500/10" />
+                                <Spinner className="w-16 h-16" color="pink" />
                             </div>
                         ) : filteredPrizes.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-64 gap-4">
@@ -541,7 +598,7 @@ const ManagePrizes = () => {
                             </div>
                         ) : (
                             <>
-                                <div className="overflow-x-auto">
+                                <div className="mt-4 overflow-x-auto">
                                     <table className="w-full min-w-[640px] table-auto">
                                         <thead>
                                             <tr>
@@ -719,26 +776,41 @@ const ManagePrizes = () => {
                                     </table>
                                 </div>
 
-                                <div className="flex flex-col sm:flex-row items-center gap-4 justify-center mt-4 px-4">
+                                <div className="flex flex-col items-center justify-center gap-4 px-4 mt-4 sm:flex-row">
                                     <Button
                                         variant="text"
                                         className="flex items-center gap-2"
-                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        onClick={() =>
+                                            handlePageChange(currentPage - 1)}
                                         disabled={currentPage === 1}
                                     >
-                                        <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                                        <ChevronLeftIcon
+                                            strokeWidth={2}
+                                            className="w-4 h-4"
+                                        />
                                     </Button>
-                                    
-                                    <div className="flex items-center gap-2 overflow-x-auto py-2">
-                                        {[...Array(totalPages)].map((_, index) => (
+
+                                    <div className="flex items-center gap-2 py-2 overflow-x-auto">
+                                        {[...Array(totalPages)].map((
+                                            _,
+                                            index,
+                                        ) => (
                                             <Button
                                                 key={index + 1}
-                                                variant={currentPage === index + 1 ? "gradient" : "text"}
-                                                color="blue"
-                                                onClick={() => handlePageChange(index + 1)}
-                                                className="w-10 h-10 min-w-[2.5rem]"
+                                                variant={currentPage ===
+                                                        index + 1
+                                                    ? "gradient"
+                                                    : "text"}
+                                                color={sidenavColor}
+                                                onClick={() =>
+                                                    handlePageChange(index + 1)}
+                                                className="w-10"
                                             >
-                                                {index + 1}
+                                                {
+                                                    <span className="flex justify-center">
+                                                        {index + 1}
+                                                    </span>
+                                                }
                                             </Button>
                                         ))}
                                     </div>
@@ -746,10 +818,14 @@ const ManagePrizes = () => {
                                     <Button
                                         variant="text"
                                         className="flex items-center gap-2"
-                                        onClick={() => handlePageChange(currentPage + 1)}
-                                        disabled={currentPage === totalPages}
+                                        onClick={() =>
+                                            handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages || totalPages <= 1}
                                     >
-                                        Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                        <ChevronRightIcon
+                                            strokeWidth={2}
+                                            className="w-4 h-4"
+                                        />
                                     </Button>
                                 </div>
                             </>
@@ -771,8 +847,11 @@ const ManagePrizes = () => {
                         : "Thêm Giải thưởng Mới"}
                 </DialogHeader>
 
-                        {/* NOTE Responsiveness for Dialog */}
-                <DialogBody divider className="grid lg:grid-cols-2 gap-4 overflow-y-auto max-h-[80vh] sm:max-h-[47vh]">
+                {/* NOTE Responsiveness for Dialog */}
+                <DialogBody
+                    divider
+                    className="grid lg:grid-cols-2 gap-4 overflow-y-auto max-h-[80vh] sm:max-h-[47vh]"
+                >
                     <div>
                         <Input
                             label="Tên giải thưởng"
@@ -845,7 +924,10 @@ const ManagePrizes = () => {
                             onChange={(e) => handleMemberSearch(e.target.value)}
                             onFocus={() => {
                                 setShowMemberDropdown(true);
-                                const shuffled = [...members].sort(() => 0.5 - Math.random());
+                                // Hiển thị 5 thành viên ngẫu nhiên khi focus
+                                const shuffled = [...members].sort(() =>
+                                    0.5 - Math.random()
+                                );
                                 setFilteredMembers(shuffled.slice(0, 5));
                             }}
                             error={!!errors.thanhVienDatGiai || !!memberValidationError}
@@ -994,31 +1076,41 @@ const ManagePrizes = () => {
                     Chi tiết Giải thưởng
                 </DialogHeader>
                 {detailPrize && (
-                    <DialogBody divider className="overflow-y-auto lg:max-h-[65vh] sm:max-h-[50vh] p-6">
-                        <div className="flex flex-col lg:flex-row gap-6">
+                    <DialogBody
+                        divider
+                        className="overflow-y-auto lg:max-h-[65vh] sm:max-h-[50vh] p-6"
+                    >
+                        <div className="flex flex-col gap-6 lg:flex-row">
                             {/* Cột trái - Thông tin cơ bản */}
                             <div className="flex-1">
-                                <Typography variant="h6" color="blue" className="mb-4">
+                                <Typography
+                                    variant="h6"
+                                    color="blue"
+                                    className="mb-4"
+                                >
                                     Thông tin chung
                                 </Typography>
-                                
-                                <div className="bg-blue-gray-50 p-6 rounded-lg flex flex-col gap-5">
+
+                                <div className="flex flex-col gap-5 p-6 rounded-lg bg-blue-gray-50">
                                     <div>
-                                        <Typography 
+                                        <Typography
                                             variant="h4"
-                                            className="text-center bg-white p-4 rounded border-2 border-dashed border-blue-500 text-blue-500 font-bold"
+                                            className="p-4 font-bold text-center text-blue-500 bg-white border-2 border-blue-500 border-dashed rounded"
                                         >
                                             {detailPrize.tenGiaiThuong}
                                         </Typography>
                                     </div>
 
                                     <div className="flex items-center justify-center gap-2">
-                                        <Typography variant="h5" className="text-blue-500 font-bold">
+                                        <Typography
+                                            variant="h5"
+                                            className="font-bold text-blue-500"
+                                        >
                                             {detailPrize.loaiGiai}
                                         </Typography>
                                     </div>
 
-                                    <div className="text-center bg-white p-3 rounded">
+                                    <div className="p-3 text-center bg-white rounded">
                                         <Typography className="font-medium">
                                             Đạt bởi: {detailPrize.thanhVienDatGiai?.hoTen || 
                                                      members.find(m => 
@@ -1034,36 +1126,42 @@ const ManagePrizes = () => {
 
                             {/* Cột phải - Thông tin chi tiết */}
                             <div className="flex-1 lg:flex-[1.5]">
-                                <Typography variant="h6" color="blue" className="mb-4">
+                                <Typography
+                                    variant="h6"
+                                    color="blue"
+                                    className="mb-4"
+                                >
                                     Chi tiết giải thưởng
                                 </Typography>
 
                                 <div className="grid gap-4">
-                                    <div className="bg-blue-gray-50 p-4 rounded flex justify-between items-center">
-                                        <Typography className="text-gray-700 text-sm font-medium">
+                                    <div className="flex items-center justify-between p-4 rounded bg-blue-gray-50">
+                                        <Typography className="text-sm font-medium text-gray-700">
                                             Ngày đạt giải
                                         </Typography>
                                         <Typography className="font-medium">
-                                            {new Date(detailPrize.ngayDatGiai).toLocaleDateString('vi-VN', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric'
-                                            })}
+                                            {new Date(detailPrize.ngayDatGiai)
+                                                .toLocaleDateString("vi-VN", {
+                                                    year: "numeric",
+                                                    month: "long",
+                                                    day: "numeric",
+                                                })}
                                         </Typography>
                                     </div>
 
-                                    <div className="bg-blue-gray-50 p-4 rounded">
-                                        <Typography className="text-gray-700 text-sm font-medium mb-2">
+                                    <div className="p-4 rounded bg-blue-gray-50">
+                                        <Typography className="mb-2 text-sm font-medium text-gray-700">
                                             Ghi chú
                                         </Typography>
                                         <Typography className="font-medium whitespace-pre-line">
-                                            {detailPrize.ghiChu || "Không có ghi chú"}
+                                            {detailPrize.ghiChu ||
+                                                "Không có ghi chú"}
                                         </Typography>
                                     </div>
 
-                                    {detailPrize?.anhDatGiai && (
-                                        <div className="bg-blue-gray-50 p-4 rounded">
-                                            <Typography className="text-gray-700 text-sm font-medium mb-2">
+                                    {detailPrize.anhDatGiai && (
+                                        <div className="p-4 rounded bg-blue-gray-50">
+                                            <Typography className="mb-2 text-sm font-medium text-gray-700">
                                                 Ảnh đạt giải
                                             </Typography>
                                             <div className="relative group">
@@ -1080,9 +1178,14 @@ const ManagePrizes = () => {
                                         </div>
                                     )}
 
-                                    <div className="bg-orange-50 p-4 rounded border border-orange-200">
-                                        <Typography variant="small" className="text-orange-800">
-                                            <strong>Lưu ý:</strong> Thông tin giải thưởng này đã được xác nhận và lưu trữ trong hệ thống.
+                                    <div className="p-4 border border-orange-200 rounded bg-orange-50">
+                                        <Typography
+                                            variant="small"
+                                            className="text-orange-800"
+                                        >
+                                            <strong>Lưu ý:</strong>{" "}
+                                            Thông tin giải thưởng này đã được
+                                            xác nhận và lưu trữ trong hệ thống.
                                         </Typography>
                                     </div>
                                 </div>

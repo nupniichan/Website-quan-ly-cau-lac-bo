@@ -43,7 +43,7 @@ export function DashboardNavbar() {
             fullWidth
             blurred={fixedNavbar}
         >
-            <div className="flex flex-col-reverse justify-between gap-6 md:flex-row md:items-center">
+            <div className="flex flex-col-reverse justify-between gap-6 sm:flex-row md:items-center">
                 <div className="capitalize">
                     <Breadcrumbs
                         className={`bg-transparent p-0 transition-all ${
@@ -72,9 +72,9 @@ export function DashboardNavbar() {
                     </Typography>
                 </div>
                 <div className="flex items-center">
-                    <div className="mr-auto md:mr-4 md:w-56">
+                    {/* <div className="mr-auto md:mr-4 md:w-56">
                         <Input label="Tìm kiếm" />
-                    </div>
+                    </div> */}
                     <IconButton
                         variant="text"
                         color="blue-gray"

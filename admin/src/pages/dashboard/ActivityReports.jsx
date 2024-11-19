@@ -1,8 +1,4 @@
-import {
-    EyeIcon,
-    PencilIcon,
-    TrashIcon,
-} from "@heroicons/react/24/solid";
+import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
 import {
     Button,
     Card,
@@ -16,14 +12,16 @@ import {
     Input, Spinner,
     Textarea,
     Tooltip,
-    Typography
+    Typography,
 } from "@material-tailwind/react";
+import {message, notification} from "antd";
 import axios from "axios";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
-import * as XLSX from 'xlsx';
+import * as XLSX from "xlsx";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -67,7 +65,7 @@ const ActivityReports = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [dateFilter, setDateFilter] = useState({
         startDate: "",
-        endDate: ""
+        endDate: "",
     });
     const [students, setStudents] = useState([]);
     const [filteredStudents, setFilteredStudents] = useState([]);
@@ -76,9 +74,13 @@ const ActivityReports = () => {
     const [showMainStaffDropdown, setShowMainStaffDropdown] = useState(false);
     const [isFocused, setIsFocused] = useState({
         eventIndex: -1,
-        awardIndex: -1
+        awardIndex: -1,
     });
     const [memberValidationError, setMemberValidationError] = useState("");
+
+    // Lấy controller từ context & màu hiện tại của sidenav
+    const [controller] = useMaterialTailwindController();
+    const { sidenavColor } = controller;
 
     useEffect(() => {
         const managedClubsString = localStorage.getItem("managedClubs");
@@ -93,15 +95,15 @@ const ActivityReports = () => {
                     throw new Error("No managed clubs found");
                 }
             } catch (error) {
-                alert(
-                    "Không thể tải thông tin câu lạc bộ. Vui lòng đăng nhập lại.",
-                );
+                // alert("Không thể tải thông tin câu lạc bộ. Vui lòng đăng nhập lại.");
+                message.error({content: "Không thể tải thông tin câu lạc bộ. Vui lòng đăng nhập lại."});
             }
         } else {
             console.error("No managed clubs data found");
-            alert(
-                "Không tìm thấy thông tin câu lạc bộ. Vui lòng đăng nhập lại.",
-            );
+            // alert(
+            //     "Không tìm thấy thông tin câu lạc bộ. Vui lòng đăng nhập lại.",
+            // );
+            message.error({content: "Không tìm thấy thông tin câu lạc bộ. Vui lòng đăng nhập lại."});
         }
         setIsLoading(false);
     }, []);
@@ -123,7 +125,8 @@ const ActivityReports = () => {
             console.error("Error fetching reports:", error);
             // Thêm dòng này để xem chi tiết lỗi
             console.error("Error details:", error.response?.data);
-            alert("Lỗi khi tải danh sách báo cáo");
+            // alert("Lỗi khi tải danh sách báo cáo");
+            message.error({content: "Lỗi khi tải danh sách báo cáo"});
         } finally {
             setIsLoading(false);
         }
@@ -156,11 +159,15 @@ const ActivityReports = () => {
             fetchReports(club._id);
         } catch (error) {
             console.error("Error adding report:", error);
-            alert(
-                `Lỗi khi thêm báo cáo: ${
-                    error.response?.data?.message || "Không xác định"
-                }`,
-            );
+            // alert(
+            //     `Lỗi khi thêm báo cáo: ${
+            //         error.response?.data?.message || "Không xác định"
+            //     }`,
+            // );
+            notification.error({
+                message: "Lỗi khi thêm báo cáo",
+                description: error.response?.data?.message || "Không xác định",
+            });
         }
     };
 
@@ -185,11 +192,15 @@ const ActivityReports = () => {
             fetchReports(club._id);
         } catch (error) {
             console.error("Error updating report:", error);
-            alert(
-                `Lỗi khi cập nhật báo cáo: ${
-                    error.response?.data?.message || "Không xác định"
-                }`,
-            );
+            // alert(
+            //     `Lỗi khi cập nhật báo cáo: ${
+            //         error.response?.data?.message || "Không xác định"
+            //     }`,
+            // );
+            notification.error({
+                message: "Lỗi khi cập nhật báo cáo",
+                description: error.response?.data?.message || "Không xác định",
+            });
         }
     };
 
@@ -202,17 +213,21 @@ const ActivityReports = () => {
                 fetchReports(club._id);
             } catch (error) {
                 console.error("Error deleting report:", error);
-                alert(
-                    `Lỗi khi xóa báo cáo: ${
-                        error.response?.data?.message || "Không xác định"
-                    }`,
-                );
+                // alert(
+                //     `Lỗi khi xóa báo cáo: ${
+                //         error.response?.data?.message || "Không xác định"
+                //     }`,
+                // );
+                notification.error({
+                    message: "Lỗi khi xóa báo cáo",
+                    description: error.response?.data?.message || "Không xác định",
+                })
             }
         }
     };
 
     const openAddDialog = () => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toISOString().split("T")[0];
         setNewReport({
             tenBaoCao: "",
             ngayBaoCao: today,
@@ -236,7 +251,8 @@ const ActivityReports = () => {
             setIsDialogOpen(true);
         } catch (error) {
             console.error("Error fetching report details:", error);
-            alert("Lỗi khi tải thông tin báo cáo");
+            // alert("Lỗi khi tải thông tin báo cáo");
+            message.error({content: "Lỗi khi tải thông tin báo cáo"});
         }
     };
 
@@ -298,10 +314,10 @@ const ActivityReports = () => {
         updatedEvents[index] = {
             ...updatedEvents[index],
             tenSuKien: value,
-            isSelected: false
+            isSelected: false,
         };
         setNewReport({ ...newReport, danhSachSuKien: updatedEvents });
-        
+
         try {
             const response = await axios.get(
                 `${API_URL}/search-events/${club._id}?query=${value}&limit=5`,
@@ -318,7 +334,7 @@ const ActivityReports = () => {
             tenSuKien: suggestion.ten,
             nguoiPhuTrach: suggestion.nguoiPhuTrach,
             ngayToChuc: suggestion.ngayToChuc.split("T")[0],
-            isSelected: true // Thêm flag để đánh dấu đã chọn từ suggestion
+            isSelected: true, // Thêm flag để đánh dấu đã chọn từ suggestion
         };
         setNewReport({ ...newReport, danhSachSuKien: updatedEvents });
         setEventSuggestions({ index: -1, suggestions: [] });
@@ -343,7 +359,7 @@ const ActivityReports = () => {
             tenGiai: suggestion.tenGiai,
             nguoiNhanGiai: suggestion.nguoiNhanGiai,
             ngayNhanGiai: suggestion.ngayNhanGiai.split("T")[0],
-            isSelected: true // Thêm flag để đánh dấu đã chọn từ suggestion
+            isSelected: true, // Thêm flag để đánh dấu đã chọn từ suggestion
         };
         setNewReport({ ...newReport, danhSachGiai: updatedAwards });
         setAwardSuggestions({ index: -1, suggestions: [] });
@@ -360,7 +376,7 @@ const ActivityReports = () => {
         // Định nghĩa styles chung
         const borderStyle = {
             style: "medium", // hoặc "thin" tùy preference
-            color: { rgb: "000000" }
+            color: { rgb: "000000" },
         };
 
         const commonStyle = {
@@ -368,101 +384,151 @@ const ActivityReports = () => {
                 top: borderStyle,
                 bottom: borderStyle,
                 left: borderStyle,
-                right: borderStyle
-            }
+                right: borderStyle,
+            },
         };
 
         // Tạo worksheet cho thông tin chung với border
         const generalInfo = [
-            [{v: 'BÁO CÁO HOẠT ĐỘNG CÂU LẠC BỘ', s: {
-                alignment: { horizontal: "center", vertical: "center" },
-                ...commonStyle,
-                fill: { fgColor: { rgb: "4F46E5" } },
-                font: { bold: true, sz: 16, color: { rgb: "FFFFFF" } }
-            }}],
-            [''],
-            [{v: 'THÔNG TIN CHUNG', s: {
-                font: { bold: true },
-                ...commonStyle,
-                fill: { fgColor: { rgb: "E5E7EB" } }
-            }}],
+            [{
+                v: "BÁO CÁO HOẠT ĐỘNG CÂU LẠC BỘ",
+                s: {
+                    alignment: { horizontal: "center", vertical: "center" },
+                    ...commonStyle,
+                    fill: { fgColor: { rgb: "4F46E5" } },
+                    font: { color: { rgb: "FFFFFF" }, bold: true, sz: 16 },
+                },
+            }],
+            [""],
+            [{
+                v: "THÔNG TIN CHUNG",
+                s: {
+                    font: { bold: true },
+                    ...commonStyle,
+                    fill: { fgColor: { rgb: "E5E7EB" } },
+                },
+            }],
             [
-                {v: 'Tên báo cáo:', s: commonStyle},
-                {v: report.tenBaoCao, s: commonStyle}
+                { v: "Tên báo cáo:", s: commonStyle },
+                { v: report.tenBaoCao, s: commonStyle },
             ],
             [
-                {v: 'Ngày báo cáo:', s: commonStyle},
-                {v: new Date(report.ngayBaoCao).toLocaleDateString('vi-VN'), s: commonStyle}
+                { v: "Ngày báo cáo:", s: commonStyle },
+                {
+                    v: new Date(report.ngayBaoCao).toLocaleDateString("vi-VN"),
+                    s: commonStyle,
+                },
             ],
             [
-                {v: 'Người phụ trách:', s: commonStyle},
-                {v: report.nhanSuPhuTrach, s: commonStyle}
+                { v: "Người phụ trách:", s: commonStyle },
+                { v: report.nhanSuPhuTrach, s: commonStyle },
             ],
-            [''],
-            [{v: 'THÔNG TIN TÀI CHÍNH', s: {
-                font: { bold: true },
-                ...commonStyle,
-                fill: { fgColor: { rgb: "E5E7EB" } }
-            }}],
+            [""],
+            [{
+                v: "THÔNG TIN TÀI CHÍNH",
+                s: {
+                    font: { bold: true },
+                    ...commonStyle,
+                    fill: { fgColor: { rgb: "E5E7EB" } },
+                },
+            }],
             [
-                {v: 'Tổng ngân sách chi tiêu:', s: commonStyle},
-                {v: `${report.tongNganSachChiTieu?.toLocaleString('vi-VN')} đ`, s: commonStyle}
+                { v: "Tổng ngân sách chi tiêu:", s: commonStyle },
+                {
+                    v: `${
+                        report.tongNganSachChiTieu?.toLocaleString("vi-VN")
+                    } đ`,
+                    s: commonStyle,
+                },
             ],
             [
-                {v: 'Tổng thu:', s: commonStyle},
-                {v: `${report.tongThu?.toLocaleString('vi-VN')} đ`, s: commonStyle}
+                { v: "Tổng thu:", s: commonStyle },
+                {
+                    v: `${report.tongThu?.toLocaleString("vi-VN")} đ`,
+                    s: commonStyle,
+                },
             ],
-            [''],
-            [{v: 'KẾT QUẢ ĐẠT ĐƯỢC', s: {
-                font: { bold: true },
-                ...commonStyle,
-                fill: { fgColor: { rgb: "E5E7EB" } }
-            }}],
-            [{v: report.ketQuaDatDuoc || "Chưa cập nhật", s: commonStyle}]
+            [""],
+            [{
+                v: "KẾT QUẢ ĐẠT ĐƯỢC",
+                s: {
+                    font: { bold: true },
+                    ...commonStyle,
+                    fill: { fgColor: { rgb: "E5E7EB" } },
+                },
+            }],
+            [{ v: report.ketQuaDatDuoc || "Chưa cập nhật", s: commonStyle }],
         ];
 
         // Tạo worksheet cho danh sách sự kiện với border
         const eventsData = [
-            [{v: 'DANH SÁCH SỰ KIỆN', s: {
-                alignment: { horizontal: "center" },
-                ...commonStyle,
-                fill: { fgColor: { rgb: "4F46E5" } },
-                font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } }
-            }}],
+            [{
+                v: "DANH SÁCH SỰ KIỆN",
+                s: {
+                    font: { color: { rgb: "FFFFFF" }, sz: 14, bold: true },
+                    alignment: { horizontal: "center" },
+                    ...commonStyle,
+                    fill: { fgColor: { rgb: "4F46E5" } },
+                },
+            }],
             [
-                {v: 'STT', s: {...commonStyle, font: { bold: true }}},
-                {v: 'Tên sự kiện', s: {...commonStyle, font: { bold: true }}},
-                {v: 'Người phụ trách', s: {...commonStyle, font: { bold: true }}},
-                {v: 'Ngày tổ chức', s: {...commonStyle, font: { bold: true }}}
+                { v: "STT", s: { ...commonStyle, font: { bold: true } } },
+                {
+                    v: "Tên sự kiện",
+                    s: { ...commonStyle, font: { bold: true } },
+                },
+                {
+                    v: "Người phụ trách",
+                    s: { ...commonStyle, font: { bold: true } },
+                },
+                {
+                    v: "Ngày tổ chức",
+                    s: { ...commonStyle, font: { bold: true } },
+                },
             ],
             ...report.danhSachSuKien.map((event, index) => [
-                {v: index + 1, s: commonStyle},
-                {v: event.tenSuKien, s: commonStyle},
-                {v: event.nguoiPhuTrach, s: commonStyle},
-                {v: new Date(event.ngayToChuc).toLocaleDateString('vi-VN'), s: commonStyle}
-            ])
+                { v: index + 1, s: commonStyle },
+                { v: event.tenSuKien, s: commonStyle },
+                { v: event.nguoiPhuTrach, s: commonStyle },
+                {
+                    v: new Date(event.ngayToChuc).toLocaleDateString("vi-VN"),
+                    s: commonStyle,
+                },
+            ]),
         ];
 
         // Tạo worksheet cho danh sách giải thưởng với border
         const awardsData = [
-            [{v: 'DANH SÁCH GIẢI THƯỞNG', s: {
-                alignment: { horizontal: "center" },
-                ...commonStyle,
-                fill: { fgColor: { rgb: "4F46E5" } },
-                font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } }
-            }}],
+            [{
+                v: "DANH SÁCH GIẢI THƯỞNG",
+                s: {
+                    alignment: { horizontal: "center" },
+                    ...commonStyle,
+                    fill: { fgColor: { rgb: "4F46E5" } },
+                    font: { color: { rgb: "FFFFFF" }, bold: true, sz: 14 },
+                },
+            }],
             [
-                {v: 'STT', s: {...commonStyle, font: { bold: true }}},
-                {v: 'Tên giải', s: {...commonStyle, font: { bold: true }}},
-                {v: 'Người nhận giải', s: {...commonStyle, font: { bold: true }}},
-                {v: 'Ngày nhận giải', s: {...commonStyle, font: { bold: true }}}
+                { v: "STT", s: { ...commonStyle, font: { bold: true } } },
+                { v: "Tên giải", s: { ...commonStyle, font: { bold: true } } },
+                {
+                    v: "Người nhận giải",
+                    s: { ...commonStyle, font: { bold: true } },
+                },
+                {
+                    v: "Ngày nhận giải",
+                    s: { ...commonStyle, font: { bold: true } },
+                },
             ],
             ...report.danhSachGiai.map((award, index) => [
-                {v: index + 1, s: commonStyle},
-                {v: award.tenGiai, s: commonStyle},
-                {v: award.nguoiNhanGiai, s: commonStyle},
-                {v: new Date(award.ngayNhanGiai).toLocaleDateString('vi-VN'), s: commonStyle}
-            ])
+                { v: index + 1, s: commonStyle },
+                { v: award.tenGiai, s: commonStyle },
+                { v: award.nguoiNhanGiai, s: commonStyle },
+                {
+                    v: new Date(award.ngayNhanGiai).toLocaleDateString("vi-VN"),
+                    s: commonStyle,
+                },
+            ]),
         ];
 
         // Tạo các worksheet
@@ -471,32 +537,32 @@ const ActivityReports = () => {
         const wsAwards = XLSX.utils.aoa_to_sheet(awardsData);
 
         // Áp dụng độ rộng cột và merge cells
-        [wsGeneral, wsEvents, wsAwards].forEach(ws => {
-            ws['!cols'] = [
-                { wch: 25 },  // A
+        [wsGeneral, wsEvents, wsAwards].forEach((ws) => {
+            ws["!cols"] = [
+                { wch: 25 }, // A
                 { wch: 40 }, // B
                 { wch: 25 }, // C
                 { wch: 20 }, // D
             ];
 
-            ws['!rows'] = [{ hpt: 30 }];
+            ws["!rows"] = [{ hpt: 30 }];
         });
 
         // Merge cells
-        wsGeneral['!merges'] = [
+        wsGeneral["!merges"] = [
             { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
             { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } },
             { s: { r: 7, c: 0 }, e: { r: 7, c: 1 } },
             { s: { r: 11, c: 0 }, e: { r: 11, c: 1 } },
-            { s: { r: 12, c: 0 }, e: { r: 12, c: 1 } }
+            { s: { r: 12, c: 0 }, e: { r: 12, c: 1 } },
         ];
 
-        wsEvents['!merges'] = [
-            { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }
+        wsEvents["!merges"] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
         ];
 
-        wsAwards['!merges'] = [
-            { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }
+        wsAwards["!merges"] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
         ];
 
         // Thêm các worksheet vào workbook
@@ -514,22 +580,30 @@ const ActivityReports = () => {
     // Thêm hàm format date mới
     const formatDateVN = (dateString) => {
         if (!dateString) return "";
-        return new Date(dateString).toLocaleDateString('vi-VN');
+        return new Date(dateString).toLocaleDateString("vi-VN");
     };
 
     // Cập nhật phần filter và sort reports
     const filteredReports = useMemo(() => {
         return reports
             .sort((a, b) => new Date(b.ngayBaoCao) - new Date(a.ngayBaoCao)) // Sắp xếp theo ngày mới nhất
-            .filter(report => {
+            .filter((report) => {
                 // Lọc theo tên báo cáo hoặc nhân sự phụ trách
-                const matchesSearch = report.tenBaoCao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    report.nhanSuPhuTrach.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesSearch =
+                    report.tenBaoCao.toLowerCase().includes(
+                        searchTerm.toLowerCase(),
+                    ) ||
+                    report.nhanSuPhuTrach.toLowerCase().includes(
+                        searchTerm.toLowerCase(),
+                    );
 
                 // Lọc theo khoảng thời gian
                 const reportDate = new Date(report.ngayBaoCao);
-                const matchesDateRange = (!dateFilter.startDate || new Date(dateFilter.startDate) <= reportDate) &&
-                    (!dateFilter.endDate || new Date(dateFilter.endDate) >= reportDate);
+                const matchesDateRange =
+                    (!dateFilter.startDate ||
+                        new Date(dateFilter.startDate) <= reportDate) &&
+                    (!dateFilter.endDate ||
+                        new Date(dateFilter.endDate) >= reportDate);
 
                 return matchesSearch && matchesDateRange;
             });
@@ -538,7 +612,10 @@ const ActivityReports = () => {
     // Tính toán reports cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentReports = filteredReports.slice(indexOfFirstItem, indexOfLastItem);
+    const currentReports = filteredReports.slice(
+        indexOfFirstItem,
+        indexOfLastItem,
+    );
     const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
 
     // Thêm hàm để xử lý chuyển trang
@@ -576,11 +653,13 @@ const ActivityReports = () => {
 
     const fetchMembersByClub = async (clubId) => {
         try {
-            const response = await axios.get(`${API_URL}/get-members-by-club/${clubId}`);
-            const formattedMembers = response.data.map(member => ({
+            const response = await axios.get(
+                `${API_URL}/get-members-by-club/${clubId}`,
+            );
+            const formattedMembers = response.data.map((member) => ({
                 _id: member._id,
                 hoTen: member.hoTen,
-                mssv: member.maSoHocSinh
+                mssv: member.maSoHocSinh,
             }));
             setStudents(formattedMembers);
         } catch (error) {
@@ -592,18 +671,18 @@ const ActivityReports = () => {
         const updatedEvents = [...newReport.danhSachSuKien];
         updatedEvents[index] = {
             ...updatedEvents[index],
-            nguoiPhuTrach: value
+            nguoiPhuTrach: value,
         };
         setNewReport({ ...newReport, danhSachSuKien: updatedEvents });
         setSelectedEventIndex(index);
         setShowStudentDropdown(true);
-        
-        if (value.trim() === '') {
+
+        if (value.trim() === "") {
             setFilteredStudents(students);
             return;
         }
 
-        const filtered = students.filter(student => 
+        const filtered = students.filter((student) =>
             student.hoTen.toLowerCase().includes(value.toLowerCase()) ||
             student.mssv.toLowerCase().includes(value.toLowerCase())
         );
@@ -614,7 +693,7 @@ const ActivityReports = () => {
         const updatedEvents = [...newReport.danhSachSuKien];
         updatedEvents[index] = {
             ...updatedEvents[index],
-            nguoiPhuTrach: student.hoTen
+            nguoiPhuTrach: student.hoTen,
         };
         setNewReport({ ...newReport, danhSachSuKien: updatedEvents });
         setShowStudentDropdown(false);
@@ -641,7 +720,7 @@ const ActivityReports = () => {
     const handleSelectMainStaff = (student) => {
         setNewReport({
             ...newReport,
-            nhanSuPhuTrach: student.hoTen
+            nhanSuPhuTrach: student.hoTen,
         });
         setShowMainStaffDropdown(false);
         setMemberValidationError("");
@@ -664,24 +743,24 @@ const ActivityReports = () => {
     useEffect(() => {
         const handleClickOutside = (event) => {
             // Xử lý cho sự kiện
-            if (!event.target.closest('.event-suggestion-container')) {
+            if (!event.target.closest(".event-suggestion-container")) {
                 setEventSuggestions({ index: -1, suggestions: [] });
-                setIsFocused(prev => ({ ...prev, eventIndex: -1 }));
+                setIsFocused((prev) => ({ ...prev, eventIndex: -1 }));
             }
             // Xử lý cho giải thưởng
-            if (!event.target.closest('.award-suggestion-container')) {
+            if (!event.target.closest(".award-suggestion-container")) {
                 setAwardSuggestions({ index: -1, suggestions: [] });
-                setIsFocused(prev => ({ ...prev, awardIndex: -1 }));
+                setIsFocused((prev) => ({ ...prev, awardIndex: -1 }));
             }
             // Xử lý cho nhân sự phụ trách
-            if (!event.target.closest('.main-staff-container')) {
+            if (!event.target.closest(".main-staff-container")) {
                 setShowMainStaffDropdown(false);
             }
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener("mousedown", handleClickOutside);
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
 
@@ -694,7 +773,7 @@ const ActivityReports = () => {
     // Thêm function mới để xử lý rút gọn text
     const truncateText = (text, limit) => {
         if (text.length <= limit) return text;
-        return text.slice(0, limit) + '...';
+        return text.slice(0, limit) + "...";
     };
 
     return (
@@ -702,7 +781,7 @@ const ActivityReports = () => {
             <Card>
                 <CardHeader
                     variant="gradient"
-                    color="cyan"
+                    color={sidenavColor}
                     className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
@@ -710,59 +789,67 @@ const ActivityReports = () => {
                     </Typography>
                 </CardHeader>
 
-                <CardBody className="px-0 pt-0 pb-2">
-                    <div className="flex flex-wrap items-center justify-between gap-4 p-4 px-6">
+                <CardBody className="px-0 pt-0 pb-2 overflow-auto">
+                    <div className="flex items-center justify-between gap-4 p-4 px-6">
                         {/* Cột trái - Tìm kiếm và bộ lọc */}
                         <div className="w-full flex flex-col lg:flex-row items-start lg:items-center gap-4">
                             {/* Thanh tìm kiếm */}
                             <div className="w-full lg:w-96">
                                 <Input
-                                    label="Tìm kiếm theo tên báo cáo hoặc nhân sự phụ trách"
+                                    label={
+                                        <span className="overflow-hidden whitespace-nowrap text-ellipsis">
+                                            Tìm theo tên báo cáo / nhân sự phụ trách
+                                        </span>
+                                    }
                                     icon={<i className="fas fa-search" />}
                                     value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onChange={(e) =>
+                                        setSearchTerm(e.target.value)}
                                 />
                             </div>
 
                             {/* Bộ lọc ngày */}
-                            <div className="w-full lg:w-auto flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                                <div className="w-full sm:w-auto">
+                            <div className="flex items-center gap-2">
+                                <div className="">
                                     <Input
                                         type="date"
                                         label="Từ ngày"
                                         value={dateFilter.startDate}
-                                        onChange={(e) => 
-                                            setDateFilter(prev => ({
+                                        onChange={(e) =>
+                                            setDateFilter((prev) => ({
                                                 ...prev,
-                                                startDate: e.target.value
-                                            }))
-                                        }
+                                                startDate: e.target.value,
+                                            }))}
                                     />
                                 </div>
-                                <div className="w-full sm:w-auto">
+                                <div className="">
                                     <Input
                                         type="date"
                                         label="Đến ngày"
                                         value={dateFilter.endDate}
-                                        onChange={(e) => 
-                                            setDateFilter(prev => ({
+                                        onChange={(e) =>
+                                            setDateFilter((prev) => ({
                                                 ...prev,
-                                                endDate: e.target.value
-                                            }))
-                                        }
+                                                endDate: e.target.value,
+                                            }))}
                                     />
                                 </div>
                                 {/* Nút reset bộ lọc */}
-                                {(dateFilter.startDate || dateFilter.endDate) && (
-                                    <Button
-                                        variant="text"
-                                        color="red"
-                                        className="p-2"
-                                        onClick={() => setDateFilter({ startDate: "", endDate: "" })}
-                                    >
-                                        <XMarkIcon className="h-4 w-4" />
-                                    </Button>
-                                )}
+                                {(dateFilter.startDate || dateFilter.endDate) &&
+                                    (
+                                        <Button
+                                            variant="text"
+                                            color="red"
+                                            className="p-2"
+                                            onClick={() =>
+                                                setDateFilter({
+                                                    startDate: "",
+                                                    endDate: "",
+                                                })}
+                                        >
+                                            <XMarkIcon className="w-4 h-4" />
+                                        </Button>
+                                    )}
                             </div>
                         </div>
 
@@ -778,24 +865,36 @@ const ActivityReports = () => {
                             >
                                 <Button
                                     className="flex items-center gap-3"
-                                    color="blue"
+                                    color={sidenavColor}
                                     size="sm"
                                     onClick={openAddDialog}
                                 >
-                                    <FaPlus className="w-4 h-4" strokeWidth={"2rem"} />
+                                    <FaPlus
+                                        className="w-4 h-4"
+                                        strokeWidth={"2rem"}
+                                    />
                                 </Button>
                             </Tooltip>
                         </div>
                     </div>
 
                     {/* Hiển thị kết quả tìm kiếm và lọc */}
-                    {(searchTerm || dateFilter.startDate || dateFilter.endDate) && (
+                    {(searchTerm || dateFilter.startDate ||
+                        dateFilter.endDate) && (
                         <div className="px-6 mb-4">
                             <Typography variant="small" color="blue-gray">
                                 Tìm thấy {filteredReports.length} kết quả
                                 {searchTerm && ` cho "${searchTerm}"`}
-                                {dateFilter.startDate && ` từ ${new Date(dateFilter.startDate).toLocaleDateString('vi-VN')}`}
-                                {dateFilter.endDate && ` đến ${new Date(dateFilter.endDate).toLocaleDateString('vi-VN')}`}
+                                {dateFilter.startDate &&
+                                    ` từ ${
+                                        new Date(dateFilter.startDate)
+                                            .toLocaleDateString("vi-VN")
+                                    }`}
+                                {dateFilter.endDate &&
+                                    ` đến ${
+                                        new Date(dateFilter.endDate)
+                                            .toLocaleDateString("vi-VN")
+                                    }`}
                             </Typography>
                         </div>
                     )}
@@ -1000,10 +1099,15 @@ const ActivityReports = () => {
                                     <Button
                                         variant="text"
                                         className="flex items-center gap-2"
-                                        onClick={() => handlePageChange(currentPage + 1)}
-                                        disabled={currentPage === totalPages}
+                                        onClick={() =>
+                                            handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages ||
+                                            totalPages <= 1}
                                     >
-                                        Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                        <ChevronRightIcon
+                                            strokeWidth={2}
+                                            className="w-4 h-4"
+                                        />
                                     </Button>
                                 </div>
                             )}
@@ -1022,7 +1126,10 @@ const ActivityReports = () => {
                     {editingReportId ? "Chỉnh sửa Báo cáo" : "Thêm Báo cáo Mới"}
                 </DialogHeader>
 
-                <DialogBody divider className="grid lg:grid-cols-2 gap-4 overflow-y-auto lg:max-h-[64vh] sm:max-h-[47vh]">
+                <DialogBody
+                    divider
+                    className="grid lg:grid-cols-2 gap-4 overflow-y-auto lg:max-h-[64vh] sm:max-h-[47vh]"
+                >
                     <div>
                         <Input
                             label="Tên báo cáo"
@@ -1080,13 +1187,14 @@ const ActivityReports = () => {
                             error={!!errors.nhanSuPhuTrach || !!memberValidationError}
                         />
                         {showMainStaffDropdown && (
-                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                            <div className="absolute z-50 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-md shadow-lg max-h-60">
                                 {filteredStudents.length > 0 ? (
                                     filteredStudents.slice(0, 5).map((student) => (
                                         <div
                                             key={student._id}
                                             className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                            onClick={() => handleSelectMainStaff(student)}
+                                            onClick={() =>
+                                            handleSelectMainStaff(student)}
                                         >
                                             <Typography className="text-sm">
                                                 {student.hoTen}
@@ -1119,63 +1227,99 @@ const ActivityReports = () => {
                             Danh sách sự kiện
                         </Typography>
                         {newReport.danhSachSuKien.map((event, index) => (
-                            <div key={index} className="relative flex flex-col gap-2 mb-4 p-4 border rounded-lg">
+                            <div
+                                key={index}
+                                className="relative flex flex-col gap-2 p-4 mb-4 border rounded-lg"
+                            >
                                 <div className="grid grid-cols-3 gap-2">
                                     <div className="relative event-suggestion-container">
                                         <Input
                                             label="Tên sự kiện"
                                             value={event.tenSuKien}
-                                            onChange={(e) => handleEventNameChange(e, index)}
+                                            onChange={(e) =>
+                                                handleEventNameChange(e, index)}
                                             onFocus={() => {
-                                                setIsFocused(prev => ({ ...prev, eventIndex: index }));
-                                                if (club) handleEventNameChange({ target: { value: '' } }, index);
+                                                setIsFocused((prev) => ({
+                                                    ...prev,
+                                                    eventIndex: index,
+                                                }));
+                                                if (club) {
+                                                    handleEventNameChange({
+                                                        target: { value: "" },
+                                                    }, index);
+                                                }
                                             }}
                                         />
-                                        {eventSuggestions.index === index && eventSuggestions.suggestions.length > 0 && (
-                                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                                {eventSuggestions.suggestions.map((suggestion) => (
-                                                    <div
-                                                        key={suggestion._id}
-                                                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                                        onClick={() => handleEventSuggestionClick(suggestion, index)}
-                                                    >
-                                                        <Typography className="text-sm font-medium">
-                                                            {suggestion.ten}
-                                                        </Typography>
-                                                        <Typography className="text-xs text-gray-600">
-                                                            {suggestion.nguoiPhuTrach} - {formatDateVN(suggestion.ngayToChuc)}
-                                                        </Typography>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
+                                        {eventSuggestions.index === index &&
+                                            eventSuggestions.suggestions
+                                                    .length > 0 &&
+                                            (
+                                                <div className="absolute z-50 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-md shadow-lg max-h-60">
+                                                    {eventSuggestions
+                                                        .suggestions.map((
+                                                            suggestion,
+                                                        ) => (
+                                                            <div
+                                                                key={suggestion
+                                                                    ._id}
+                                                                className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                                                onClick={() =>
+                                                                    handleEventSuggestionClick(
+                                                                        suggestion,
+                                                                        index,
+                                                                    )}
+                                                            >
+                                                                <Typography className="text-sm font-medium">
+                                                                    {suggestion
+                                                                        .ten}
+                                                                </Typography>
+                                                                <Typography className="text-xs text-gray-600">
+                                                                    {suggestion
+                                                                        .nguoiPhuTrach}
+                                                                    {" "}
+                                                                    -{" "}
+                                                                    {formatDateVN(
+                                                                        suggestion
+                                                                            .ngayToChuc,
+                                                                    )}
+                                                                </Typography>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            )}
                                     </div>
 
                                     <div className="relative">
-                                        <Typography variant="small" className="absolute -top-2 left-2 px-2 bg-white text-blue-gray-500 text-[11px] font-normal z-10">
+                                        <Typography
+                                            variant="small"
+                                            className="absolute -top-2 left-2 px-2 bg-white text-blue-gray-500 text-[11px] font-normal z-10"
+                                        >
                                             Người phụ trách
                                         </Typography>
                                         <Input
-                                            value={event.nguoiPhuTrach || ''}
+                                            value={event.nguoiPhuTrach || ""}
                                             disabled={true}
                                             className="!border !border-blue-gray-100 !bg-white"
                                             labelProps={{
-                                                className: "hidden"
+                                                className: "hidden",
                                             }}
                                         />
                                     </div>
 
                                     <div className="relative">
-                                        <Typography variant="small" className="absolute -top-2 left-2 px-2 bg-white text-blue-gray-500 text-[11px] font-normal z-10">
+                                        <Typography
+                                            variant="small"
+                                            className="absolute -top-2 left-2 px-2 bg-white text-blue-gray-500 text-[11px] font-normal z-10"
+                                        >
                                             Ngày tổ chức
                                         </Typography>
                                         <Input
                                             type="date"
-                                            value={event.ngayToChuc || ''}
+                                            value={event.ngayToChuc || ""}
                                             disabled={true}
                                             className="!border !border-blue-gray-100 !bg-white"
                                             labelProps={{
-                                                className: "hidden"
+                                                className: "hidden",
                                             }}
                                         />
                                     </div>
@@ -1204,40 +1348,73 @@ const ActivityReports = () => {
                             Danh sách giải thưởng
                         </Typography>
                         {newReport.danhSachGiai.map((award, index) => (
-                            <div key={index} className="relative flex flex-col gap-2 mb-4 p-4 border rounded-lg">
+                            <div
+                                key={index}
+                                className="relative flex flex-col gap-2 p-4 mb-4 border rounded-lg"
+                            >
                                 <div className="grid grid-cols-3 gap-2">
                                     <div className="relative award-suggestion-container">
                                         <Input
                                             label="Tên giải"
                                             value={award.tenGiai}
-                                            onChange={(e) => handleAwardNameChange(e, index)}
+                                            onChange={(e) =>
+                                                handleAwardNameChange(e, index)}
                                             onFocus={() => {
-                                                setIsFocused(prev => ({ ...prev, awardIndex: index }));
-                                                if (club) handleAwardNameChange({ target: { value: '' } }, index);
+                                                setIsFocused((prev) => ({
+                                                    ...prev,
+                                                    awardIndex: index,
+                                                }));
+                                                if (club) {
+                                                    handleAwardNameChange({
+                                                        target: { value: "" },
+                                                    }, index);
+                                                }
                                             }}
                                         />
-                                        {awardSuggestions.index === index && awardSuggestions.suggestions.length > 0 && (
-                                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                                {awardSuggestions.suggestions.map((suggestion) => (
-                                                    <div
-                                                        key={suggestion._id}
-                                                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                                        onClick={() => handleAwardSuggestionClick(suggestion, index)}
-                                                    >
-                                                        <Typography className="text-sm font-medium">
-                                                            {suggestion.tenGiai}
-                                                        </Typography>
-                                                        <Typography className="text-xs text-gray-600">
-                                                            {suggestion.nguoiNhanGiai} - {formatDateVN(suggestion.ngayNhanGiai)}
-                                                        </Typography>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
+                                        {awardSuggestions.index === index &&
+                                            awardSuggestions.suggestions
+                                                    .length > 0 &&
+                                            (
+                                                <div className="absolute z-50 w-full mt-1 overflow-y-auto bg-white border border-gray-200 rounded-md shadow-lg max-h-60">
+                                                    {awardSuggestions
+                                                        .suggestions.map((
+                                                            suggestion,
+                                                        ) => (
+                                                            <div
+                                                                key={suggestion
+                                                                    ._id}
+                                                                className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                                                onClick={() =>
+                                                                    handleAwardSuggestionClick(
+                                                                        suggestion,
+                                                                        index,
+                                                                    )}
+                                                            >
+                                                                <Typography className="text-sm font-medium">
+                                                                    {suggestion
+                                                                        .tenGiai}
+                                                                </Typography>
+                                                                <Typography className="text-xs text-gray-600">
+                                                                    {suggestion
+                                                                        .nguoiNhanGiai}
+                                                                    {" "}
+                                                                    -{" "}
+                                                                    {formatDateVN(
+                                                                        suggestion
+                                                                            .ngayNhanGiai,
+                                                                    )}
+                                                                </Typography>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            )}
                                     </div>
 
                                     <div className="relative">
-                                        <Typography variant="small" className="absolute -top-2 left-2 px-2 bg-white text-blue-gray-500 text-[11px] font-normal z-10">
+                                        <Typography
+                                            variant="small"
+                                            className="absolute -top-2 left-2 px-2 bg-white text-blue-gray-500 text-[11px] font-normal z-10"
+                                        >
                                             Người nhận giải
                                         </Typography>
                                         <Input
@@ -1245,13 +1422,16 @@ const ActivityReports = () => {
                                             disabled
                                             className="!border !border-blue-gray-100 !bg-white"
                                             labelProps={{
-                                                className: "hidden"
+                                                className: "hidden",
                                             }}
                                         />
                                     </div>
 
                                     <div className="relative">
-                                        <Typography variant="small" className="absolute -top-2 left-2 px-2 bg-white text-blue-gray-500 text-[11px] font-normal z-10">
+                                        <Typography
+                                            variant="small"
+                                            className="absolute -top-2 left-2 px-2 bg-white text-blue-gray-500 text-[11px] font-normal z-10"
+                                        >
                                             Ngày nhận giải
                                         </Typography>
                                         <Input
@@ -1260,7 +1440,7 @@ const ActivityReports = () => {
                                             disabled
                                             className="!border !border-blue-gray-100 !bg-white"
                                             labelProps={{
-                                                className: "hidden"
+                                                className: "hidden",
                                             }}
                                         />
                                     </div>
@@ -1290,7 +1470,10 @@ const ActivityReports = () => {
                                     ...newReport,
                                     tongNganSachChiTieu: e.target.value,
                                 });
-                                setErrors({ ...errors, tongNganSachChiTieu: "" });
+                                setErrors({
+                                    ...errors,
+                                    tongNganSachChiTieu: "",
+                                });
                             }}
                             error={!!errors.tongNganSachChiTieu}
                         />
@@ -1322,15 +1505,14 @@ const ActivityReports = () => {
                         )}
                     </div>
 
-                    <div className="col-span-2 w-full">
+                    <div className="w-full col-span-2">
                         <Textarea
                             label="Kết quả đạt được"
                             value={newReport.ketQuaDatDuoc}
-                            onChange={(e) =>
-                                setNewReport({
-                                    ...newReport,
-                                    ketQuaDatDuoc: e.target.value,
-                                })}
+                            onChange={(e) => setNewReport({
+                                ...newReport,
+                                ketQuaDatDuoc: e.target.value,
+                            })}
                             className="w-full !min-h-[100px]"
                             rows={4}
                         />
@@ -1366,70 +1548,90 @@ const ActivityReports = () => {
             >
                 <DialogHeader className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Typography variant="h6">Chi tiết báo cáo hoạt động</Typography>
-                        <Typography 
-                            variant="small" 
-                            className="px-3 py-1 rounded-full font-bold uppercase bg-blue-500 text-white"
+                        <Typography variant="h6">
+                            Chi tiết báo cáo hoạt động
+                        </Typography>
+                        <Typography
+                            variant="small"
+                            className="px-3 py-1 font-bold text-white uppercase bg-blue-500 rounded-full"
                         >
-                            {detailReport?.ngayBaoCao && new Date(detailReport.ngayBaoCao).toLocaleDateString('vi-VN', {
-                                month: 'long',
-                                year: 'numeric'
-                            })}
+                            {detailReport?.ngayBaoCao &&
+                                new Date(detailReport.ngayBaoCao)
+                                    .toLocaleDateString("vi-VN", {
+                                        month: "long",
+                                        year: "numeric",
+                                    })}
                         </Typography>
                     </div>
                 </DialogHeader>
 
                 {detailReport && (
-                    <DialogBody divider className="overflow-y-auto lg:max-h-[65vh] sm:max-h-[50vh] p-6">
+                    <DialogBody
+                        divider
+                        className="overflow-y-auto lg:max-h-[65vh] sm:max-h-[50vh] p-6"
+                    >
                         <div className="flex gap-6">
                             {/* Cột trái - Thông tin cơ bản */}
                             <div className="flex-1">
-                                <div className="bg-blue-gray-50 p-6 rounded-lg">
+                                <div className="p-6 rounded-lg bg-blue-gray-50">
                                     {/* Tên báo cáo */}
-                                    <div className="text-center mb-6">
-                                        <Typography 
-                                            variant="h4" 
-                                            color="blue" 
-                                            className="font-bold mb-3 bg-white p-4 rounded-lg border-2 border-dashed border-blue-500"
+                                    <div className="mb-6 text-center">
+                                        <Typography
+                                            variant="h4"
+                                            color="blue"
+                                            className="p-4 mb-3 font-bold bg-white border-2 border-blue-500 border-dashed rounded-lg"
                                         >
                                             {detailReport.tenBaoCao}
                                         </Typography>
-                                        <Typography 
-                                            variant="small" 
-                                            className="bg-white px-4 py-2 rounded-full text-blue-900 inline-block font-medium"
+                                        <Typography
+                                            variant="small"
+                                            className="inline-block px-4 py-2 font-medium text-blue-900 bg-white rounded-full"
                                         >
-                                            Người phụ trách: {detailReport.nhanSuPhuTrach}
+                                            Người phụ trách:{" "}
+                                            {detailReport.nhanSuPhuTrach}
                                         </Typography>
                                     </div>
 
                                     {/* Thông tin tài chính */}
-                                    <div className="bg-white p-4 rounded-lg mb-4">
-                                        <Typography className="text-sm text-gray-600 mb-3 font-medium">
+                                    <div className="p-4 mb-4 bg-white rounded-lg">
+                                        <Typography className="mb-3 text-sm font-medium text-gray-600">
                                             Tổng quan tài chính
                                         </Typography>
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div className="text-center p-3 bg-green-50 rounded-lg">
-                                                <Typography className="text-sm text-green-600 mb-1">Tổng thu</Typography>
+                                            <div className="p-3 text-center rounded-lg bg-green-50">
+                                                <Typography className="mb-1 text-sm text-green-600">
+                                                    Tổng thu
+                                                </Typography>
                                                 <Typography className="text-xl font-bold text-green-600">
-                                                    {detailReport.tongThu?.toLocaleString('vi-VN')} đ
+                                                    {detailReport.tongThu
+                                                        ?.toLocaleString(
+                                                            "vi-VN",
+                                                        )} đ
                                                 </Typography>
                                             </div>
-                                            <div className="text-center p-3 bg-red-50 rounded-lg">
-                                                <Typography className="text-sm text-red-600 mb-1">Tổng chi</Typography>
+                                            <div className="p-3 text-center rounded-lg bg-red-50">
+                                                <Typography className="mb-1 text-sm text-red-600">
+                                                    Tổng chi
+                                                </Typography>
                                                 <Typography className="text-xl font-bold text-red-600">
-                                                    {detailReport.tongNganSachChiTieu?.toLocaleString('vi-VN')} đ
+                                                    {detailReport
+                                                        .tongNganSachChiTieu
+                                                        ?.toLocaleString(
+                                                            "vi-VN",
+                                                        )} đ
                                                 </Typography>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Kết quả đạt được */}
-                                    <div className="bg-white p-4 rounded-lg">
-                                        <Typography className="text-sm text-gray-600 mb-2 font-medium">
+                                    <div className="p-4 bg-white rounded-lg">
+                                        <Typography className="mb-2 text-sm font-medium text-gray-600">
                                             Kết quả đạt được
                                         </Typography>
-                                        <Typography className="text-blue-gray-800 whitespace-pre-line">
-                                            {detailReport.ketQuaDatDuoc || "Chưa cập nhật"}
+                                        <Typography className="whitespace-pre-line text-blue-gray-800">
+                                            {detailReport.ketQuaDatDuoc ||
+                                                "Chưa cập nhật"}
                                         </Typography>
                                     </div>
                                 </div>
@@ -1439,25 +1641,43 @@ const ActivityReports = () => {
                             <div className="flex-[1.5]">
                                 <div className="grid gap-4">
                                     {/* Danh sách sự kiện */}
-                                    <div className="bg-blue-gray-50 p-4 rounded-lg">
-                                        <Typography className="text-lg font-semibold text-blue-gray-800 mb-3">
+                                    <div className="p-4 rounded-lg bg-blue-gray-50">
+                                        <Typography className="mb-3 text-lg font-semibold text-blue-gray-800">
                                             Danh sách sự kiện
                                         </Typography>
                                         <div className="grid gap-3">
-                                            {detailReport.danhSachSuKien.map((event, index) => (
-                                                <div key={index} className="bg-white p-3 rounded-lg">
-                                                    <Typography className="font-medium text-blue-900 mb-2">
+                                            {detailReport.danhSachSuKien.map((
+                                                event,
+                                                index,
+                                            ) => (
+                                                <div
+                                                    key={index}
+                                                    className="p-3 bg-white rounded-lg"
+                                                >
+                                                    <Typography className="mb-2 font-medium text-blue-900">
                                                         {event.tenSuKien}
                                                     </Typography>
                                                     <div className="grid grid-cols-2 gap-2 text-sm">
                                                         <div>
-                                                            <Typography className="text-gray-600">Người phụ trách:</Typography>
-                                                            <Typography className="font-medium">{event.nguoiPhuTrach}</Typography>
+                                                            <Typography className="text-gray-600">
+                                                                Người phụ trách:
+                                                            </Typography>
+                                                            <Typography className="font-medium">
+                                                                {event
+                                                                    .nguoiPhuTrach}
+                                                            </Typography>
                                                         </div>
                                                         <div>
-                                                            <Typography className="text-gray-600">Ngày tổ chức:</Typography>
+                                                            <Typography className="text-gray-600">
+                                                                Ngày tổ chức:
+                                                            </Typography>
                                                             <Typography className="font-medium">
-                                                                {new Date(event.ngayToChuc).toLocaleDateString('vi-VN')}
+                                                                {new Date(
+                                                                    event
+                                                                        .ngayToChuc,
+                                                                ).toLocaleDateString(
+                                                                    "vi-VN",
+                                                                )}
                                                             </Typography>
                                                         </div>
                                                     </div>
@@ -1467,25 +1687,43 @@ const ActivityReports = () => {
                                     </div>
 
                                     {/* Danh sách giải thưởng */}
-                                    <div className="bg-blue-gray-50 p-4 rounded-lg">
-                                        <Typography className="text-lg font-semibold text-blue-gray-800 mb-3">
+                                    <div className="p-4 rounded-lg bg-blue-gray-50">
+                                        <Typography className="mb-3 text-lg font-semibold text-blue-gray-800">
                                             Danh sách giải thưởng
                                         </Typography>
                                         <div className="grid gap-3">
-                                            {detailReport.danhSachGiai.map((award, index) => (
-                                                <div key={index} className="bg-white p-3 rounded-lg">
-                                                    <Typography className="font-medium text-blue-900 mb-2">
+                                            {detailReport.danhSachGiai.map((
+                                                award,
+                                                index,
+                                            ) => (
+                                                <div
+                                                    key={index}
+                                                    className="p-3 bg-white rounded-lg"
+                                                >
+                                                    <Typography className="mb-2 font-medium text-blue-900">
                                                         {award.tenGiai}
                                                     </Typography>
                                                     <div className="grid grid-cols-2 gap-2 text-sm">
                                                         <div>
-                                                            <Typography className="text-gray-600">Người nhận giải:</Typography>
-                                                            <Typography className="font-medium">{award.nguoiNhanGiai}</Typography>
+                                                            <Typography className="text-gray-600">
+                                                                Người nhận giải:
+                                                            </Typography>
+                                                            <Typography className="font-medium">
+                                                                {award
+                                                                    .nguoiNhanGiai}
+                                                            </Typography>
                                                         </div>
                                                         <div>
-                                                            <Typography className="text-gray-600">Ngày nhận:</Typography>
+                                                            <Typography className="text-gray-600">
+                                                                Ngày nhận:
+                                                            </Typography>
                                                             <Typography className="font-medium">
-                                                                {new Date(award.ngayNhanGiai).toLocaleDateString('vi-VN')}
+                                                                {new Date(
+                                                                    award
+                                                                        .ngayNhanGiai,
+                                                                ).toLocaleDateString(
+                                                                    "vi-VN",
+                                                                )}
                                                             </Typography>
                                                         </div>
                                                     </div>
@@ -1495,14 +1733,19 @@ const ActivityReports = () => {
                                     </div>
 
                                     {/* Ghi chú */}
-                                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                                        <Typography variant="small" className="text-orange-800">
-                                            <strong>Lưu ý:</strong> Báo cáo này được tạo vào ngày{" "}
-                                            {new Date(detailReport.ngayBaoCao).toLocaleDateString('vi-VN', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric'
-                                            })}
+                                    <div className="p-4 border border-orange-200 rounded-lg bg-orange-50">
+                                        <Typography
+                                            variant="small"
+                                            className="text-orange-800"
+                                        >
+                                            <strong>Lưu ý:</strong>{" "}
+                                            Báo cáo này được tạo vào ngày{" "}
+                                            {new Date(detailReport.ngayBaoCao)
+                                                .toLocaleDateString("vi-VN", {
+                                                    year: "numeric",
+                                                    month: "long",
+                                                    day: "numeric",
+                                                })}
                                         </Typography>
                                     </div>
                                 </div>
@@ -1518,16 +1761,16 @@ const ActivityReports = () => {
                             className="flex items-center gap-2"
                             onClick={() => exportToExcel(detailReport)}
                         >
-                            <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                viewBox="0 0 24 24" 
-                                fill="currentColor" 
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
                                 className="w-4 h-4"
                             >
-                                <path 
-                                    fillRule="evenodd" 
-                                    d="M12 2.25a.75.75 0 0 1 .75.75v11.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3a.75.75 0 0 1 .75-.75Zm-9 13.5a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z" 
-                                    clipRule="evenodd" 
+                                <path
+                                    fillRule="evenodd"
+                                    d="M12 2.25a.75.75 0 0 1 .75.75v11.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3a.75.75 0 0 1 .75-.75Zm-9 13.5a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z"
+                                    clipRule="evenodd"
                                 />
                             </svg>
                             Xuất Excel

@@ -7,7 +7,8 @@ import {
     Dialog,
     DialogBody,
     DialogFooter,
-    DialogHeader, Input,
+    DialogHeader,
+    Input,
     Option,
     Select, Tooltip,
     Typography, Spinner
@@ -17,6 +18,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { message, notification } from "antd";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -115,12 +117,14 @@ const BudgetAllocation = () => {
 
         // Kiểm tra trường rỗng
         const emptyFields = requiredFields.filter(
-            field => !allocationData[field.key]
+            (field) => !allocationData[field.key],
         );
-        
+
         if (emptyFields.length > 0) {
             throw new Error(
-                `Vui lòng điền đầy đủ thông tin: ${emptyFields.map(f => f.label).join(", ")}`
+                `Vui lòng điền đầy đủ thông tin: ${
+                    emptyFields.map((f) => f.label).join(", ")
+                }`,
             );
         }
 
@@ -130,13 +134,15 @@ const BudgetAllocation = () => {
             throw new Error("Số tiền phân bổ không được âm hoặc bằng 0");
         }
         if (amount > 50000000) {
-            throw new Error("Số tiền phân bổ không được vượt quá 50 triệu đồng");
+            throw new Error(
+                "Số tiền phân bổ không được vượt quá 50 triệu đồng",
+            );
         }
 
         // Kiểm tra ngày phân bổ phải là ngày hiện tại
         const allocationDate = new Date(allocationData.allocationDate);
         const today = new Date();
-        
+
         // Reset time để so sánh chỉ theo ngày
         allocationDate.setHours(0, 0, 0, 0);
         today.setHours(0, 0, 0, 0);
@@ -163,7 +169,7 @@ const BudgetAllocation = () => {
             // Gọi API một lần duy nhất
             await axios.post(
                 `${API_URL}/add-budget-allocation`,
-                formattedData
+                formattedData,
             );
 
             // Đóng dialog và reset form trước
@@ -181,18 +187,28 @@ const BudgetAllocation = () => {
 
         } catch (error) {
             if (error.message) {
-                alert(error.message);
+                // alert(error.message);
+                message.error({ content: error.message });
                 return;
             }
             console.error("Error adding budget allocation:", error);
             if (error.response?.data) {
-                alert(
-                    `Lỗi khi thêm phân bổ ngân sách: ${
-                        error.response.data.message || "Không xác định"
-                    }`
-                );
+                // alert(
+                //     `Lỗi khi thêm phân bổ ngân sách: ${
+                //         error.response.data.message || "Không xác định"
+                //     }`
+                // );
+                notification.error({
+                    message: "Lỗi khi thêm phân bổ ngân sách",
+                    description: error.response.data.message ||
+                        "Không xác định",
+                });
             } else {
-                alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+                // alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+                message.error({
+                    content:
+                        "Không thể kết nối đến server. Vui lòng thử lại sau.",
+                });
             }
         } finally {
             setIsLoading(false);
@@ -224,14 +240,30 @@ const BudgetAllocation = () => {
         } catch (error) {
             console.error("Error details:", error.response?.data);
             if (error.message) {
-                alert(error.message);
+                // alert(error.message);
+                message.error({ content: error.message });
                 return;
             }
-            alert(
-                `Lỗi khi cập nhật phân bổ ngân sách: ${
-                    error.response?.data?.message || "Không xác định"
-                }`
-            );
+            // Xử lý lỗi API
+            console.error("Error updating budget allocation:", error);
+            if (error.response?.data) {
+                // alert(
+                //     `Lỗi khi cập nhật phân bổ ngân sách: ${
+                //         error.response.data.message || "Không xác định"
+                //     }`
+                // );
+                notification.error({
+                    message: "Lỗi khi cập nhật phân bổ ngân sách",
+                    description: error.response.data.message ||
+                        "Không xác định",
+                });
+            } else {
+                // alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+                message.error({
+                    content:
+                        "Không thể kết nối đến server. Vui lòng thử lại sau.",
+                });
+            }
         }
     };
 
@@ -249,11 +281,16 @@ const BudgetAllocation = () => {
                 alert("Xóa phân bổ ngân sách thành công!");
             } catch (error) {
                 console.error("Error deleting budget allocation:", error);
-                alert(
-                    `Lỗi khi xóa phân bổ ngân sách: ${
-                        error.response?.data?.message || "Không xác định"
-                    }`,
-                );
+                // alert(
+                //     `Lỗi khi xóa phân bổ ngân sách: ${
+                //         error.response?.data?.message || "Không xác định"
+                //     }`,
+                // );
+                notification.error({
+                    message: "Lỗi khi xóa phân bổ ngân sách",
+                    description: error.response?.data?.message ||
+                        "Không xác định",
+                });
             }
         }
     };
@@ -299,30 +336,42 @@ const BudgetAllocation = () => {
     const filteredAllocations = useMemo(() => {
         return allocations
             .filter((allocation) => {
-                const matchClub = !filters.club || allocation.club._id === filters.club;
+                const matchClub = !filters.club ||
+                    allocation.club._id === filters.club;
                 const matchDate = (!filters.startDate ||
-                    new Date(allocation.allocationDate) >= new Date(filters.startDate)) &&
+                    new Date(allocation.allocationDate) >=
+                        new Date(filters.startDate)) &&
                     (!filters.endDate ||
-                        new Date(allocation.allocationDate) <= new Date(filters.endDate));
+                        new Date(allocation.allocationDate) <=
+                            new Date(filters.endDate));
                 const matchAmount = (!filters.minAmount ||
                     allocation.amount >= Number(filters.minAmount)) &&
                     (!filters.maxAmount ||
                         allocation.amount <= Number(filters.maxAmount));
-                
+
                 const matchSearch = !searchTerm || (
-                    allocation.club?.ten.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    allocation.purpose.toLowerCase().includes(searchTerm.toLowerCase())
+                    allocation.club?.ten.toLowerCase().includes(
+                        searchTerm.toLowerCase(),
+                    ) ||
+                    allocation.purpose.toLowerCase().includes(
+                        searchTerm.toLowerCase(),
+                    )
                 );
 
                 return matchClub && matchDate && matchAmount && matchSearch;
             })
-            .sort((a, b) => new Date(b.allocationDate) - new Date(a.allocationDate));
+            .sort((a, b) =>
+                new Date(b.allocationDate) - new Date(a.allocationDate)
+            );
     }, [allocations, filters, searchTerm]);
 
     // Tính toán allocations cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentAllocations = filteredAllocations.slice(indexOfFirstItem, indexOfLastItem);
+    const currentAllocations = filteredAllocations.slice(
+        indexOfFirstItem,
+        indexOfLastItem,
+    );
     const totalPages = Math.ceil(filteredAllocations.length / itemsPerPage);
 
     // Reset trang khi thay đổi bộ lọc
@@ -333,10 +382,10 @@ const BudgetAllocation = () => {
     // Thêm hàm format date kiểu VN
     const formatDateToVN = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
+        return date.toLocaleDateString("vi-VN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
         });
     };
 
@@ -380,7 +429,9 @@ const BudgetAllocation = () => {
                         <div className="w-full">
                             <Input
                                 label="Tìm kiếm theo tên câu lạc bộ hoặc mục đích"
-                                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                                icon={
+                                    <MagnifyingGlassIcon className="h-5 w-5" />
+                                }
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -496,7 +547,16 @@ const BudgetAllocation = () => {
                             </thead>
                             <tbody>
                                 {currentAllocations.map(
-                                    ({ _id, club, amount, purpose, allocationDate }, key) => {
+                                    (
+                                    {
+                                        _id,
+                                        club,
+                                        amount,
+                                        purpose,
+                                        allocationDate,
+                                    },
+                                    key,
+                                ) => {
                                         const className = `py-3 px-5 ${
                                             key === currentAllocations.length - 1
                                                 ? ""
@@ -640,78 +700,112 @@ const BudgetAllocation = () => {
                         <Button
                             variant="text"
                             className="flex items-center gap-2"
-                            onClick={() => setCurrentPage(prev => prev - 1)}
+                            onClick={() => setCurrentPage((prev) => prev - 1)}
                             disabled={currentPage === 1}
                         >
-                            <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                            <ChevronLeftIcon
+                                strokeWidth={2}
+                                className="h-4 w-4"
+                            />{" "}
+                            Trước
                         </Button>
 
                         <div className="flex items-center gap-2">
-                            {totalPages <= 5 ? (
-                                [...Array(totalPages)].map((_, index) => (
-                                    <Button
-                                        key={index + 1}
-                                        variant={currentPage === index + 1 ? "gradient" : "text"}
-                                        color="purple"
-                                        onClick={() => setCurrentPage(index + 1)}
-                                        className="w-10 h-10"
-                                    >
-                                        {index + 1}
-                                    </Button>
-                                ))
-                            ) : (
-                                <>
-                                    <Button
-                                        variant={currentPage === 1 ? "gradient" : "text"}
-                                        color="purple"
-                                        onClick={() => setCurrentPage(1)}
-                                        className="w-10 h-10"
-                                    >
-                                        1
-                                    </Button>
+                            {totalPages <= 5
+                                ? (
+                                    [...Array(totalPages)].map((_, index) => (
+                                        <Button
+                                            key={index + 1}
+                                            variant={currentPage === index + 1
+                                                ? "gradient"
+                                                : "text"}
+                                            color="purple"
+                                            onClick={() =>
+                                                setCurrentPage(index + 1)}
+                                            className="w-10 h-10"
+                                        >
+                                            {index + 1}
+                                        </Button>
+                                    ))
+                                )
+                                : (
+                                    <>
+                                        <Button
+                                            variant={currentPage === 1
+                                                ? "gradient"
+                                                : "text"}
+                                            color="purple"
+                                            onClick={() => setCurrentPage(1)}
+                                            className="w-10 h-10"
+                                        >
+                                            1
+                                        </Button>
 
-                                    {currentPage > 3 && <span className="mx-2">...</span>}
+                                        {currentPage > 3 && (
+                                            <span className="mx-2">...</span>
+                                        )}
 
-                                    {[...Array(3)].map((_, index) => {
-                                        const pageNumber = Math.min(
-                                            Math.max(currentPage - 1 + index, 2),
-                                            totalPages - 1
-                                        );
-                                        if (pageNumber <= 1 || pageNumber >= totalPages) return null;
-                                        return (
-                                            <Button
-                                                key={pageNumber}
-                                                variant={currentPage === pageNumber ? "gradient" : "text"}
-                                                color="purple"
-                                                onClick={() => setCurrentPage(pageNumber)}
-                                                className="w-10 h-10"
-                                            >
-                                                {pageNumber}
-                                            </Button>
-                                        );
-                                    })}
+                                        {[...Array(3)].map((_, index) => {
+                                            const pageNumber = Math.min(
+                                                Math.max(
+                                                    currentPage - 1 + index,
+                                                    2,
+                                                ),
+                                                totalPages - 1,
+                                            );
+                                            if (
+                                                pageNumber <= 1 ||
+                                                pageNumber >= totalPages
+                                            ) return null;
+                                            return (
+                                                <Button
+                                                    key={pageNumber}
+                                                    variant={currentPage ===
+                                                            pageNumber
+                                                        ? "gradient"
+                                                        : "text"}
+                                                    color="purple"
+                                                    onClick={() =>
+                                                        setCurrentPage(
+                                                            pageNumber,
+                                                        )}
+                                                    className="w-10 h-10"
+                                                >
+                                                    {pageNumber}
+                                                </Button>
+                                            );
+                                        })}
 
-                                    {currentPage < totalPages - 2 && <span className="mx-2">...</span>}
+                                        {currentPage < totalPages - 2 && (
+                                            <span className="mx-2">...</span>
+                                        )}
 
-                                    <Button
-                                        variant={currentPage === totalPages ? "gradient" : "text"}
-                                        color="purple"
-                                        onClick={() => setCurrentPage(totalPages)}
-                                        className="w-10 h-10"
-                                    >
-                                        {totalPages}
-                                    </Button>
-                                </>
-                            )}
+                                        <Button
+                                            variant={currentPage === totalPages
+                                                ? "gradient"
+                                                : "text"}
+                                            color="purple"
+                                            onClick={() =>
+                                                setCurrentPage(totalPages)}
+                                            className="w-10 h-10"
+                                        >
+                                            {totalPages}
+                                        </Button>
+                                    </>
+                                )}
                         </div>
 
                         <Button
                             variant="text"
                             className="flex items-center gap-2"
-                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            onClick={() => setCurrentPage((prev) => prev + 1)}
                             disabled={currentPage === totalPages}
                         >
-                            Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                            Sau{" "}
+                            <ChevronRightIcon
+                                strokeWidth={2}
+                                className="h-4 w-4"
+                            />
                         </Button>
                     </div>
                 </CardBody>
@@ -731,30 +825,48 @@ const BudgetAllocation = () => {
                         <table className="w-full border-collapse">
                             <thead>
                                 <tr>
-                                    <th colSpan="2" className="bg-purple-50 p-3 text-left text-lg font-bold text-purple-900">
+                                    <th
+                                        colSpan="2"
+                                        className="bg-purple-50 p-3 text-left text-lg font-bold text-purple-900"
+                                    >
                                         Thông tin phân bổ
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <th className="border p-3 bg-gray-50 w-1/3">Câu lạc bộ</th>
-                                    <td className="border p-3">{detailAllocation.club?.ten || "N/A"}</td>
-                                </tr>
-                                <tr>
-                                    <th className="border p-3 bg-gray-50">Số tiền</th>
-                                    <td className="border p-3 font-semibold text-purple-600">
-                                        {detailAllocation.amount.toLocaleString()} VND
+                                    <th className="border p-3 bg-gray-50 w-1/3">
+                                        Câu lạc bộ
+                                    </th>
+                                    <td className="border p-3">
+                                        {detailAllocation.club?.ten || "N/A"}
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th className="border p-3 bg-gray-50">Mục đích</th>
-                                    <td className="border p-3">{detailAllocation.purpose}</td>
+                                    <th className="border p-3 bg-gray-50">
+                                        Số tiền
+                                    </th>
+                                    <td className="border p-3 font-semibold text-purple-600">
+                                        {detailAllocation.amount
+                                            .toLocaleString()} VND
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <th className="border p-3 bg-gray-50">Ngày phân bổ</th>
+                                    <th className="border p-3 bg-gray-50">
+                                        Mục đích
+                                    </th>
                                     <td className="border p-3">
-                                        {formatDateToVN(detailAllocation.allocationDate)}
+                                        {detailAllocation.purpose}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th className="border p-3 bg-gray-50">
+                                        Ngày phân bổ
+                                    </th>
+                                    <td className="border p-3">
+                                        {formatDateToVN(
+                                            detailAllocation.allocationDate,
+                                        )}
                                     </td>
                                 </tr>
                             </tbody>
@@ -829,11 +941,10 @@ const BudgetAllocation = () => {
                     <Input
                         label="Mục đích"
                         value={newAllocation.purpose}
-                        onChange={(e) =>
-                            setNewAllocation({
-                                ...newAllocation,
-                                purpose: e.target.value,
-                            })}
+                        onChange={(e) => setNewAllocation({
+                            ...newAllocation,
+                            purpose: e.target.value,
+                        })}
                     />
                     <Input
                         type="date"
@@ -843,7 +954,7 @@ const BudgetAllocation = () => {
                         className="cursor-not-allowed"
                     />
                 </DialogBody>
-                
+
                 <DialogFooter>
                     <Button
                         variant="text"
