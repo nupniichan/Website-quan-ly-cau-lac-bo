@@ -126,7 +126,7 @@ export function SignIn() {
                             color="blue-gray"
                             className="-mb-3 font-medium"
                         >
-                            Mã của bạn
+                            Email của bạn
                         </Typography>
                         <Input
                             size="lg"
