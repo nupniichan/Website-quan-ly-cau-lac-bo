@@ -420,7 +420,7 @@ const ApproveEvents = () => {
                                             setSearchTerm("");
                                         }}
                                     >
-                                        <XMarkIcon className="h-4 w-4" />
+                                        <XMarkIcon className="w-4 h-4" />
                                     </Button>
                                 )}
                             </div>
@@ -486,7 +486,7 @@ const ApproveEvents = () => {
                             onClick={() => setFilter("all")}
                             className="flex items-center gap-2"
                         >
-                            <i className="fas fa-list text-sm"></i>
+                            <i className="text-sm fas fa-list"></i>
                             Tất cả
                         </Button>
                         <Button
@@ -498,7 +498,7 @@ const ApproveEvents = () => {
                             onClick={() => setFilter("choDuyet")}
                             className="flex items-center gap-2"
                         >
-                            <i className="fas fa-clock text-sm"></i>
+                            <i className="text-sm fas fa-clock"></i>
                             Chờ duyệt
                         </Button>
                         <Button
@@ -510,7 +510,7 @@ const ApproveEvents = () => {
                             onClick={() => setFilter("daDuyet")}
                             className="flex items-center gap-2"
                         >
-                            <i className="fas fa-check text-sm"></i>
+                            <i className="text-sm fas fa-check"></i>
                             Đã duyệt
                         </Button>
                         <Button
@@ -522,7 +522,7 @@ const ApproveEvents = () => {
                             onClick={() => setFilter("tuChoi")}
                             className="flex items-center gap-2"
                         >
-                            <i className="fas fa-times text-sm"></i>
+                            <i className="text-sm fas fa-times"></i>
                             Từ chối
                         </Button>
                     </div>
@@ -533,9 +533,9 @@ const ApproveEvents = () => {
                             <div className="px-4">
                                     {isLoading
                                     ? (
-                                        <div className="flex justify-center items-center p-8">
+                                        <div className="flex items-center justify-center p-8">
                                             <Spinner
-                                                className="h-12 w-12"
+                                                className="w-12 h-12"
                                                 color="pink"
                                             />
                                         </div>
@@ -562,7 +562,7 @@ const ApproveEvents = () => {
                                                         ].map((head) => (
                                                             <th
                                                                 key={head}
-                                                                className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                                                                className="px-5 py-3 text-left border-b border-blue-gray-50"
                                                             >
                                                                 <Typography
                                                                     variant="small"
@@ -594,7 +594,7 @@ const ApproveEvents = () => {
                                                                     key={event
                                                                         ._id}
                                                                 >
-                                                                    <td className="py-3 px-5">
+                                                                    <td className="px-5 py-3">
                                                                         <Typography className="text-sm font-semibold text-blue-gray-600">
                                                                             {(currentPage -
                                                                                         1) *
@@ -603,7 +603,7 @@ const ApproveEvents = () => {
                                                                                 1}
                                                                         </Typography>
                                                                     </td>
-                                                                    <td className="py-3 px-5">
+                                                                    <td className="px-5 py-3">
                                                                         <Tooltip
                                                                             content={event
                                                                                 .ten}
@@ -617,7 +617,7 @@ const ApproveEvents = () => {
                                                                             </Typography>
                                                                         </Tooltip>
                                                                     </td>
-                                                                    <td className="py-3 px-5">
+                                                                    <td className="px-5 py-3">
                                                                         <Typography className="text-sm font-semibold text-blue-gray-600">
                                                                             {event
                                                                                     .club &&
@@ -631,7 +631,7 @@ const ApproveEvents = () => {
                                                                                     .club}
                                                                         </Typography>
                                                                     </td>
-                                                                    <td className="py-3 px-5">
+                                                                    <td className="px-5 py-3">
                                                                         <div className="flex flex-col">
                                                                             <Typography className="text-sm font-semibold text-blue-gray-600">
                                                                                 {new Date(
@@ -656,13 +656,13 @@ const ApproveEvents = () => {
                                                                             </div>
                                                                         </div>
                                                                     </td>
-                                                                    <td className="py-3 px-5">
+                                                                    <td className="px-5 py-3">
                                                                         <Typography className="text-sm font-semibold text-blue-gray-600">
                                                                             {event
                                                                                 .diaDiem}
                                                                         </Typography>
                                                                     </td>
-                                                                    <td className="py-3 px-5">
+                                                                    <td className="px-5 py-3">
                                                                         <div className="w-max">
                                                                             <Typography
                                                                                 className="text-sm font-semibold"
@@ -678,7 +678,7 @@ const ApproveEvents = () => {
                                                                             </Typography>
                                                                         </div>
                                                                     </td>
-                                                                    <td className="py-3 px-5">
+                                                                    <td className="px-5 py-3">
                                                                         <div className="flex gap-2">
                                                                             <Tooltip content="Xem chi tiết">
                                                                                 <IconButton
@@ -690,7 +690,7 @@ const ApproveEvents = () => {
                                                                                                 ._id,
                                                                                         )}
                                                                                 >
-                                                                                    <EyeIcon className="h-4 w-4" />
+                                                                                    <EyeIcon className="w-4 h-4" />
                                                                                 </IconButton>
                                                                             </Tooltip>
                                                                             {event
@@ -708,7 +708,7 @@ const ApproveEvents = () => {
                                                                                                             ._id,
                                                                                                     )}
                                                                                             >
-                                                                                                <CheckCircleIcon className="h-4 w-4" />
+                                                                                                <CheckCircleIcon className="w-4 h-4" />
                                                                                             </IconButton>
                                                                                         </Tooltip>
                                                                                         <Tooltip content="Từ chối">
@@ -721,7 +721,7 @@ const ApproveEvents = () => {
                                                                                                             ._id,
                                                                                                     )}
                                                                                             >
-                                                                                                <XCircleIcon className="h-4 w-4" />
+                                                                                                <XCircleIcon className="w-4 h-4" />
                                                                                             </IconButton>
                                                                                         </Tooltip>
                                                                                     </>
@@ -739,7 +739,7 @@ const ApproveEvents = () => {
 
                                 {/* Pagination */}
                             {filteredEvents.length > 0 && (
-                                    <div className="flex items-center gap-4 justify-center mt-4">
+                                    <div className="flex items-center justify-center gap-4 mt-4">
                                         <Button
                                             variant="text"
                                             className="flex items-center gap-2"
@@ -749,7 +749,7 @@ const ApproveEvents = () => {
                                         >
                                             <ChevronLeftIcon
                                             strokeWidth={2}
-                                            className="h-4 w-4"
+                                            className="w-4 h-4"
                                         />{" "}
                                         Trước
                                         </Button>
@@ -781,7 +781,7 @@ const ApproveEvents = () => {
                                         onClick={() => setCurrentPage(currentPage + 1)}
                                         disabled={currentPage === totalPages}
                                     >
-                                        Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                        Sau <ChevronRightIcon strokeWidth={2} className="w-4 h-4" />
                                     </Button>
                                 </div>
                             )}
@@ -820,7 +820,7 @@ const ApproveEvents = () => {
                                     <Tooltip
                                         content={
                                             <div className="p-2">
-                                                <div className="font-bold mb-1">{eventInfo.event.title}</div>
+                                                <div className="mb-1 font-bold">{eventInfo.event.title}</div>
                                                 <div className="text-sm">
                                                     <div>Thời gian: {eventInfo.timeText}</div>
                                                     <div>Địa điểm: {eventInfo.event.extendedProps.location}</div>
@@ -834,7 +834,7 @@ const ApproveEvents = () => {
                                         }}
                                     >
                                         <div className="p-1">
-                                            <div className="font-semibold text-sm truncate">
+                                            <div className="text-sm font-semibold truncate">
                                                 {eventInfo.event.title}
                                             </div>
                                             <div className="text-xs truncate">
@@ -868,7 +868,7 @@ const ApproveEvents = () => {
                                     <tr>
                                         <th
                                             colSpan="4"
-                                            className="bg-blue-50 p-3 text-left text-lg font-bold text-blue-900"
+                                            className="p-3 text-lg font-bold text-left text-blue-900 bg-blue-50"
                                         >
                                             Thông tin cơ bản
                                         </th>
@@ -876,47 +876,47 @@ const ApproveEvents = () => {
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <th className="border p-3 bg-gray-50 w-1/4">
+                                        <th className="w-1/4 p-3 border bg-gray-50">
                                             Tên sự kiện
                                         </th>
-                                        <td className="border p-3" colSpan="3">
+                                        <td className="p-3 border" colSpan="3">
                                             {detailEvent.ten}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <th className="border p-3 bg-gray-50">
-                                            Ngày tổ chc
+                                        <th className="p-3 border bg-gray-50">
+                                            Ngày tổ chức
                                         </th>
-                                        <td className="border p-3">
+                                        <td className="p-3 border">
                                             {new Date(detailEvent.ngayToChuc)
                                                 .toLocaleDateString()}
                                         </td>
-                                        <th className="border p-3 bg-gray-50">
+                                        <th className="p-3 border bg-gray-50">
                                             Thời gian
                                         </th>
-                                        <td className="border p-3">
+                                        <td className="p-3 border">
                                             {`${detailEvent.thoiGianBatDau} - ${detailEvent.thoiGianKetThuc}`}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <th className="border p-3 bg-gray-50">
+                                        <th className="p-3 border bg-gray-50">
                                             Địa điểm
                                         </th>
-                                        <td className="border p-3">
+                                        <td className="p-3 border">
                                             {detailEvent.diaDiem}
                                         </td>
-                                        <th className="border p-3 bg-gray-50">
+                                        <th className="p-3 border bg-gray-50">
                                             Người ph trách
                                         </th>
-                                        <td className="border p-3">
+                                        <td className="p-3 border">
                                             {detailEvent.nguoiPhuTrach}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <th className="border p-3 bg-gray-50">
+                                        <th className="p-3 border bg-gray-50">
                                             CLB tổ chức
                                         </th>
-                                        <td className="border p-3">
+                                        <td className="p-3 border">
                                             {detailEvent.club &&
                                                     typeof detailEvent.club ===
                                                         "object"
@@ -926,10 +926,10 @@ const ApproveEvents = () => {
                                                 ? detailEvent.club
                                                 : "Không xác định"}
                                         </td>
-                                        <th className="border p-3 bg-gray-50">
+                                        <th className="p-3 border bg-gray-50">
                                             Trạng thái
                                         </th>
-                                        <td className="border p-3">
+                                        <td className="p-3 border">
                                             <Typography
                                                 className="font-semibold"
                                                 color={getStatusColor(
@@ -949,14 +949,14 @@ const ApproveEvents = () => {
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr>
-                                        <th className="bg-blue-50 p-3 text-left text-lg font-bold text-blue-900">
+                                        <th className="p-3 text-lg font-bold text-left text-blue-900 bg-blue-50">
                                             Nội dung sự kiện
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td className="border p-3 whitespace-pre-line">
+                                        <td className="p-3 whitespace-pre-line border">
                                             {detailEvent.noiDung}
                                         </td>
                                     </tr>
@@ -969,7 +969,7 @@ const ApproveEvents = () => {
                                     <tr>
                                         <th
                                             colSpan="2"
-                                            className="bg-blue-50 p-3 text-left text-lg font-bold text-blue-900"
+                                            className="p-3 text-lg font-bold text-left text-blue-900 bg-blue-50"
                                         >
                                             Thông tin khác
                                         </th>
@@ -977,10 +977,10 @@ const ApproveEvents = () => {
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <th className="border p-3 bg-gray-50">
+                                        <th className="p-3 border bg-gray-50">
                                             Khách mời
                                         </th>
-                                        <td className="border p-3">
+                                        <td className="p-3 border">
                                             {detailEvent.khachMoi.join(", ") ||
                                                 "Không có"}
                                         </td>
@@ -994,14 +994,14 @@ const ApproveEvents = () => {
                                 <table className="w-full border-collapse">
                                     <thead>
                                         <tr>
-                                            <th className="bg-red-50 p-3 text-left text-lg font-bold text-red-900">
+                                            <th className="p-3 text-lg font-bold text-left text-red-900 bg-red-50">
                                                 Lý do từ chối
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td className="border p-3 text-red-600">
+                                            <td className="p-3 text-red-600 border">
                                                 {detailEvent.lyDoTuChoi}
                                             </td>
                                         </tr>
@@ -1075,8 +1075,8 @@ const ApproveEvents = () => {
 
                         {/* Hiển thị thông tin sự kiện cần duyệt */}
                         {eventToApprove && (
-                            <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                                <Typography className="font-bold mb-2">
+                            <div className="p-4 mb-4 rounded-lg bg-blue-50">
+                                <Typography className="mb-2 font-bold">
                                     Sự kiện cần duyệt:
                                 </Typography>
                                 <div className="space-y-1">
@@ -1103,7 +1103,7 @@ const ApproveEvents = () => {
                             {conflictingEvents.map((event, index) => (
                                 <div
                                     key={event._id}
-                                    className="bg-red-50 p-3 rounded-lg"
+                                    className="p-3 rounded-lg bg-red-50"
                                 >
                                     <Typography className="font-medium">
                                         {event.ten}
@@ -1130,7 +1130,7 @@ const ApproveEvents = () => {
                             ))}
                         </div>
 
-                        <Typography color="red" className="font-medium mt-4">
+                        <Typography color="red" className="mt-4 font-medium">
                             Bạn có chắc chắn muốn duyệt sự kiện này không?
                         </Typography>
                     </div>
