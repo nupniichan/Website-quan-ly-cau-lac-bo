@@ -23,7 +23,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
-const API_URL = "http://localhost:5500/api";
+const API_URL = "http://4.242.20.80:5500/api";
 
 const formatDateForInput = (dateString) => {
     if (!dateString) return "";

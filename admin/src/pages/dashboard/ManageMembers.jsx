@@ -29,7 +29,7 @@ import { FaPlus } from "react-icons/fa6";
 import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 import { message, notification } from "antd";
 
-const API_URL = "http://localhost:5500/api";
+const API_URL = "http://4.242.20.80:5500/api";
 
 const ManageMembers = () => {
     const [members, setMembers] = useState([]);
@@ -144,7 +144,7 @@ const ManageMembers = () => {
     const fetchManagedClub = async (clubId) => {
         try {
             const response = await axios.get(
-                `http://localhost:5500/api/get-club/${clubId}`,
+                `http://4.242.20.80:5500/api/get-club/${clubId}`,
             );
             setManagedClub(response.data);
             setNewMember((prev) => ({ ...prev, club: clubId }));

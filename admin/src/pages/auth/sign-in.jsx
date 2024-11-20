@@ -34,7 +34,7 @@ export function SignIn() {
         setIsLoading(true);
         try {
             const response = await axios.post(
-                "http://localhost:5500/api/login",
+                "http://4.242.20.80:5500/api/login",
                 {
                     email,
                     password,
@@ -64,7 +64,7 @@ export function SignIn() {
 
                 try {
                     const clubsResponse = await axios.get(
-                        `http://localhost:5500/api/get-managed-clubs/${userId}`,
+                        `http://4.242.20.80:5500/api/get-managed-clubs/${userId}`,
                     );
 
                     if (clubsResponse.data && clubsResponse.data.length > 0) {

@@ -29,7 +29,7 @@ import {
 import * as XLSX from 'xlsx';
 import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
-const API_URL = "http://localhost:5500/api";
+const API_URL = "http://4.242.20.80:5500/api";
 
 const ClubReports = () => {
     const [reports, setReports] = useState([]);

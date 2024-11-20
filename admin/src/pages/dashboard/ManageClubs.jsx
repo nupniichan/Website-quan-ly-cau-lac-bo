@@ -25,7 +25,7 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 import { message, notification } from "antd";
 import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
-const API_URL = "http://localhost:5500/api";
+const API_URL = "http://4.242.20.80:5500/api";
 
 // Thêm hàm validate chung
 const validateClubData = async (clubData, editingClubId) => {

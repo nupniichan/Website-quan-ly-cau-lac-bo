@@ -24,7 +24,7 @@ import {
 import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 import { message, notification } from "antd";
 
-const API_URL = "http://localhost:5500/api";
+const API_URL = "http://4.242.20.80:5500/api";
 
 const ManageBudget = () => {
     const [budgets, setBudgets] = useState([]);
