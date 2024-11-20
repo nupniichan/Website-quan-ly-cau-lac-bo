@@ -8,7 +8,6 @@ const eventSchema = new mongoose.Schema({
     thoiGianKetThuc: { type: String, required: true },
     diaDiem: { type: String, required: true },
     noiDung: { type: String, required: true },
-    nganSachChiTieu: { type: Number, required: true },
     nguoiPhuTrach: { type: String, required: true },
     khachMoi: [{ type: String }], // Array of strings for multiple guests
     club: { 

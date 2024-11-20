@@ -58,41 +58,46 @@ const Header = () => {
         <div className="relative flex items-center justify-end px-4 h-full z-20">
           {/* Logo Container */}
           {/* Mobile Logo */}
-
-          {/* Mobile Logo */}
-          <Link to="/" className="w-[50%] h-auto md:hidden mr-[30%] mt-[35%]">
+          <Link to="/" className="w-[45%] h-auto md:hidden mr-[50%] mt-[20%]">
             <img
               src={logoImage}
               alt="Logo"
-              className="w-full h-auto" // Ensures the image fits the link
+              className="w-full h-auto object-contain"
+            />
+          </Link>
+
+          {/* Tablet Logo */}
+          <Link to="/" className="hidden md:block lg:hidden w-[25%] mr-[70%] mt-[10%]">
+            <img
+              src={logoImage}
+              alt="Logo"
+              className="w-full h-auto object-contain"
             />
           </Link>
 
           {/* Desktop Logo */}
-          <Link to="/" className="hidden md:block w-[12%] h-auto mr-[30%] mt-[8%]">
+          <Link to="/" className="hidden lg:block w-[13%] h-auto mr-[30%] mt-[5%]">
             <img
               src={logoImage}
               alt="Logo"
-              className="w-full h-auto" // Ensures the image fits the link
+              className="w-full h-auto object-contain"
             />
           </Link>
 
-
           {/* Desktop Navigation */}
-          <div className="hidden md:flex mr-[2%]">
+          <div className="hidden lg:flex mr-[2%]">
             <span className="font-bold text-[#004D86] mr-[60px]">Học sinh</span>
             <span className="font-bold text-[#004D86] mr-[60px]">Cựu học sinh</span>
             <span className="font-bold text-[#004D86] mr-[90px]">Đội ngũ giáo viên</span>
           </div>
 
-          {/* Mobile Navigation Button */}
-          <div className="md:hidden relative" ref={mobileMenuRef}>
+          {/* Mobile & Tablet Navigation Button */}
+          <div className="lg:hidden relative" ref={mobileMenuRef}>
             <button onClick={toggleMobileMenu} className="text-[#004D86]">
-              <Menu size={24} /> {/* Use Menu icon here */}
+              <Menu size={24} />
             </button>
-            {/* Mobile Menu */}
             {isMobileMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-yellow-500 rounded-lg shadow-lg z-50 transform transition-transform duration-300 scale-y-100 origin-top">
+              <div className="absolute right-0 mt-2 w-48 md:w-56 bg-yellow-500 rounded-lg shadow-lg z-50">
                 <ul className="flex flex-col p-2">
                   <li className="px-4 py-2 text-[#004D86] hover:bg-yellow-600 rounded transition duration-200">Học sinh</li>
                   <li className="px-4 py-2 text-[#004D86] hover:bg-yellow-600 rounded transition duration-200">Cựu học sinh</li>
@@ -114,7 +119,7 @@ const Header = () => {
         />
         <div className="relative flex items-center justify-end px-4 h-full z-20">
         {/* Language Dropdown for Desktop */}
-        <div className="hidden md:flex items-center mr-[20px]" ref={languageRef}>
+        <div className="hidden lg:flex items-center mr-[20px]" ref={languageRef}>
           <span className="text-white cursor-pointer" onClick={toggleLanguage}>
             Tiếng Việt <ChevronDown size={16} className="inline-block text-white ml-1" />
           </span>
@@ -135,8 +140,8 @@ const Header = () => {
           )}
         </div>
 
-          {/* Language Dropdown for Mobile */}
-          <div className="relative flex items-center mr-4 md:hidden" ref={languageRef}>
+          {/* Language Dropdown for Mobile & Tablet */}
+          <div className="relative flex items-center mr-4 lg:hidden" ref={languageRef}>
             <button
               onClick={toggleLanguage}
               className="flex items-center justify-center w-10 h-10 transition duration-200"
@@ -162,7 +167,7 @@ const Header = () => {
           </div>
 
           {/* Desktop Search Bar */}
-          <div className="hidden md:relative md:flex items-center" ref={searchRef}>
+          <div className="hidden lg:relative lg:flex items-center" ref={searchRef}>
             <input
               type="text"
               placeholder="Search..."
@@ -171,8 +176,8 @@ const Header = () => {
             <Search size={16} className="absolute right-[35%] top-1/2 transform -translate-y-1/2 text-white" />
           </div>
 
-          {/* Mobile Search Bar */}
-          <div className="relative flex items-center md:hidden" ref={searchRef}>
+          {/* Mobile & Tablet Search Bar */}
+          <div className="relative flex items-center lg:hidden" ref={searchRef}>
             <button onClick={toggleSearch} className="flex items-center justify-center w-10 h-10 transition duration-200">
               <Search size={20} className="text-white" />
             </button>

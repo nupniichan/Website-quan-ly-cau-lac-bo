@@ -1,14 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { reducer } from "./action";
-
-export const MaterialTailwind = React.createContext(null);
-MaterialTailwind.displayName = "MaterialTailwindContext";
+import { MaterialTailwind } from "./MaterialTailwindContext"; // Updated import
 
 export function MaterialTailwindControllerProvider({ children }) {
     const initialState = {
         openSidenav: false,
-        sidenavColor: "dark",
+        sidenavColor: "pink",
         sidenavType: "white",
         transparentNavbar: true,
         fixedNavbar: false,

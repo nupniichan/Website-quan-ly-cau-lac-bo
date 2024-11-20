@@ -206,20 +206,26 @@ router.get('/get-club/:clubId', async (req, res) => {
 router.put('/update-club/:clubId', upload.single('logo'), async (req, res) => {
   try {
     const { clubId } = req.params;
-    const { ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, mieuTa, quyDinh, truongBanCLB } = req.body;
+    const { ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, mieuTa, quyDinh, truongBanCLB, tinhTrang } = req.body;
+
+    const updateData = {
+      ten,
+      linhVucHoatDong,
+      ngayThanhLap,
+      giaoVienPhuTrach,
+      mieuTa,
+      quyDinh,
+      truongBanCLB,
+      tinhTrang,
+    };
+
+    if (req.file) {
+      updateData.logo = `/uploads/${req.file.filename}`;
+    }
 
     const updatedClub = await Club.findOneAndUpdate(
       { clubId: clubId },
-      {
-        ten,
-        linhVucHoatDong,
-        ngayThanhLap,
-        giaoVienPhuTrach,
-        mieuTa,
-        quyDinh,
-        truongBanCLB,
-        logo: req.file ? `/uploads/${req.file.filename}` : undefined
-      },
+      updateData,
       { new: true }
     );
 

@@ -319,4 +319,22 @@ router.get('/get-recent-members', async (req, res) => {
     }
 });
 
+// Thêm route mới để kiểm tra thành viên
+router.get('/check-member/:clubId/:memberName', async (req, res) => {
+    try {
+        const { clubId, memberName } = req.params;
+        const member = await Member.findOne({
+            club: clubId,
+            hoTen: memberName
+        });
+        
+        res.status(200).json({
+            isMember: !!member,
+            message: member ? 'Thành viên hợp lệ' : 'Người này không phải là thành viên của câu lạc bộ'
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 module.exports = router;

@@ -9,26 +9,28 @@ import {
     DialogBody,
     DialogFooter,
     DialogHeader,
+    IconButton,
+    Input,
+    Option,
+    Select,
     Spinner,
     Tooltip,
     Typography,
-    IconButton,
-    Input,
-    Select,
-    Option,
 } from "@material-tailwind/react";
 import {
     CheckCircleIcon,
-    EyeIcon,
-    XCircleIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
+    EyeIcon,
+    XCircleIcon,
     XMarkIcon,
 } from "@heroicons/react/24/solid";
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { message, notification } from "antd";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -44,7 +46,7 @@ const ApproveEvents = () => {
     const [selectedEventId, setSelectedEventId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
-    const [activeTab, setActiveTab] = useState('list');
+    const [activeTab, setActiveTab] = useState("list");
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedClub, setSelectedClub] = useState("");
     const [dateRange, setDateRange] = useState({
@@ -55,6 +57,10 @@ const ApproveEvents = () => {
     const [conflictingEvents, setConflictingEvents] = useState([]);
     const [eventToApprove, setEventToApprove] = useState(null);
 
+    // Lấy controller từ context & màu hiện tại của sidenav
+    const [controller] = useMaterialTailwindController();
+    const { sidenavColor } = controller;
+
     useEffect(() => {
         fetchEvents();
         fetchClubs();
@@ -64,7 +70,7 @@ const ApproveEvents = () => {
         setIsLoading(true);
         try {
             const response = await axios.get(`${API_URL}/get-events`);
-            const sortedEvents = response.data.sort((a, b) => 
+            const sortedEvents = response.data.sort((a, b) =>
                 new Date(b.ngayToChuc) - new Date(a.ngayToChuc)
             );
             setEvents(sortedEvents);
@@ -86,7 +92,7 @@ const ApproveEvents = () => {
     };
 
     const handleApproveEvent = async (id) => {
-        const eventToCheck = events.find(event => event._id === id);
+        const eventToCheck = events.find((event) => event._id === id);
         const conflicts = checkEventConflicts(eventToCheck);
 
         if (conflicts.length > 0) {
@@ -107,11 +113,10 @@ const ApproveEvents = () => {
             setEventToApprove(null);
         } catch (error) {
             console.error("Error approving event:", error);
-            alert(
-                `Lỗi khi phê duyệt sự kiện: ${
-                    error.response?.data?.message || "Không xác định"
-                }`,
-            );
+            notification.error({
+                message: "Lỗi khi phê duyệt sự kiện!",
+                description: error.response?.data?.message || "Không xác định",
+            })
         }
     };
 
@@ -125,11 +130,15 @@ const ApproveEvents = () => {
             fetchEvents();
         } catch (error) {
             console.error("Error rejecting event:", error);
-            alert(
-                `Lỗi khi từ chối sự kiện: ${
-                    error.response?.data?.message || "Không xác định"
-                }`,
-            );
+            // alert(
+            //     `Lỗi khi từ chối sự kiện: ${
+            //         error.response?.data?.message || "Không xác định"
+            //     }`,
+            // );
+            notification.error({
+                message: `Lỗi khi từ chối sự kiện!`,
+                description: error.response?.data?.message || "Không xác định",
+            });
         }
     };
 
@@ -170,20 +179,33 @@ const ApproveEvents = () => {
     // Đảm bảo filteredEvents trả về tất cả events khi filter là 'all'
     const filteredEvents = useMemo(() => {
         return events
-            .filter(event => {
+            .filter((event) => {
                 // Lọc theo trạng thái
-                if (filter !== "all" && event.trangThai !== filter) return false;
-                
+                if (filter !== "all" && event.trangThai !== filter) {
+                    return false;
+                }
+
                 // Lọc theo tên
-                if (searchTerm && !event.ten.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-                
+                if (
+                    searchTerm &&
+                    !event.ten.toLowerCase().includes(searchTerm.toLowerCase())
+                ) return false;
+
                 // Lọc theo câu lạc bộ
-                if (selectedClub && event.club?.ten !== selectedClub) return false;
-                
+                if (selectedClub && event.club?.ten !== selectedClub) {
+                    return false;
+                }
+
                 // Lọc theo ngày
-                if (dateRange.from && new Date(event.ngayToChuc) < new Date(dateRange.from)) return false;
-                if (dateRange.to && new Date(event.ngayToChuc) > new Date(dateRange.to)) return false;
-                
+                if (
+                    dateRange.from &&
+                    new Date(event.ngayToChuc) < new Date(dateRange.from)
+                ) return false;
+                if (
+                    dateRange.to &&
+                    new Date(event.ngayToChuc) > new Date(dateRange.to)
+                ) return false;
+
                 return true;
             });
     }, [events, filter, searchTerm, selectedClub, dateRange]);
@@ -210,7 +232,10 @@ const ApproveEvents = () => {
     // Tính toán events cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentEvents = filteredEvents.slice(indexOfFirstItem, indexOfLastItem);
+    const currentEvents = filteredEvents.slice(
+        indexOfFirstItem,
+        indexOfLastItem,
+    );
     const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
 
     // Reset trang khi thay đổi bộ lọc
@@ -220,38 +245,45 @@ const ApproveEvents = () => {
 
     // Thêm custom styles cho calendar
     const calendarCustomStyles = {
-        '.fc': 'bg-white rounded-lg shadow-md',
-        '.fc .fc-toolbar': 'p-4',
-        '.fc .fc-toolbar-title': 'text-xl font-bold text-gray-800',
-        '.fc .fc-button': 'bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200',
-        '.fc .fc-button-primary:not(:disabled):active': 'bg-blue-700',
-        '.fc .fc-button-primary:disabled': 'bg-blue-300',
-        '.fc .fc-daygrid-day': 'hover:bg-blue-50 cursor-pointer',
-        '.fc .fc-event': 'bg-blue-500 border-none hover:opacity-90 cursor-pointer',
-        '.fc .fc-event-time': 'font-semibold',
-        '.fc .fc-event-title': 'font-medium',
-        '.fc .fc-header-toolbar': 'mb-4 flex flex-wrap justify-between items-center gap-4',
-        '.fc .fc-view-harness': 'bg-white rounded-lg shadow-sm',
-        '.fc .fc-scrollgrid': 'border-none',
-        '.fc .fc-scrollgrid td': 'border-color-gray-200',
-        '.fc th': 'p-3 font-semibold text-gray-600 border-gray-200',
-        '.fc td': 'border-gray-200',
+        ".fc": "bg-white rounded-lg shadow-md",
+        ".fc .fc-toolbar": "p-4",
+        ".fc .fc-toolbar-title": "text-xl font-bold text-gray-800",
+        ".fc .fc-button":
+            "bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200",
+        ".fc .fc-button-primary:not(:disabled):active": "bg-blue-700",
+        ".fc .fc-button-primary:disabled": "bg-blue-300",
+        ".fc .fc-daygrid-day": "hover:bg-blue-50 cursor-pointer",
+        ".fc .fc-event":
+            "bg-blue-500 border-none hover:opacity-90 cursor-pointer",
+        ".fc .fc-event-time": "font-semibold",
+        ".fc .fc-event-title": "font-medium",
+        ".fc .fc-header-toolbar":
+            "mb-4 flex flex-wrap justify-between items-center gap-4",
+        ".fc .fc-view-harness": "bg-white rounded-lg shadow-sm",
+        ".fc .fc-scrollgrid": "border-none",
+        ".fc .fc-scrollgrid td": "border-color-gray-200",
+        ".fc th": "p-3 font-semibold text-gray-600 border-gray-200",
+        ".fc td": "border-gray-200",
     };
 
     const getCalendarEvents = useMemo(() => {
         return events
-            .filter(event => event.trangThai === 'daDuyet')
-            .map(event => ({
+            .filter((event) => event.trangThai === "daDuyet")
+            .map((event) => ({
                 id: event._id,
                 title: event.ten,
-                start: `${event.ngayToChuc.split('T')[0]}T${event.thoiGianBatDau}`,
-                end: `${event.ngayToChuc.split('T')[0]}T${event.thoiGianKetThuc}`,
+                start: `${
+                    event.ngayToChuc.split("T")[0]
+                }T${event.thoiGianBatDau}`,
+                end: `${
+                    event.ngayToChuc.split("T")[0]
+                }T${event.thoiGianKetThuc}`,
                 location: event.diaDiem,
-                className: 'bg-green-500 text-white rounded-md p-1',
+                className: "bg-green-500 text-white rounded-md p-1",
                 extendedProps: {
                     club: event.club?.ten || event.club,
-                    nguoiPhuTrach: event.nguoiPhuTrach
-                }
+                    nguoiPhuTrach: event.nguoiPhuTrach,
+                },
             }));
     }, [events]);
 
@@ -261,29 +293,37 @@ const ApproveEvents = () => {
     };
 
     const truncateWords = (str, numWords) => {
-        const words = str.split(' ');
+        const words = str.split(" ");
         if (words.length > numWords) {
-            return words.slice(0, numWords).join(' ') + '...';
+            return words.slice(0, numWords).join(" ") + "...";
         }
         return str;
     };
 
     // Hàm kiểm tra xem có sự kiện nào trùng lịch không
     const checkEventConflicts = (eventToCheck) => {
-        return events.filter(event => {
-            if (event._id === eventToCheck._id || event.trangThai !== 'daDuyet') return false;
+        return events.filter((event) => {
+            if (
+                event._id === eventToCheck._id || event.trangThai !== "daDuyet"
+            ) return false;
 
-            const sameDate = event.ngayToChuc.split('T')[0] === eventToCheck.ngayToChuc.split('T')[0];
+            const sameDate =
+                event.ngayToChuc.split("T")[0] ===
+                    eventToCheck.ngayToChuc.split("T")[0];
             if (!sameDate) return false;
 
             // Chuyển đổi thời gian sang minutes để dễ so sánh
             const convertTimeToMinutes = (time) => {
-                const [hours, minutes] = time.split(':').map(Number);
+                const [hours, minutes] = time.split(":").map(Number);
                 return hours * 60 + minutes;
             };
 
-            const event1Start = convertTimeToMinutes(eventToCheck.thoiGianBatDau);
-            const event1End = convertTimeToMinutes(eventToCheck.thoiGianKetThuc);
+            const event1Start = convertTimeToMinutes(
+                eventToCheck.thoiGianBatDau,
+            );
+            const event1End = convertTimeToMinutes(
+                eventToCheck.thoiGianKetThuc,
+            );
             const event2Start = convertTimeToMinutes(event.thoiGianBatDau);
             const event2End = convertTimeToMinutes(event.thoiGianKetThuc);
 
@@ -299,7 +339,11 @@ const ApproveEvents = () => {
     return (
         <div className="flex flex-col gap-12 mt-12 mb-8">
             <Card>
-                <CardHeader variant="gradient" color="blue" className="p-6 mb-8">
+                <CardHeader
+                    variant="gradient"
+                    color={sidenavColor}
+                    className="p-6 mb-8"
+                >
                     <Typography variant="h6" color="white">
                         Danh sách sự kiện
                     </Typography>
@@ -315,7 +359,8 @@ const ApproveEvents = () => {
                                     label="Tìm kiếm theo tên sự kiện"
                                     icon={<i className="fas fa-search" />}
                                     value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onChange={(e) =>
+                                        setSearchTerm(e.target.value)}
                                 />
                             </div>
 
@@ -342,12 +387,11 @@ const ApproveEvents = () => {
                                         type="date"
                                         label="Từ ngày"
                                         value={dateRange.from}
-                                        onChange={(e) => 
-                                            setDateRange(prev => ({
+                                        onChange={(e) =>
+                                            setDateRange((prev) => ({
                                                 ...prev,
-                                                from: e.target.value
-                                            }))
-                                        }
+                                                from: e.target.value,
+                                            }))}
                                     />
                                 </div>
                                 <div>
@@ -355,17 +399,17 @@ const ApproveEvents = () => {
                                         type="date"
                                         label="Đến ngày"
                                         value={dateRange.to}
-                                        onChange={(e) => 
-                                            setDateRange(prev => ({
+                                        onChange={(e) =>
+                                            setDateRange((prev) => ({
                                                 ...prev,
-                                                to: e.target.value
-                                            }))
-                                        }
+                                                to: e.target.value,
+                                            }))}
                                     />
                                 </div>
 
                                 {/* Nút reset tất cả bộ lọc */}
-                                {(dateRange.from || dateRange.to || selectedClub || searchTerm) && (
+                                {(dateRange.from || dateRange.to ||
+                                    selectedClub || searchTerm) && (
                                     <Button
                                         variant="text"
                                         color="red"
@@ -385,20 +429,24 @@ const ApproveEvents = () => {
                         {/* Cột phải - Nút chuyển đổi view */}
                         <div className="flex gap-2">
                             <Button
-                                variant={activeTab === 'list' ? "gradient" : "outlined"}
-                                color="blue"
+                                variant={activeTab === "list"
+                                    ? "gradient"
+                                    : "outlined"}
+                                color={sidenavColor}
                                 size="sm"
-                                onClick={() => setActiveTab('list')}
+                                onClick={() => setActiveTab("list")}
                                 className="flex items-center gap-2"
                             >
                                 <i className="fas fa-list"></i>
                                 Danh sách
                             </Button>
                             <Button
-                                variant={activeTab === 'calendar' ? "gradient" : "outlined"}
-                                color="blue"
+                                variant={activeTab === "calendar"
+                                    ? "gradient"
+                                    : "outlined"}
+                                color={sidenavColor}
                                 size="sm"
-                                onClick={() => setActiveTab('calendar')}
+                                onClick={() => setActiveTab("calendar")}
                                 className="flex items-center gap-2"
                             >
                                 <i className="fas fa-calendar"></i>
@@ -408,14 +456,23 @@ const ApproveEvents = () => {
                     </div>
 
                     {/* Hiển thị kết quả tìm kiếm và lọc */}
-                    {(searchTerm || dateRange.from || dateRange.to || selectedClub) && (
+                    {(searchTerm || dateRange.from || dateRange.to ||
+                        selectedClub) && (
                         <div className="px-6 mb-4">
                             <Typography variant="small" color="blue-gray">
                                 Tìm thấy {filteredEvents.length} kết quả
                                 {searchTerm && ` cho "${searchTerm}"`}
                                 {selectedClub && ` tại "${selectedClub}"`}
-                                {dateRange.from && ` từ ${new Date(dateRange.from).toLocaleDateString('vi-VN')}`}
-                                {dateRange.to && ` đến ${new Date(dateRange.to).toLocaleDateString('vi-VN')}`}
+                                {dateRange.from &&
+                                    ` từ ${
+                                        new Date(dateRange.from)
+                                            .toLocaleDateString("vi-VN")
+                                    }`}
+                                {dateRange.to &&
+                                    ` đến ${
+                                        new Date(dateRange.to)
+                                            .toLocaleDateString("vi-VN")
+                                    }`}
                             </Typography>
                         </div>
                     )}
@@ -433,7 +490,9 @@ const ApproveEvents = () => {
                             Tất cả
                         </Button>
                         <Button
-                            variant={filter === "choDuyet" ? "gradient" : "outlined"}
+                            variant={filter === "choDuyet"
+                                ? "gradient"
+                                : "outlined"}
                             color="orange"
                             size="sm"
                             onClick={() => setFilter("choDuyet")}
@@ -443,7 +502,9 @@ const ApproveEvents = () => {
                             Chờ duyệt
                         </Button>
                         <Button
-                            variant={filter === "daDuyet" ? "gradient" : "outlined"}
+                            variant={filter === "daDuyet"
+                                ? "gradient"
+                                : "outlined"}
                             color="green"
                             size="sm"
                             onClick={() => setFilter("daDuyet")}
@@ -453,7 +514,9 @@ const ApproveEvents = () => {
                             Đã duyệt
                         </Button>
                         <Button
-                            variant={filter === "tuChoi" ? "gradient" : "outlined"}
+                            variant={filter === "tuChoi"
+                                ? "gradient"
+                                : "outlined"}
                             color="red"
                             size="sm"
                             onClick={() => setFilter("tuChoi")}
@@ -464,173 +527,264 @@ const ApproveEvents = () => {
                         </Button>
                     </div>
 
-                    {activeTab === 'list' ? (
-                        // List view
-                        <div className="px-4">
-                            {/* Events Table */}
-                            {isLoading ? (
-                                <div className="flex justify-center items-center p-8">
-                                    <Spinner className="h-12 w-12" />
+                    {activeTab === "list"
+                        ? (
+                            // List view
+                            <div className="px-4">
+                                    {isLoading
+                                    ? (
+                                        <div className="flex justify-center items-center p-8">
+                                            <Spinner
+                                                className="h-12 w-12"
+                                                color="pink"
+                                            />
+                                        </div>
+                            ) : filteredEvents.length === 0 ? (
+                                <div className="flex items-center justify-center h-64">
+                                    <Typography variant="h6" color="blue-gray" className="font-normal">
+                                        Hiện tại chưa có sự kiện nào từ câu lạc bộ
+                                    </Typography>
                                 </div>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full min-w-[640px] table-auto">
-                                        <thead>
-                                            <tr>
-                                                {[
-                                                    "STT",
-                                                    "Tên sự kiện",
-                                                    "CLB tổ chức",
-                                                    "Ngày tổ chức",
-                                                    "Địa điểm",
-                                                    "Trạng thái",
-                                                    "Thao tác",
-                                                ].map((head) => (
-                                                    <th
-                                                        key={head}
-                                                        className="border-b border-blue-gray-50 py-3 px-5 text-left"
-                                                    >
-                                                        <Typography
-                                                            variant="small"
-                                                            className="text-[11px] font-bold uppercase text-blue-gray-400"
-                                                        >
-                                                            {head}
-                                                        </Typography>
-                                                    </th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {currentEvents.map((event, index) => {
-                                                const isLast = event === currentEvents[currentEvents.length - 1];
-                                                const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
-
-                                                return (
-                                                    <tr key={event._id}>
-                                                        <td className="py-3 px-5">
-                                                            <Typography className="text-sm font-semibold text-blue-gray-600">
-                                                                {(currentPage - 1) * itemsPerPage + index + 1}
-                                                            </Typography>
-                                                        </td>
-                                                        <td className="py-3 px-5">
-                                                            <Tooltip content={event.ten}>
-                                                                <Typography className="text-sm font-semibold text-blue-gray-600">
-                                                                    {truncateWords(event.ten, 10)}
-                                                                </Typography>
-                                                            </Tooltip>
-                                                        </td>
-                                                        <td className="py-3 px-5">
-                                                            <Typography className="text-sm font-semibold text-blue-gray-600">
-                                                                {event.club && typeof event.club === "object"
-                                                                    ? event.club.ten
-                                                                    : event.club}
-                                                            </Typography>
-                                                        </td>
-                                                        <td className="py-3 px-5">
-                                                            <div className="flex flex-col">
-                                                                <Typography className="text-sm font-semibold text-blue-gray-600">
-                                                                    {new Date(event.ngayToChuc).toLocaleDateString("vi-VN")}
-                                                                </Typography>
-                                                                <div className="flex items-center gap-2 mt-1">
-                                                                    <div className="w-1 h-1 rounded-full bg-blue-gray-300"></div>
-                                                                    <Typography className="text-xs text-blue-gray-500">
-                                                                        {event.thoiGianBatDau} - {event.thoiGianKetThuc}
-                                                                    </Typography>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-3 px-5">
-                                                            <Typography className="text-sm font-semibold text-blue-gray-600">
-                                                                {event.diaDiem}
-                                                            </Typography>
-                                                        </td>
-                                                        <td className="py-3 px-5">
-                                                            <div className="w-max">
+                                    )
+                                    : (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full min-w-[640px] table-auto">
+                                                <thead>
+                                                    <tr>
+                                                        {[
+                                                            "STT",
+                                                            "Tên sự kiện",
+                                                            "CLB tổ chức",
+                                                            "Ngày tổ chức",
+                                                            "Địa điểm",
+                                                            "Trạng thái",
+                                                            "Thao tác",
+                                                        ].map((head) => (
+                                                            <th
+                                                                key={head}
+                                                                className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                                                            >
                                                                 <Typography
-                                                                    className="text-sm font-semibold"
-                                                                    color={getStatusColor(event.trangThai)}
+                                                                    variant="small"
+                                                                    className="text-[11px] font-bold uppercase text-blue-gray-400"
                                                                 >
-                                                                    {getStatusText(event.trangThai)}
+                                                                    {head}
                                                                 </Typography>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-3 px-5">
-                                                            <div className="flex gap-2">
-                                                                <Tooltip content="Xem chi tiết">
-                                                                    <IconButton
-                                                                        variant="text"
-                                                                        color="blue"
-                                                                        onClick={() => openDetailDialog(event._id)}
-                                                                    >
-                                                                        <EyeIcon className="h-4 w-4" />
-                                                                    </IconButton>
-                                                                </Tooltip>
-                                                                {event.trangThai === "choDuyet" && (
-                                                                    <>
-                                                                        <Tooltip content="Phê duyệt">
-                                                                            <IconButton
-                                                                                variant="text"
-                                                                                color="green"
-                                                                                onClick={() => handleApproveEvent(event._id)}
-                                                                            >
-                                                                                <CheckCircleIcon className="h-4 w-4" />
-                                                                            </IconButton>
-                                                                        </Tooltip>
-                                                                        <Tooltip content="Từ chối">
-                                                                            <IconButton
-                                                                                variant="text"
-                                                                                color="red"
-                                                                                onClick={() => openRejectDialog(event._id)}
-                                                                            >
-                                                                                <XCircleIcon className="h-4 w-4" />
-                                                                            </IconButton>
-                                                                        </Tooltip>
-                                                                    </>
-                                                                )}
-                                                            </div>
-                                                        </td>
+                                                            </th>
+                                                        ))}
                                                     </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
+                                                </thead>
+                                                <tbody>
+                                                    {currentEvents.map(
+                                                        (event, index) => {
+                                                            const isLast =
+                                                                event ===
+                                                                    currentEvents[
+                                                                        currentEvents
+                                                                            .length -
+                                                                        1
+                                                                    ];
+                                                            const classes =
+                                                                isLast
+                                                                    ? "p-4"
+                                                                    : "p-4 border-b border-blue-gray-50";
+
+                                                            return (
+                                                                <tr
+                                                                    key={event
+                                                                        ._id}
+                                                                >
+                                                                    <td className="py-3 px-5">
+                                                                        <Typography className="text-sm font-semibold text-blue-gray-600">
+                                                                            {(currentPage -
+                                                                                        1) *
+                                                                                    itemsPerPage +
+                                                                                index +
+                                                                                1}
+                                                                        </Typography>
+                                                                    </td>
+                                                                    <td className="py-3 px-5">
+                                                                        <Tooltip
+                                                                            content={event
+                                                                                .ten}
+                                                                        >
+                                                                            <Typography className="text-sm font-semibold text-blue-gray-600">
+                                                                                {truncateWords(
+                                                                                    event
+                                                                                        .ten,
+                                                                                    10,
+                                                                                )}
+                                                                            </Typography>
+                                                                        </Tooltip>
+                                                                    </td>
+                                                                    <td className="py-3 px-5">
+                                                                        <Typography className="text-sm font-semibold text-blue-gray-600">
+                                                                            {event
+                                                                                    .club &&
+                                                                                    typeof event
+                                                                                            .club ===
+                                                                                        "object"
+                                                                                ? event
+                                                                                    .club
+                                                                                    .ten
+                                                                                : event
+                                                                                    .club}
+                                                                        </Typography>
+                                                                    </td>
+                                                                    <td className="py-3 px-5">
+                                                                        <div className="flex flex-col">
+                                                                            <Typography className="text-sm font-semibold text-blue-gray-600">
+                                                                                {new Date(
+                                                                                    event
+                                                                                        .ngayToChuc,
+                                                                                ).toLocaleDateString(
+                                                                                    "vi-VN",
+                                                                                )}
+                                                                            </Typography>
+                                                                            <div className="flex items-center gap-2 mt-1">
+                                                                                <div className="w-1 h-1 rounded-full bg-blue-gray-300">
+                                                                                </div>
+                                                                                <Typography className="text-xs text-blue-gray-500">
+                                                                                    {event
+                                                                                        .thoiGianBatDau}
+                                                                                    {" "}
+                                                                                    -
+                                                                                    {" "}
+                                                                                    {event
+                                                                                        .thoiGianKetThuc}
+                                                                                </Typography>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="py-3 px-5">
+                                                                        <Typography className="text-sm font-semibold text-blue-gray-600">
+                                                                            {event
+                                                                                .diaDiem}
+                                                                        </Typography>
+                                                                    </td>
+                                                                    <td className="py-3 px-5">
+                                                                        <div className="w-max">
+                                                                            <Typography
+                                                                                className="text-sm font-semibold"
+                                                                                color={getStatusColor(
+                                                                                    event
+                                                                                        .trangThai,
+                                                                                )}
+                                                                            >
+                                                                                {getStatusText(
+                                                                                    event
+                                                                                        .trangThai,
+                                                                                )}
+                                                                            </Typography>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="py-3 px-5">
+                                                                        <div className="flex gap-2">
+                                                                            <Tooltip content="Xem chi tiết">
+                                                                                <IconButton
+                                                                                    variant="text"
+                                                                                    color={sidenavColor}
+                                                                                    onClick={() =>
+                                                                                        openDetailDialog(
+                                                                                            event
+                                                                                                ._id,
+                                                                                        )}
+                                                                                >
+                                                                                    <EyeIcon className="h-4 w-4" />
+                                                                                </IconButton>
+                                                                            </Tooltip>
+                                                                            {event
+                                                                                        .trangThai ===
+                                                                                    "choDuyet" &&
+                                                                                (
+                                                                                    <>
+                                                                                        <Tooltip content="Phê duyệt">
+                                                                                            <IconButton
+                                                                                                variant="text"
+                                                                                                color="green"
+                                                                                                onClick={() =>
+                                                                                                    handleApproveEvent(
+                                                                                                        event
+                                                                                                            ._id,
+                                                                                                    )}
+                                                                                            >
+                                                                                                <CheckCircleIcon className="h-4 w-4" />
+                                                                                            </IconButton>
+                                                                                        </Tooltip>
+                                                                                        <Tooltip content="Từ chối">
+                                                                                            <IconButton
+                                                                                                variant="text"
+                                                                                                color="red"
+                                                                                                onClick={() =>
+                                                                                                    openRejectDialog(
+                                                                                                        event
+                                                                                                            ._id,
+                                                                                                    )}
+                                                                                            >
+                                                                                                <XCircleIcon className="h-4 w-4" />
+                                                                                            </IconButton>
+                                                                                        </Tooltip>
+                                                                                    </>
+                                                                                )}
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        },
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+
+                                {/* Pagination */}
+                            {filteredEvents.length > 0 && (
+                                    <div className="flex items-center gap-4 justify-center mt-4">
+                                        <Button
+                                            variant="text"
+                                            className="flex items-center gap-2"
+                                            onClick={() =>
+                                            setCurrentPage(currentPage - 1)}
+                                            disabled={currentPage === 1}
+                                        >
+                                            <ChevronLeftIcon
+                                            strokeWidth={2}
+                                            className="h-4 w-4"
+                                        />{" "}
+                                        Trước
+                                        </Button>
+    
+                                        <div className="flex items-center gap-2">
+                                            {[...Array(totalPages)].map((
+                                            _,
+                                            index,
+                                        ) => (
+                                                <Button
+                                                    key={index + 1}
+                                                    variant={currentPage ===
+                                                        index + 1
+                                                    ? "gradient"
+                                                    : "text"}
+                                                    color={sidenavColor}
+                                                    onClick={() =>
+                                                    setCurrentPage(index + 1)}
+                                                    className="w-10 h-10"
+                                                >
+                                                    {index + 1}
+                                                </Button>
+                                            ))}
+                                        </div>
+
+                                    <Button
+                                        variant="text"
+                                        className="flex items-center gap-2"
+                                        onClick={() => setCurrentPage(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                    </Button>
                                 </div>
                             )}
-
-                            {/* Pagination */}
-                            <div className="flex items-center gap-4 justify-center mt-4">
-                                <Button
-                                    variant="text"
-                                    className="flex items-center gap-2"
-                                    onClick={() => setCurrentPage(currentPage - 1)}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
-                                </Button>
-                                
-                                <div className="flex items-center gap-2">
-                                    {[...Array(totalPages)].map((_, index) => (
-                                        <Button
-                                            key={index + 1}
-                                            variant={currentPage === index + 1 ? "gradient" : "text"}
-                                            color="blue"
-                                            onClick={() => setCurrentPage(index + 1)}
-                                            className="w-10 h-10"
-                                        >
-                                            {index + 1}
-                                        </Button>
-                                    ))}
-                                </div>
-
-                                <Button
-                                    variant="text"
-                                    className="flex items-center gap-2"
-                                    onClick={() => setCurrentPage(currentPage + 1)}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
-                                </Button>
-                            </div>
                         </div>
                     ) : (
                         // Calendar view
@@ -712,48 +866,79 @@ const ApproveEvents = () => {
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr>
-                                        <th colSpan="4" className="bg-blue-50 p-3 text-left text-lg font-bold text-blue-900">
+                                        <th
+                                            colSpan="4"
+                                            className="bg-blue-50 p-3 text-left text-lg font-bold text-blue-900"
+                                        >
                                             Thông tin cơ bản
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <th className="border p-3 bg-gray-50 w-1/4">Tên sự kiện</th>
-                                        <td className="border p-3" colSpan="3">{detailEvent.ten}</td>
+                                        <th className="border p-3 bg-gray-50 w-1/4">
+                                            Tên sự kiện
+                                        </th>
+                                        <td className="border p-3" colSpan="3">
+                                            {detailEvent.ten}
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <th className="border p-3 bg-gray-50">Ngày tổ chc</th>
+                                        <th className="border p-3 bg-gray-50">
+                                            Ngày tổ chc
+                                        </th>
                                         <td className="border p-3">
-                                            {new Date(detailEvent.ngayToChuc).toLocaleDateString()}
+                                            {new Date(detailEvent.ngayToChuc)
+                                                .toLocaleDateString()}
                                         </td>
-                                        <th className="border p-3 bg-gray-50">Thời gian</th>
+                                        <th className="border p-3 bg-gray-50">
+                                            Thời gian
+                                        </th>
                                         <td className="border p-3">
                                             {`${detailEvent.thoiGianBatDau} - ${detailEvent.thoiGianKetThuc}`}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <th className="border p-3 bg-gray-50">Địa điểm</th>
-                                        <td className="border p-3">{detailEvent.diaDiem}</td>
-                                        <th className="border p-3 bg-gray-50">Người ph trách</th>
-                                        <td className="border p-3">{detailEvent.nguoiPhuTrach}</td>
+                                        <th className="border p-3 bg-gray-50">
+                                            Địa điểm
+                                        </th>
+                                        <td className="border p-3">
+                                            {detailEvent.diaDiem}
+                                        </td>
+                                        <th className="border p-3 bg-gray-50">
+                                            Người ph trách
+                                        </th>
+                                        <td className="border p-3">
+                                            {detailEvent.nguoiPhuTrach}
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <th className="border p-3 bg-gray-50">CLB tổ chức</th>
+                                        <th className="border p-3 bg-gray-50">
+                                            CLB tổ chức
+                                        </th>
                                         <td className="border p-3">
-                                            {detailEvent.club && typeof detailEvent.club === "object"
+                                            {detailEvent.club &&
+                                                    typeof detailEvent.club ===
+                                                        "object"
                                                 ? detailEvent.club.ten
-                                                : typeof detailEvent.club === "string"
+                                                : typeof detailEvent.club ===
+                                                        "string"
                                                 ? detailEvent.club
                                                 : "Không xác định"}
                                         </td>
-                                        <th className="border p-3 bg-gray-50">Trạng thái</th>
+                                        <th className="border p-3 bg-gray-50">
+                                            Trạng thái
+                                        </th>
                                         <td className="border p-3">
                                             <Typography
                                                 className="font-semibold"
-                                                color={getStatusColor(detailEvent.trangThai)}
+                                                color={getStatusColor(
+                                                    detailEvent.trangThai,
+                                                )}
                                             >
-                                                {getStatusText(detailEvent.trangThai)}
+                                                {getStatusText(
+                                                    detailEvent.trangThai,
+                                                )}
                                             </Typography>
                                         </td>
                                     </tr>
@@ -782,29 +967,30 @@ const ApproveEvents = () => {
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr>
-                                        <th colSpan="2" className="bg-blue-50 p-3 text-left text-lg font-bold text-blue-900">
+                                        <th
+                                            colSpan="2"
+                                            className="bg-blue-50 p-3 text-left text-lg font-bold text-blue-900"
+                                        >
                                             Thông tin khác
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <th className="border p-3 bg-gray-50 w-1/4">Ngân sách chi tiêu</th>
-                                        <td className="border p-3 font-semibold text-blue-600">
-                                            {detailEvent.nganSachChiTieu.toLocaleString()} VND
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th className="border p-3 bg-gray-50">Khách mời</th>
+                                        <th className="border p-3 bg-gray-50">
+                                            Khách mời
+                                        </th>
                                         <td className="border p-3">
-                                            {detailEvent.khachMoi.join(", ") || "Không có"}
+                                            {detailEvent.khachMoi.join(", ") ||
+                                                "Không có"}
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
 
                             {/* Lý do từ chối (nếu có) */}
-                            {detailEvent.trangThai === "tuChoi" && detailEvent.lyDoTuChoi && (
+                            {detailEvent.trangThai === "tuChoi" &&
+                                detailEvent.lyDoTuChoi && (
                                 <table className="w-full border-collapse">
                                     <thead>
                                         <tr>
@@ -828,7 +1014,7 @@ const ApproveEvents = () => {
                 <DialogFooter>
                     <Button
                         variant="gradient"
-                        color="blue"
+                        color={sidenavColor}
                         onClick={() => setIsDetailDialogOpen(false)}
                     >
                         Đóng
@@ -875,41 +1061,69 @@ const ApproveEvents = () => {
             </Dialog>
 
             {/* Dialog xác nhận khi có sự kiện trùng lịch */}
-            <Dialog open={isConfirmDialogOpen} handler={() => setIsConfirmDialogOpen(false)}>
+            <Dialog
+                open={isConfirmDialogOpen}
+                handler={() => setIsConfirmDialogOpen(false)}
+            >
                 <DialogHeader>Cảnh báo trùng lịch sự kiện</DialogHeader>
                 <DialogBody divider className="max-h-[60vh] overflow-auto">
                     <div className="space-y-4">
                         <Typography color="red" className="font-medium">
-                            Hiện có {conflictingEvents.length} sự kiện đã được duyệt trùng lịch:
+                            Hiện có {conflictingEvents.length}{" "}
+                            sự kiện đã được duyệt trùng lịch:
                         </Typography>
-                        
+
                         {/* Hiển thị thông tin sự kiện cần duyệt */}
                         {eventToApprove && (
                             <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                                <Typography className="font-bold mb-2">Sự kiện cần duyệt:</Typography>
+                                <Typography className="font-bold mb-2">
+                                    Sự kiện cần duyệt:
+                                </Typography>
                                 <div className="space-y-1">
-                                    <Typography className="text-sm">Tên: {eventToApprove.ten}</Typography>
                                     <Typography className="text-sm">
-                                        Thời gian: {eventToApprove.thoiGianBatDau} - {eventToApprove.thoiGianKetThuc}
+                                        Tên: {eventToApprove.ten}
                                     </Typography>
-                                    <Typography className="text-sm">Địa điểm: {eventToApprove.diaDiem}</Typography>
+                                    <Typography className="text-sm">
+                                        Thời gian:{" "}
+                                        {eventToApprove.thoiGianBatDau} -{" "}
+                                        {eventToApprove.thoiGianKetThuc}
+                                    </Typography>
+                                    <Typography className="text-sm">
+                                        Địa điểm: {eventToApprove.diaDiem}
+                                    </Typography>
                                 </div>
                             </div>
                         )}
 
                         {/* Danh sách các sự kiện bị trùng */}
                         <div className="space-y-2">
-                            <Typography className="font-medium">Các sự kiện trùng lịch:</Typography>
+                            <Typography className="font-medium">
+                                Các sự kiện trùng lịch:
+                            </Typography>
                             {conflictingEvents.map((event, index) => (
-                                <div key={event._id} className="bg-red-50 p-3 rounded-lg">
-                                    <Typography className="font-medium">{event.ten}</Typography>
+                                <div
+                                    key={event._id}
+                                    className="bg-red-50 p-3 rounded-lg"
+                                >
+                                    <Typography className="font-medium">
+                                        {event.ten}
+                                    </Typography>
                                     <div className="grid grid-cols-2 gap-2 mt-1 text-sm">
                                         <Typography>
-                                            Thời gian: {event.thoiGianBatDau} - {event.thoiGianKetThuc}
+                                            Thời gian: {event.thoiGianBatDau} -
+                                            {" "}
+                                            {event.thoiGianKetThuc}
                                         </Typography>
-                                        <Typography>Địa điểm: {event.diaDiem}</Typography>
                                         <Typography>
-                                            CLB: {event.club?.ten || typeof event.club === 'string' ? event.club : 'N/A'}
+                                            Địa điểm: {event.diaDiem}
+                                        </Typography>
+                                        <Typography>
+                                            CLB:{" "}
+                                            {event.club?.ten ||
+                                                    typeof event.club ===
+                                                        "string"
+                                                ? event.club
+                                                : "N/A"}
                                         </Typography>
                                     </div>
                                 </div>
@@ -922,16 +1136,16 @@ const ApproveEvents = () => {
                     </div>
                 </DialogBody>
                 <DialogFooter className="space-x-2">
-                    <Button 
-                        variant="text" 
-                        color="red" 
+                    <Button
+                        variant="text"
+                        color="red"
                         onClick={() => setIsConfirmDialogOpen(false)}
                     >
                         Hủy
                     </Button>
-                    <Button 
-                        variant="gradient" 
-                        color="green" 
+                    <Button
+                        variant="gradient"
+                        color="green"
                         onClick={() => approveEvent(eventToApprove._id)}
                     >
                         Xác nhận duyệt

@@ -6,11 +6,11 @@ export default defineConfig({
     resolve: {
         alias: [{ find: "@", replacement: "/src" }],
     },
-  server: {
-    port: 5100,
-    host: true,
-    watch: {
-      usePolling: true,
+    server: {
+        port: 5100,
+        host: true,
+        watch: {
+            usePolling: true,
+        },
     },
-  }
 });

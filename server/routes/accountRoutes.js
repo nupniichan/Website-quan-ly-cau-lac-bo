@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Account = require('../models/Account');
 const jwt = require('jsonwebtoken');
+const Club = require('../models/Club');
 
 // Register a new account
 router.post('/register', async (req, res) => {
@@ -138,6 +139,36 @@ router.delete('/delete-account/:userId', async (req, res) => {
     } catch (error) {
         console.error('Error deleting account:', error);
         res.status(500).json({ message: 'Server error while deleting account', error: error.message });
+    }
+});
+
+// Thêm route mới để kiểm tra tài khoản có đang quản lý CLB đang hoạt động không
+router.get('/check-account-clubs/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Tìm các CLB mà user này đang là trưởng ban và còn hoạt động
+        const activeClubs = await Club.findOne({
+            truongBanCLB: userId,
+            tinhTrang: 'Còn hoạt động'
+        });
+
+        res.json({
+            hasActiveClubs: !!activeClubs
+        });
+    } catch (error) {
+        console.error('Error checking account clubs:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// Thêm route mới để lấy tất cả học sinh
+router.get('/students', async (req, res) => {
+    try {
+        const students = await Account.find({ role: 'student' });
+        res.json(students);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching students', error: error.message });
     }
 });
 

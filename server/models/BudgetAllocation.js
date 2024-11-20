@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Counter = require('./Counter');
 
 const budgetAllocationSchema = new mongoose.Schema({
-    _id: { type: Number },  // Bỏ required: true
+    _id: { type: Number },
     club: { 
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Club',
@@ -13,10 +13,10 @@ const budgetAllocationSchema = new mongoose.Schema({
     allocationDate: { type: Date, required: true } 
 });
 
-// Sửa lại middleware pre-save
+// Middleware pre-save
 budgetAllocationSchema.pre('save', async function(next) {
     try {
-        if (!this._id) {  // Chỉ tạo _id mới nếu chưa có
+        if (!this._id) {
             const counter = await Counter.findByIdAndUpdate(
                 { _id: 'budgetAllocationId' },
                 { $inc: { seq: 1 } },
@@ -24,27 +24,35 @@ budgetAllocationSchema.pre('save', async function(next) {
             );
             this._id = counter.seq;
         }
-
-        // Cập nhật budget của club khi thêm phân bổ mới
-        if (this.isNew) {
-            await mongoose.model('Club').findByIdAndUpdate(
-                this.club,
-                { $inc: { budget: this.amount } }
-            );
-        }
         next();
     } catch (error) {
         next(error);
     }
 });
 
-// Thêm middleware pre-remove để cập nhật budget khi xóa phân bổ
-budgetAllocationSchema.pre('remove', async function(next) {
+// Thay đổi từ pre-remove sang pre-deleteOne
+budgetAllocationSchema.pre('deleteOne', { document: true, query: false }, async function(next) {
     try {
         await mongoose.model('Club').findByIdAndUpdate(
             this.club,
             { $inc: { budget: -this.amount } }
         );
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Thêm middleware cho findOneAndDelete
+budgetAllocationSchema.pre('findOneAndDelete', async function(next) {
+    try {
+        const doc = await this.model.findOne(this.getQuery());
+        if (doc) {
+            await mongoose.model('Club').findByIdAndUpdate(
+                doc.club,
+                { $inc: { budget: -doc.amount } }
+            );
+        }
         next();
     } catch (error) {
         next(error);

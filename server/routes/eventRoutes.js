@@ -17,7 +17,6 @@ const Reports = require('../models/Report');
  *         - thoiGianKetThuc
  *         - diaDiem
  *         - noiDung
- *         - nganSachChiTieu
  *         - nguoiPhuTrach
  *         - club
  *       properties:
@@ -40,9 +39,6 @@ const Reports = require('../models/Report');
  *         noiDung:
  *           type: string
  *           description: Nội dung s kiện
- *         nganSachChiTieu:
- *           type: number
- *           description: Ngân sách chi tiêu cho sự kiện
  *         nguoiPhuTrach:
  *           type: string
  *           description: Người phụ trách sự kiện
@@ -94,13 +90,6 @@ router.post('/add-event', async (req, res) => {
             return res.status(404).json({ message: 'Club not found' });
         }
 
-        // Kiểm tra ngân sách hiện có
-        if (clubDoc.budget < eventData.nganSachChiTieu) {
-            return res.status(400).json({ 
-                message: 'Ngân sách không đủ để tổ chức sự kiện' 
-            });
-        }
-
         const newEvent = new Event({
             ...eventData,
             khachMoi: Array.isArray(khachMoi) ? khachMoi : [khachMoi],
@@ -109,17 +98,6 @@ router.post('/add-event', async (req, res) => {
         });
 
         await newEvent.save();
-
-        // Cập nhật ngân sách của CLB khi sự kiện được duyệt
-        if (newEvent.trangThai === 'daDuyet') {
-            await Club.findByIdAndUpdate(clubDoc._id, {
-                $inc: { 
-                    budget: -eventData.nganSachChiTieu,
-                    suKien: newEvent._id 
-                }
-            });
-        }
-
         res.status(201).json(newEvent);
     } catch (error) {
         console.error('Error adding event:', error);
@@ -346,25 +324,11 @@ router.put('/approve-event/:id', async (req, res) => {
             return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
         }
 
-        // Kiểm tra và cập nhật ngân sách CLB
-        const club = await Club.findById(event.club);
-        if (club.budget < event.nganSachChiTieu) {
-            return res.status(400).json({ 
-                message: 'Ngân sách CLB không đủ để tổ chức sự kiện' 
-            });
-        }
-
-        // Cập nhật trạng thái sự kiện và trừ ngân sách
         const updatedEvent = await Event.findByIdAndUpdate(
             req.params.id, 
             { trangThai: 'daDuyet' }, 
             { new: true }
         );
-
-        // Trừ ngân sách của CLB
-        await Club.findByIdAndUpdate(event.club, {
-            $inc: { budget: -event.nganSachChiTieu }
-        });
 
         res.status(200).json(updatedEvent);
     } catch (error) {

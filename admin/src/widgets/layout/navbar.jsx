@@ -9,14 +9,17 @@ import {
 import PropTypes from "prop-types";
 import React from "react";
 import { Link } from "react-router-dom";
+import { setOpenSidenav } from "@/context/action";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
 export function Navbar({ brandName, routes, action }) {
-    const [openNav, setOpenNav] = React.useState(false);
+    const [controller, dispatch] = useMaterialTailwindController();
+    const { openSidenav } = controller;
 
     React.useEffect(() => {
         window.addEventListener(
             "resize",
-            () => window.innerWidth >= 960 && setOpenNav(false),
+            () => window.innerWidth >= 960 && setOpenSidenav(dispatch, false),
         );
     }, []);
 
@@ -45,6 +48,10 @@ export function Navbar({ brandName, routes, action }) {
         </ul>
     );
 
+    const handleOpenSidenav = () => {
+        setOpenSidenav(dispatch, !openSidenav);
+    };
+
     return (
         <MTNavbar className="p-3">
             <div className="container mx-auto flex items-center justify-between text-blue-gray-900">
@@ -64,14 +71,14 @@ export function Navbar({ brandName, routes, action }) {
                     variant="text"
                     size="sm"
                     className="ml-auto text-inherit hover:bg-transparent focus:bg-transparent active:bg-transparent lg:hidden"
-                    onClick={() => setOpenNav(!openNav)}
+                    onClick={handleOpenSidenav}
                 >
-                    {openNav
+                    {openSidenav
                         ? <XMarkIcon strokeWidth={2} className="h-6 w-6" />
                         : <Bars3Icon strokeWidth={2} className="h-6 w-6" />}
                 </IconButton>
             </div>
-            <Collapse open={openNav}>
+            <Collapse open={openSidenav}>
                 <div className="container mx-auto">
                     {navList}
                     {React.cloneElement(action, {

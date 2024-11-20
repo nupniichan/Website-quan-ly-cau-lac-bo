@@ -7,10 +7,16 @@ const prizeSchema = new mongoose.Schema({
     tenGiaiThuong: { type: String, required: true },
     ngayDatGiai: { type: Date, required: true },
     loaiGiai: { type: String, required: true },
-    thanhVienDatGiai: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
+    thanhVienDatGiai: { 
+        type: mongoose.Schema.Types.Mixed,
+        ref: 'Member'
+    },
     club: { type: mongoose.Schema.Types.ObjectId, ref: 'Club', required: true },
     ghiChu: { type: String },
-    anhDatGiai: { type: String }
+    anhDatGiai: { type: String },
+    // Có thể thêm các trường mới nếu cần
+}, {
+    timestamps: true // Thêm createdAt và updatedAt
 });
 
 // Hook tự động tăng _id cho Prize bằng Counter

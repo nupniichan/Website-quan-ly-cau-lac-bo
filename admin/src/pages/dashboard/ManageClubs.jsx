@@ -10,23 +10,25 @@ import {
     DialogFooter,
     DialogHeader,
     Input,
+    Option,
+    Select,
     Spinner,
     Textarea,
     Tooltip,
     Typography,
-    Select,
-    Option,
 } from "@material-tailwind/react";
 import axios from "axios";
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
+import { message, notification } from "antd";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
 const API_URL = "http://localhost:5500/api";
 
 // Thêm hàm validate chung
-const validateClubData = (clubData) => {
+const validateClubData = async (clubData, editingClubId) => {
     // Kiểm tra các trường bắt buộc không được null hoặc rỗng
     const requiredFields = [
         { key: "ten", label: "Tên CLB" },
@@ -39,12 +41,14 @@ const validateClubData = (clubData) => {
 
     // Kiểm tra trường rỗng
     const emptyFields = requiredFields.filter(
-        field => !clubData[field.key]?.trim()
+        (field) => !clubData[field.key]?.trim(),
     );
-    
+
     if (emptyFields.length > 0) {
         throw new Error(
-            `Vui lòng điền đầy đủ thông tin: ${emptyFields.map(f => f.label).join(", ")}`
+            `Vui lòng điền đầy đủ thông tin: ${
+                emptyFields.map((f) => f.label).join(", ")
+            }`,
         );
     }
 
@@ -56,15 +60,40 @@ const validateClubData = (clubData) => {
     if (ngayThanhLap > today) {
         throw new Error("Ngày thành lập không được là ngày tương lai");
     }
+
+    try {
+        // Kiểm tra tài khoản trưởng ban có tồn tại
+        const accountResponse = await axios.get(`${API_URL}/get-accounts`);
+        const accountExists = accountResponse.data.some(
+            account => account.userId === clubData.truongBanCLB && account.role === 'student'
+        );
+        
+        if (!accountExists) {
+            throw new Error("Tài khoản trưởng ban CLB không tồn tại hoặc không phải là học sinh");
+        }
+
+        // Kiểm tra xem account đã quản lý câu lạc bộ nào chưa
+        const clubResponse = await axios.get(`${API_URL}/get-clubs`);
+        const existingClub = clubResponse.data.find(
+            club => club.truongBanCLB === clubData.truongBanCLB && club.clubId !== editingClubId
+        );
+        
+        if (existingClub) {
+            throw new Error(`Tài khoản này đã là trưởng ban của câu lạc bộ "${existingClub.ten}"`);
+        }
+    } catch (error) {
+        if (error.message) throw error;
+        throw new Error("Lỗi khi kiểm tra thông tin trưởng ban CLB");
+    }
 };
 
 // Thêm hàm helper để format ngày
 const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
+    return date.toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
     });
 };
 
@@ -93,13 +122,17 @@ const ManageClubs = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [dateFilter, setDateFilter] = useState({
         startDate: "",
-        endDate: ""
+        endDate: "",
     });
     const [fieldFilter, setFieldFilter] = useState("");
     const [showStudentDropdown, setShowStudentDropdown] = useState(false);
     const [studentAccounts, setStudentAccounts] = useState([]);
     const [studentSearch, setStudentSearch] = useState("");
     const dropdownRef = useRef(null);
+
+    // Lấy controller từ context & màu hiện tại của sidenav
+    const [controller] = useMaterialTailwindController();
+    const { sidenavColor } = controller;
 
     useEffect(() => {
         fetchClubs();
@@ -111,7 +144,7 @@ const ManageClubs = () => {
             try {
                 const response = await axios.get(`${API_URL}/get-accounts`);
                 const students = response.data
-                    .filter(account => account.role === 'student')
+                    .filter((account) => account.role === "student")
                     .slice(0, 10);
                 setStudentAccounts(students);
             } catch (error) {
@@ -124,21 +157,34 @@ const ManageClubs = () => {
     // Handle click outside
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target)
+            ) {
                 setShowStudentDropdown(false);
             }
         };
 
         document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     // Thêm hàm lọc students
     const getFilteredStudents = (searchValue) => {
-        return studentAccounts.filter(student =>
-            student.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-            student.userId.toLowerCase().includes(searchValue.toLowerCase())
-        );
+        // Lọc ra các account đã là trưởng ban của các CLB khác
+        const existingLeaders = clubs
+            .filter(club => club.clubId !== editingClubId) // Bỏ qua CLB đang edit
+            .map(club => club.truongBanCLB);
+
+        return studentAccounts
+            .filter(student => 
+                // Lọc theo tên và mã số
+                (student.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+                student.userId.toLowerCase().includes(searchValue.toLowerCase())) &&
+                // Loại bỏ các account đã là trưởng ban
+                !existingLeaders.includes(student.userId)
+            );
     };
 
     const fetchClubs = async () => {
@@ -155,7 +201,7 @@ const ManageClubs = () => {
 
     const handleAddClub = async () => {
         try {
-            validateClubData(newClub);
+            await validateClubData(newClub, null);
 
             const formData = new FormData();
             Object.keys(newClub).forEach((key) => {
@@ -176,26 +222,36 @@ const ManageClubs = () => {
         } catch (error) {
             // Xử lý lỗi validation
             if (error.message) {
-                alert(error.message);
+                // alert(error.message);
+                message.error({ content: error.message });
                 return;
             }
             // Xử lý lỗi API
             console.error("Error adding club:", error);
             if (error.response) {
-                alert(
-                    `Lỗi khi thêm câu lạc bộ: ${
-                        error.response.data.message || "Không xác định"
-                    }`
-                );
+                // alert(
+                //     `Lỗi khi thêm câu lạc bộ: ${
+                //         error.response.data.message || "Không xác định"
+                //     }`
+                // );
+                notification.error({
+                    message: "Lỗi khi thêm câu lạc bộ",
+                    description: error.response.data.message ||
+                        "Không xác định",
+                });
             } else {
-                alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+                // alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+                message.error({
+                    content:
+                        "Không thể kết nối đến server. Vui lòng thử lại sau.",
+                });
             }
         }
     };
 
     const handleUpdateClub = async () => {
         try {
-            validateClubData(newClub);
+            await validateClubData(newClub, editingClubId);
 
             const formData = new FormData();
             Object.keys(newClub).forEach((key) => {
@@ -213,7 +269,7 @@ const ManageClubs = () => {
                 formData,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
-                }
+                },
             );
             setIsDialogOpen(false);
             setEditingClubId(null);
@@ -221,30 +277,43 @@ const ManageClubs = () => {
         } catch (error) {
             // Xử lý lỗi validation
             if (error.message) {
-                alert(error.message);
+                // alert(error.message);
+                message.error({ content: error.message });
                 return;
             }
             // Xử lý lỗi API
             console.error("Error updating club:", error);
             if (error.response) {
-                alert(
-                    `Lỗi khi cập nhật câu lạc bộ: ${
-                        error.response.data.message || "Không xác định"
-                    }`
-                );
+                // alert(
+                //     `Lỗi khi cập nhật câu lạc bộ: ${
+                //         error.response.data.message || "Không xác định"
+                //     }`
+                // );
+                notification.error({
+                    message: "Lỗi khi cập nhật câu lạc bộ",
+                    description: error.response.data.message ||
+                        "Không xác định",
+                });
             } else {
-                alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+                // alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+                message.error({
+                    content:
+                        "Không thể kết nối đến server. Vui lòng thử lại sau.",
+                });
             }
         }
     };
 
     const handleDeleteClub = async (clubId) => {
         // Tìm club cần xóa
-        const clubToDelete = clubs.find(club => club.clubId === clubId);
-        
+        const clubToDelete = clubs.find((club) => club.clubId === clubId);
+
         // Kiểm tra tình trạng
         if (clubToDelete.tinhTrang === "Còn hoạt động") {
-            alert("Không thể xóa câu lạc bộ đang hoạt động!");
+            // alert("Không thể xóa câu lạc bộ đang hoạt động!");
+            message.warning({
+                content: "Không thể xóa câu lạc bộ đang hoạt động!",
+            });
             return;
         }
 
@@ -257,13 +326,21 @@ const ManageClubs = () => {
             } catch (error) {
                 console.error("Error deleting club:", error);
                 if (error.response) {
-                    alert(
-                        `Lỗi khi xóa câu lạc bộ: ${error.response.data.message}`,
-                    );
+                    // alert(
+                    //     `Lỗi khi xóa câu lạc bộ: ${error.response.data.message}`,
+                    // );
+                    notification.error({
+                        message: "Lỗi khi xóa câu lạc bộ",
+                        description: error.response.data.message,
+                    });
                 } else {
-                    alert(
-                        "Không thể kết nối đến server. Vui lòng thử lại sau.",
-                    );
+                    // alert(
+                    //     "Không thể kết nối đến server. Vui lòng thử lại sau.",
+                    // );
+                    message.error({
+                        content:
+                            "Không thể kết nối đến server. Vui lòng thử lại sau.",
+                    });
                 }
             }
         }
@@ -291,7 +368,7 @@ const ManageClubs = () => {
         try {
             const response = await axios.get(`${API_URL}/get-club/${clubId}`);
             const date = new Date(response.data.ngayThanhLap);
-            const formattedDate = date.toISOString().split('T')[0]; // Format YYYY-MM-DD cho input
+            const formattedDate = date.toISOString().split("T")[0]; // Format YYYY-MM-DD cho input
 
             setNewClub({
                 ...response.data,
@@ -308,13 +385,22 @@ const ManageClubs = () => {
         } catch (error) {
             console.error("Error fetching club details:", error);
             if (error.response) {
-                alert(
-                    `Lỗi khi lấy thông tin câu lạc bộ: ${
-                        error.response.data.message || "Không xác định"
-                    }`,
-                );
+                // alert(
+                //     `Lỗi khi lấy thông tin câu lạc bộ: ${
+                //         error.response.data.message || "Không xác định"
+                //     }`,
+                // );
+                notification.error({
+                    message: "Lỗi khi lấy thông tin câu lạc bộ",
+                    description: error.response.data.message ||
+                        "Không xác định",
+                });
             } else {
-                alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+                // alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+                message.error({
+                    content:
+                        "Không thể kết nối đến server. Vui lòng thử lại sau.",
+                })
             }
         }
     };
@@ -326,11 +412,15 @@ const ManageClubs = () => {
             setIsDetailDialogOpen(true);
         } catch (error) {
             console.error("Error fetching club details:", error);
-            alert(
-                `Lỗi khi lấy thông tin câu lạc bộ: ${
-                    error.response?.data?.message || "Không xác định"
-                }`,
-            );
+            // alert(
+            //     `Lỗi khi lấy thông tin câu lạc bộ: ${
+            //         error.response?.data?.message || "Không xác định"
+            //     }`,
+            // );
+            notification.error({
+                message: "Lỗi khi lấy thông tin câu lạc bộ",
+                description: error.response?.data?.message || "Không xác định",
+            });
         }
     };
 
@@ -351,27 +441,37 @@ const ManageClubs = () => {
 
     // Tạo danh sách lĩnh vực hoạt động duy nhất từ clubs
     const uniqueFields = useMemo(() => {
-        const fields = clubs.map(club => club.linhVucHoatDong);
-        return [...new Set(fields)].filter(field => field); // Lọc bỏ giá trị null/undefined/empty
+        const fields = clubs.map((club) => club.linhVucHoatDong);
+        return [...new Set(fields)].filter((field) => field); // Lọc bỏ giá trị null/undefined/empty
     }, [clubs]);
 
     // Cập nhật hàm lọc clubs
     const filteredClubs = useMemo(() => {
-        return clubs.filter(club => {
+        return clubs.filter((club) => {
             // Lọc theo tên CLB hoặc lĩnh vực hoạt động hoặc giáo viên phụ trách hoặc trưởng ban CLB
-            const matchesSearch = 
+            const matchesSearch =
                 club.ten.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                club.linhVucHoatDong.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                club.giaoVienPhuTrach.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                club.truongBanCLB.toLowerCase().includes(searchTerm.toLowerCase());
+                club.linhVucHoatDong.toLowerCase().includes(
+                    searchTerm.toLowerCase(),
+                ) ||
+                club.giaoVienPhuTrach.toLowerCase().includes(
+                    searchTerm.toLowerCase(),
+                ) ||
+                club.truongBanCLB.toLowerCase().includes(
+                    searchTerm.toLowerCase(),
+                );
 
             // Lọc theo khoảng thời gian thành lập
             const clubDate = new Date(club.ngayThanhLap);
-            const matchesDateRange = (!dateFilter.startDate || new Date(dateFilter.startDate) <= clubDate) &&
-                (!dateFilter.endDate || new Date(dateFilter.endDate) >= clubDate);
+            const matchesDateRange =
+                (!dateFilter.startDate ||
+                    new Date(dateFilter.startDate) <= clubDate) &&
+                (!dateFilter.endDate ||
+                    new Date(dateFilter.endDate) >= clubDate);
 
             // Lọc theo lĩnh vực hoạt động
-            const matchesField = !fieldFilter || club.linhVucHoatDong === fieldFilter;
+            const matchesField = !fieldFilter ||
+                club.linhVucHoatDong === fieldFilter;
 
             return matchesSearch && matchesDateRange && matchesField;
         });
@@ -383,7 +483,10 @@ const ManageClubs = () => {
     }, [searchTerm, dateFilter, fieldFilter]);
 
     // Cập nhật phân trang
-    const currentClubs = filteredClubs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const currentClubs = filteredClubs.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage,
+    );
     const totalPages = Math.ceil(filteredClubs.length / itemsPerPage);
 
     return (
@@ -391,7 +494,7 @@ const ManageClubs = () => {
             <Card>
                 <CardHeader
                     variant="gradient"
-                    color="brown"
+                    color={sidenavColor}
                     className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
@@ -408,7 +511,8 @@ const ManageClubs = () => {
                                     label="Tìm kiếm theo tên CLB, lĩnh vực, giáo viên, trưởng ban"
                                     icon={<i className="fas fa-search" />}
                                     value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onChange={(e) =>
+                                        setSearchTerm(e.target.value)}
                                 />
                             </div>
 
@@ -435,12 +539,11 @@ const ManageClubs = () => {
                                         type="date"
                                         label="Từ ngày"
                                         value={dateFilter.startDate}
-                                        onChange={(e) => 
-                                            setDateFilter(prev => ({
+                                        onChange={(e) =>
+                                            setDateFilter((prev) => ({
                                                 ...prev,
-                                                startDate: e.target.value
-                                            }))
-                                        }
+                                                startDate: e.target.value,
+                                            }))}
                                     />
                                 </div>
                                 <div>
@@ -448,23 +551,26 @@ const ManageClubs = () => {
                                         type="date"
                                         label="Đến ngày"
                                         value={dateFilter.endDate}
-                                        onChange={(e) => 
-                                            setDateFilter(prev => ({
+                                        onChange={(e) =>
+                                            setDateFilter((prev) => ({
                                                 ...prev,
-                                                endDate: e.target.value
-                                            }))
-                                        }
+                                                endDate: e.target.value,
+                                            }))}
                                     />
                                 </div>
 
                                 {/* Nút reset bộ lọc - cập nhật để xóa cả fieldFilter */}
-                                {(dateFilter.startDate || dateFilter.endDate || searchTerm || fieldFilter) && (
+                                {(dateFilter.startDate || dateFilter.endDate ||
+                                    searchTerm || fieldFilter) && (
                                     <Button
                                         variant="text"
                                         color="red"
                                         className="p-2"
                                         onClick={() => {
-                                            setDateFilter({ startDate: "", endDate: "" });
+                                            setDateFilter({
+                                                startDate: "",
+                                                endDate: "",
+                                            });
                                             setSearchTerm("");
                                             setFieldFilter("");
                                         }}
@@ -487,92 +593,110 @@ const ManageClubs = () => {
                             >
                                 <Button
                                     className="flex items-center gap-3"
-                                    color="blue"
+                                    color={sidenavColor}
                                     size="sm"
                                     onClick={openAddDialog}
                                 >
-                                    <FaPlus className="w-4 h-4" strokeWidth={"2rem"} />
+                                    <FaPlus
+                                        className="w-4 h-4"
+                                        strokeWidth={"2rem"}
+                                    />
                                 </Button>
                             </Tooltip>
                         </div>
                     </div>
 
                     {/* Hiển thị kết quả tìm kiếm và lọc */}
-                    {(searchTerm || dateFilter.startDate || dateFilter.endDate || fieldFilter) && (
+                    {(searchTerm || dateFilter.startDate ||
+                        dateFilter.endDate || fieldFilter) && (
                         <div className="px-6 mb-4">
                             <Typography variant="small" color="blue-gray">
                                 Tìm thấy {filteredClubs.length} kết quả
                                 {searchTerm && ` cho "${searchTerm}"`}
-                                {fieldFilter && ` trong lĩnh vực "${fieldFilter}"`}
-                                {dateFilter.startDate && ` từ ${formatDate(dateFilter.startDate)}`}
-                                {dateFilter.endDate && ` đến ${formatDate(dateFilter.endDate)}`}
+                                {fieldFilter &&
+                                    ` trong lĩnh vực "${fieldFilter}"`}
+                                {dateFilter.startDate &&
+                                    ` từ ${formatDate(dateFilter.startDate)}`}
+                                {dateFilter.endDate &&
+                                    ` đến ${formatDate(dateFilter.endDate)}`}
                             </Typography>
                         </div>
                     )}
 
                     <div className="overflow-auto lg:max-h-[56vh] md:max-h-[75vh] sm:max-h-[85vh]">
-                        {isLoading
-                            ? (
-                                <div className="flex items-center justify-center h-64">
-                                    <Spinner
-                                        className="w-12 h-12"
-                                        color="brown"
-                                    />
-                                </div>
-                            )
-                            : clubs.length === 0
-                            ? (
-                                <Typography className="py-4 text-center">
-                                    Chưa có câu lạc bộ nào.
+                        {isLoading ? (
+                            <div className="flex items-center justify-center h-64">
+                                <Spinner className="w-12 h-12" color="pink" />
+                            </div>
+                        ) : filteredClubs.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-64 gap-4">
+                                <Typography variant="h6" color="blue-gray">
+                                    {searchTerm || dateFilter.startDate || dateFilter.endDate || fieldFilter
+                                        ? "Không tìm thấy câu lạc bộ nào phù hợp với điều kiện tìm kiếm"
+                                        : "Chưa có câu lạc bộ nào trong hệ thống"}
                                 </Typography>
-                            )
-                            : (
-                                <>
-                                    <table className="w-full min-w-[640px] table-auto">
-                                        <thead>
-                                            <tr>
-                                                {[
-                                                    "STT",
-                                                    "Logo",
-                                                    "Tên CLB",
-                                                    "Lĩnh vực hoạt động",
-                                                    "Ngày thành lập",
-                                                    "Giáo viên phụ trách",
-                                                    "Trưởng ban CLB",
-                                                    "Tình trạng",
-                                                    "Thao tác",
-                                                ].map((el) => (
-                                                    <th
-                                                        key={el}
-                                                        className="px-5 py-3 text-left border-b border-blue-gray-50"
+                                <Button
+                                    className="flex items-center gap-3"
+                                    color={sidenavColor}
+                                    onClick={openAddDialog}
+                                >
+                                    <FaPlus className="w-4 h-4" /> Thêm câu lạc bộ mới
+                                </Button>
+                            </div>
+                        ) : (
+                            <>
+                                <table className="w-full min-w-[640px] table-auto">
+                                    <thead>
+                                        <tr>
+                                            {[
+                                                "STT",
+                                                "Logo",
+                                                "Tên CLB",
+                                                "Lĩnh vực hoạt động",
+                                                "Ngày thành lập",
+                                                "Giáo viên phụ trách",
+                                                "Trưởng ban CLB",
+                                                "Tình trạng",
+                                                "Thao tác",
+                                            ].map((el) => (
+                                                <th
+                                                    key={el}
+                                                    className="px-5 py-3 text-left border-b border-blue-gray-50"
+                                                >
+                                                    <Typography
+                                                        variant="small"
+                                                        className="text-[11px] font-bold uppercase text-blue-gray-400"
                                                     >
-                                                        <Typography
-                                                            variant="small"
-                                                            className="text-[11px] font-bold uppercase text-blue-gray-400"
-                                                        >
-                                                            {el}
-                                                        </Typography>
-                                                    </th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {currentClubs.map(
-                                                ({ clubId, ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, truongBanCLB, logo, tinhTrang }, key) => {
-                                                    const className = `py-3 px-5 ${
-                                                        key === currentClubs.length - 1
-                                                            ? ""
-                                                            : "border-b border-blue-gray-50"
-                                                    }`;
+                                                        {el}
+                                                    </Typography>
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {currentClubs.map(
+                                            ({ clubId, ten, linhVucHoatDong, ngayThanhLap, giaoVienPhuTrach, truongBanCLB, logo, tinhTrang }, key) => {
+                                                const className = `py-3 px-5 ${
+                                                    key === currentClubs.length - 1
+                                                        ? ""
+                                                        : "border-b border-blue-gray-50"
+                                                }`;
 
                                                     return (
                                                         <tr key={clubId}>
-                                                            <td className={className}>
+                                                            <td
+                                                                className={className}
+                                                            >
                                                                 <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {(currentPage - 1) * itemsPerPage + key + 1}
+                                                                    {(currentPage -
+                                                                                1) *
+                                                                            itemsPerPage +
+                                                                        key + 1}
                                                                 </Typography>
                                                             </td>
-                                                            <td className={className}>
+                                                            <td
+                                                                className={className}
+                                                            >
                                                                 <img
                                                                     src={logo
                                                                         ? `${API_URL}/${logo}`
@@ -609,7 +733,9 @@ const ManageClubs = () => {
                                                                 className={className}
                                                             >
                                                                 <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {formatDate(ngayThanhLap)}
+                                                                    {formatDate(
+                                                                        ngayThanhLap,
+                                                                    )}
                                                                 </Typography>
                                                             </td>
                                                             <td
@@ -623,18 +749,28 @@ const ManageClubs = () => {
                                                                 className={className}
                                                             >
                                                                 <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                                    {studentAccounts.find(s => s.userId === truongBanCLB)?.name || truongBanCLB}
+                                                                    {studentAccounts
+                                                                        .find(
+                                                                            (s) =>
+                                                                                s.userId ===
+                                                                                    truongBanCLB
+                                                                        )?.name ||
+                                                                        truongBanCLB}
                                                                 </Typography>
                                                             </td>
-                                                            <td className={className}>
-                                                                <Typography 
+                                                            <td
+                                                                className={className}
+                                                            >
+                                                                <Typography
                                                                     className={`text-xs font-semibold ${
-                                                                        tinhTrang === "Còn hoạt động" 
-                                                                            ? "text-green-600" 
+                                                                        tinhTrang ===
+                                                                                "Còn hoạt động"
+                                                                            ? "text-green-600"
                                                                             : "text-red-600"
                                                                     }`}
                                                                 >
-                                                                    {tinhTrang || "Còn hoạt động"}
+                                                                    {tinhTrang ||
+                                                                        "Còn hoạt động"}
                                                                 </Typography>
                                                             </td>
                                                             <td
@@ -644,11 +780,12 @@ const ManageClubs = () => {
                                                                     <Tooltip
                                                                         content="Xem"
                                                                         animate={{
-                                                                            mount: {
-                                                                                scale:
-                                                                                    1,
-                                                                                y: 0,
-                                                                            },
+                                                                            mount:
+                                                                                {
+                                                                                    scale:
+                                                                                        1,
+                                                                                    y: 0,
+                                                                                },
                                                                             unmount:
                                                                                 {
                                                                                     scale:
@@ -677,11 +814,12 @@ const ManageClubs = () => {
                                                                     <Tooltip
                                                                         content="Sửa"
                                                                         animate={{
-                                                                            mount: {
-                                                                                scale:
-                                                                                    1,
-                                                                                y: 0,
-                                                                            },
+                                                                            mount:
+                                                                                {
+                                                                                    scale:
+                                                                                        1,
+                                                                                    y: 0,
+                                                                                },
                                                                             unmount:
                                                                                 {
                                                                                     scale:
@@ -710,11 +848,12 @@ const ManageClubs = () => {
                                                                     <Tooltip
                                                                         content="Xoá"
                                                                         animate={{
-                                                                            mount: {
-                                                                                scale:
-                                                                                    1,
-                                                                                y: 0,
-                                                                            },
+                                                                            mount:
+                                                                                {
+                                                                                    scale:
+                                                                                        1,
+                                                                                    y: 0,
+                                                                                },
                                                                             unmount:
                                                                                 {
                                                                                     scale:
@@ -744,7 +883,7 @@ const ManageClubs = () => {
                                                             </td>
                                                         </tr>
                                                     );
-                                                }
+                                                },
                                             )}
                                         </tbody>
                                     </table>
@@ -754,78 +893,146 @@ const ManageClubs = () => {
                                         <Button
                                             variant="text"
                                             className="flex items-center gap-2"
-                                            onClick={() => setCurrentPage(prev => prev - 1)}
+                                            onClick={() =>
+                                                setCurrentPage((prev) =>
+                                                    prev - 1
+                                                )}
                                             disabled={currentPage === 1}
                                         >
-                                            <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                                            <ChevronLeftIcon
+                                                strokeWidth={2}
+                                                className="h-4 w-4"
+                                            />{" "}
+                                            Trước
                                         </Button>
 
                                         <div className="flex items-center gap-2">
-                                            {totalPages <= 5 ? (
-                                                [...Array(totalPages)].map((_, index) => (
-                                                    <Button
-                                                        key={index + 1}
-                                                        variant={currentPage === index + 1 ? "gradient" : "text"}
-                                                        color="brown"
-                                                        onClick={() => setCurrentPage(index + 1)}
-                                                        className="w-10 h-10"
-                                                    >
-                                                        {index + 1}
-                                                    </Button>
-                                                ))
-                                            ) : (
-                                                <>
-                                                    <Button
-                                                        variant={currentPage === 1 ? "gradient" : "text"}
-                                                        color="brown"
-                                                        onClick={() => setCurrentPage(1)}
-                                                        className="w-10 h-10"
-                                                    >
-                                                        1
-                                                    </Button>
+                                            {totalPages <= 5
+                                                ? (
+                                                    [...Array(totalPages)].map((
+                                                        _,
+                                                        index,
+                                                    ) => (
+                                                        <Button
+                                                            key={index + 1}
+                                                            variant={currentPage ===
+                                                                    index + 1
+                                                                ? "gradient"
+                                                                : "text"}
+                                                            color={sidenavColor}
+                                                            onClick={() =>
+                                                                setCurrentPage(
+                                                                    index + 1,
+                                                                )}
+                                                            className="w-10 h-10"
+                                                        >
+                                                            {index + 1}
+                                                        </Button>
+                                                    ))
+                                                )
+                                                : (
+                                                    <>
+                                                        <Button
+                                                            variant={currentPage ===
+                                                                    1
+                                                                ? "gradient"
+                                                                : "text"}
+                                                            color={sidenavColor}
+                                                            onClick={() =>
+                                                                setCurrentPage(
+                                                                    1,
+                                                                )}
+                                                            className="w-10 h-10"
+                                                        >
+                                                            1
+                                                        </Button>
 
-                                                    {currentPage > 3 && <span className="mx-2">...</span>}
+                                                        {currentPage > 3 && (
+                                                            <span className="mx-2">
+                                                                ...
+                                                            </span>
+                                                        )}
 
-                                                    {[...Array(3)].map((_, index) => {
-                                                        const pageNumber = Math.min(
-                                                            Math.max(currentPage - 1 + index, 2),
-                                                            totalPages - 1
-                                                        );
-                                                        if (pageNumber <= 1 || pageNumber >= totalPages) return null;
-                                                        return (
-                                                            <Button
-                                                                key={pageNumber}
-                                                                variant={currentPage === pageNumber ? "gradient" : "text"}
-                                                                color="brown"
-                                                                onClick={() => setCurrentPage(pageNumber)}
-                                                                className="w-10 h-10"
-                                                            >
-                                                                {pageNumber}
-                                                            </Button>
-                                                        );
-                                                    })}
+                                                        {[...Array(3)].map(
+                                                            (_, index) => {
+                                                                const pageNumber =
+                                                                    Math.min(
+                                                                        Math.max(
+                                                                            currentPage -
+                                                                                1 +
+                                                                                index,
+                                                                            2,
+                                                                        ),
+                                                                        totalPages -
+                                                                            1,
+                                                                    );
+                                                                if (
+                                                                    pageNumber <=
+                                                                        1 ||
+                                                                    pageNumber >=
+                                                                        totalPages
+                                                                ) return null;
+                                                                return (
+                                                                    <Button
+                                                                        key={pageNumber}
+                                                                        variant={currentPage ===
+                                                                                pageNumber
+                                                                            ? "gradient"
+                                                                            : "text"}
+                                                                        color={sidenavColor}
+                                                                        onClick={() =>
+                                                                            setCurrentPage(
+                                                                                pageNumber,
+                                                                            )}
+                                                                        className="w-10 h-10"
+                                                                    >
+                                                                        {pageNumber}
+                                                                    </Button>
+                                                                );
+                                                            },
+                                                        )}
 
-                                                    {currentPage < totalPages - 2 && <span className="mx-2">...</span>}
+                                                        {currentPage <
+                                                                totalPages -
+                                                                    2 && (
+                                                            <span className="mx-2">
+                                                                ...
+                                                            </span>
+                                                        )}
 
-                                                    <Button
-                                                        variant={currentPage === totalPages ? "gradient" : "text"}
-                                                        color="brown"
-                                                        onClick={() => setCurrentPage(totalPages)}
-                                                        className="w-10 h-10"
-                                                    >
-                                                        {totalPages}
-                                                    </Button>
-                                                </>
-                                            )}
+                                                        <Button
+                                                            variant={currentPage ===
+                                                                    totalPages
+                                                                ? "gradient"
+                                                                : "text"}
+                                                            color={sidenavColor}
+                                                            onClick={() =>
+                                                                setCurrentPage(
+                                                                    totalPages,
+                                                                )}
+                                                            className="w-10 h-10"
+                                                        >
+                                                            {totalPages}
+                                                        </Button>
+                                                    </>
+                                                )}
                                         </div>
 
                                         <Button
                                             variant="text"
                                             className="flex items-center gap-2"
-                                            onClick={() => setCurrentPage(prev => prev + 1)}
-                                            disabled={currentPage === totalPages}
+                                            onClick={() =>
+                                                setCurrentPage((prev) =>
+                                                    prev + 1
+                                                )}
+                                            disabled={currentPage ===
+                                                totalPages}
                                         >
-                                            Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                                            Sau{" "}
+                                            <ChevronRightIcon
+                                                strokeWidth={2}
+                                                className="h-4 w-4"
+                                            />
                                         </Button>
                                     </div>
                                 </>
@@ -883,21 +1090,31 @@ const ManageClubs = () => {
                     <div className="relative" ref={dropdownRef}>
                         <Input
                             label="Trưởng ban CLB"
-                            value={studentAccounts.find(s => s.userId === newClub.truongBanCLB)?.name || newClub.truongBanCLB}
+                            value={studentAccounts.find((s) =>
+                                s.userId === newClub.truongBanCLB
+                            )?.name || newClub.truongBanCLB}
                             onFocus={() => setShowStudentDropdown(true)}
                             onChange={(e) => {
-                                setNewClub({ ...newClub, truongBanCLB: e.target.value });
+                                setNewClub({
+                                    ...newClub,
+                                    truongBanCLB: e.target.value,
+                                });
                                 setStudentSearch(e.target.value);
                             }}
                         />
                         {showStudentDropdown && (
                             <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                {getFilteredStudents(studentSearch).map((student) => (
+                                {getFilteredStudents(studentSearch).map((
+                                    student,
+                                ) => (
                                     <div
                                         key={student.userId}
                                         className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                                         onClick={() => {
-                                            setNewClub({ ...newClub, truongBanCLB: student.userId });
+                                            setNewClub({
+                                                ...newClub,
+                                                truongBanCLB: student.userId,
+                                            });
                                             setShowStudentDropdown(false);
                                             setStudentSearch("");
                                         }}
@@ -907,7 +1124,8 @@ const ManageClubs = () => {
                                         </Typography>
                                     </div>
                                 ))}
-                                {getFilteredStudents(studentSearch).length === 0 && (
+                                {getFilteredStudents(studentSearch).length ===
+                                        0 && (
                                     <div className="px-4 py-2 text-gray-500">
                                         Không tìm thấy kết quả
                                     </div>
@@ -918,7 +1136,8 @@ const ManageClubs = () => {
                     <Select
                         label="Tình trạng"
                         value={newClub.tinhTrang}
-                        onChange={(value) => setNewClub({ ...newClub, tinhTrang: value })}
+                        onChange={(value) =>
+                            setNewClub({ ...newClub, tinhTrang: value })}
                     >
                         <Option value="Còn hoạt động">Còn hoạt động</Option>
                         <Option value="Ngừng hoạt động">Ngừng hoạt động</Option>
@@ -943,7 +1162,7 @@ const ManageClubs = () => {
                             <Button
                                 variant="gradient"
                                 className="flex items-center gap-3 w-[10.6rem] h-[3rem]"
-                                color="brown"
+                                color={sidenavColor}
                             >
                                 <CloudArrowUpIcon className="w-5 h-5 stroke-2" />
                                 Tải logo lên
@@ -957,7 +1176,9 @@ const ManageClubs = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 {editingClubId && currentLogo && (
                                     <div className="flex flex-col gap-2">
-                                        <p className="font-semibold">Ảnh hiện tại:</p>
+                                        <p className="font-semibold">
+                                            Ảnh hiện tại:
+                                        </p>
                                         <div className="w-32 h-32 relative">
                                             <img
                                                 src={currentLogo}
@@ -969,7 +1190,9 @@ const ManageClubs = () => {
                                 )}
                                 {previewLogo && (
                                     <div className="flex flex-col gap-2">
-                                        <p className="font-semibold">Ảnh mới:</p>
+                                        <p className="font-semibold">
+                                            Ảnh mới:
+                                        </p>
                                         <div className="w-32 h-32 relative">
                                             <img
                                                 src={previewLogo}
@@ -1021,12 +1244,15 @@ const ManageClubs = () => {
                             <div className="grid md:grid-cols-3 gap-6">
                                 <div className="flex justify-center items-center">
                                     <img
-                                        src={detailClub.logo ? `${API_URL}/${detailClub.logo}` : "/img/default-club-logo.png"}
+                                        src={detailClub.logo
+                                            ? `${API_URL}/${detailClub.logo}`
+                                            : "/img/default-club-logo.png"}
                                         alt={detailClub.ten}
                                         className="w-48 h-48 object-cover rounded-lg shadow-lg"
                                         onError={(e) => {
                                             e.target.onerror = null;
-                                            e.target.src = "/img/default-club-logo.png";
+                                            e.target.src =
+                                                "/img/default-club-logo.png";
                                         }}
                                     />
                                 </div>
@@ -1034,43 +1260,74 @@ const ManageClubs = () => {
                                     <table className="w-full border-collapse">
                                         <thead>
                                             <tr>
-                                                <th colSpan="2" className="bg-brown-50 p-3 text-left text-lg font-bold text-brown-900">
+                                                <th
+                                                    colSpan="2"
+                                                    className="bg-brown-50 p-3 text-left text-lg font-bold text-brown-900"
+                                                >
                                                     Thông tin cơ bản
                                                 </th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <th className="border p-3 bg-gray-50 w-1/3">Tên CLB</th>
-                                                <td className="border p-3">{detailClub.ten}</td>
-                                            </tr>
-                                            <tr>
-                                                <th className="border p-3 bg-gray-50">Lĩnh vực hoạt động</th>
-                                                <td className="border p-3">{detailClub.linhVucHoatDong}</td>
-                                            </tr>
-                                            <tr>
-                                                <th className="border p-3 bg-gray-50">Ngày thành lập</th>
+                                                <th className="border p-3 bg-gray-50 w-1/3">
+                                                    Tên CLB
+                                                </th>
                                                 <td className="border p-3">
-                                                    {formatDate(detailClub.ngayThanhLap)}
+                                                    {detailClub.ten}
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <th className="border p-3 bg-gray-50">Giáo viên phụ trách</th>
-                                                <td className="border p-3">{detailClub.giaoVienPhuTrach}</td>
-                                            </tr>
-                                            <tr>
-                                                <th className="border p-3 bg-gray-50">Trưởng ban CLB</th>
-                                                <td className="border p-3">{detailClub.truongBanCLB}</td>
-                                            </tr>
-                                            <tr>
-                                                <th className="border p-3 bg-gray-50">Tình trạng</th>
+                                                <th className="border p-3 bg-gray-50">
+                                                    Lĩnh vực hoạt động
+                                                </th>
                                                 <td className="border p-3">
-                                                    <span className={`font-semibold ${
-                                                        detailClub.tinhTrang === "Còn hoạt động" 
-                                                            ? "text-green-600" 
-                                                            : "text-red-600"
-                                                    }`}>
-                                                        {detailClub.tinhTrang || "Còn hoạt động"}
+                                                    {detailClub.linhVucHoatDong}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th className="border p-3 bg-gray-50">
+                                                    Ngày thành lập
+                                                </th>
+                                                <td className="border p-3">
+                                                    {formatDate(
+                                                        detailClub.ngayThanhLap,
+                                                    )}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th className="border p-3 bg-gray-50">
+                                                    Giáo viên phụ trách
+                                                </th>
+                                                <td className="border p-3">
+                                                    {detailClub
+                                                        .giaoVienPhuTrach}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th className="border p-3 bg-gray-50">
+                                                    Trưởng ban CLB
+                                                </th>
+                                                <td className="border p-3">
+                                                    {detailClub.truongBanCLB}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th className="border p-3 bg-gray-50">
+                                                    Tình trạng
+                                                </th>
+                                                <td className="border p-3">
+                                                    <span
+                                                        className={`font-semibold ${
+                                                            detailClub
+                                                                    .tinhTrang ===
+                                                                    "Còn hoạt động"
+                                                                ? "text-green-600"
+                                                                : "text-red-600"
+                                                        }`}
+                                                    >
+                                                        {detailClub.tinhTrang ||
+                                                            "Còn hoạt động"}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -1091,7 +1348,8 @@ const ManageClubs = () => {
                                 <tbody>
                                     <tr>
                                         <td className="border p-3 whitespace-pre-line">
-                                            {detailClub.mieuTa || "Chưa có miêu tả"}
+                                            {detailClub.mieuTa ||
+                                                "Chưa có miêu tả"}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1109,7 +1367,8 @@ const ManageClubs = () => {
                                 <tbody>
                                     <tr>
                                         <td className="border p-3 whitespace-pre-line">
-                                            {detailClub.quyDinh || "Chưa có quy định"}
+                                            {detailClub.quyDinh ||
+                                                "Chưa có quy định"}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1120,7 +1379,7 @@ const ManageClubs = () => {
                 <DialogFooter>
                     <Button
                         variant="gradient"
-                        color="brown"
+                        color={sidenavColor}
                         onClick={() => setIsDetailDialogOpen(false)}
                     >
                         Đóng

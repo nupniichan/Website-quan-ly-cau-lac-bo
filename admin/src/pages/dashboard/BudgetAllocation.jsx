@@ -7,16 +7,19 @@ import {
     Dialog,
     DialogBody,
     DialogFooter,
-    DialogHeader, Input,
+    DialogHeader,
+    Input,
     Option,
     Select, Tooltip,
-    Typography
+    Typography, Spinner
 } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { message, notification } from "antd";
+import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
 const API_URL = "http://localhost:5500/api";
 
@@ -45,6 +48,12 @@ const BudgetAllocation = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [searchTerm, setSearchTerm] = useState("");
+    const [clubSearchTerm, setClubSearchTerm] = useState("");
+    const [showClubSuggestions, setShowClubSuggestions] = useState(false);
+
+    // Lấy controller từ context & màu hiện tại của sidenav
+    const [controller] = useMaterialTailwindController();
+    const { sidenavColor } = controller;
 
     useEffect(() => {
         fetchAllocations();
@@ -74,8 +83,35 @@ const BudgetAllocation = () => {
         }
     };
 
-    // Thêm hàm validate chung
+    // Thêm hàm lọc clubs dựa trên từ khóa tìm kiếm
+    const filteredClubs = useMemo(() => {
+        if (!clubSearchTerm) return [];
+        return clubs.filter(club => 
+            club.ten.toLowerCase().includes(clubSearchTerm.toLowerCase())
+        );
+    }, [clubs, clubSearchTerm]);
+
+    // Thêm hàm xử lý chọn club
+    const handleSelectClub = (club) => {
+        setNewAllocation({
+            ...newAllocation,
+            club: club._id
+        });
+        setClubSearchTerm(club.ten);
+        setShowClubSuggestions(false);
+    };
+
+    // Thêm hàm validate club trước khi submit
+    const validateClub = () => {
+        const selectedClub = clubs.find(c => c._id === newAllocation.club);
+        if (!selectedClub) {
+            throw new Error("Câu lạc bộ không tồn tại trong hệ thống");
+        }
+    };
+
+    // Cập nhật hàm validateAllocationData
     const validateAllocationData = (allocationData) => {
+        validateClub(); // Thêm validation cho club
         // Kiểm tra các trường bắt buộc
         const requiredFields = [
             { key: "club", label: "Câu lạc bộ" },
@@ -86,12 +122,14 @@ const BudgetAllocation = () => {
 
         // Kiểm tra trường rỗng
         const emptyFields = requiredFields.filter(
-            field => !allocationData[field.key]
+            (field) => !allocationData[field.key],
         );
-        
+
         if (emptyFields.length > 0) {
             throw new Error(
-                `Vui lòng điền đầy đủ thông tin: ${emptyFields.map(f => f.label).join(", ")}`
+                `Vui lòng điền đầy đủ thông tin: ${
+                    emptyFields.map((f) => f.label).join(", ")
+                }`,
             );
         }
 
@@ -101,13 +139,15 @@ const BudgetAllocation = () => {
             throw new Error("Số tiền phân bổ không được âm hoặc bằng 0");
         }
         if (amount > 50000000) {
-            throw new Error("Số tiền phân bổ không được vượt quá 50 triệu đồng");
+            throw new Error(
+                "Số tiền phân bổ không được vượt quá 50 triệu đồng",
+            );
         }
 
         // Kiểm tra ngày phân bổ phải là ngày hiện tại
         const allocationDate = new Date(allocationData.allocationDate);
         const today = new Date();
-        
+
         // Reset time để so sánh chỉ theo ngày
         allocationDate.setHours(0, 0, 0, 0);
         today.setHours(0, 0, 0, 0);
@@ -128,30 +168,55 @@ const BudgetAllocation = () => {
                 allocationDate: newAllocation.allocationDate,
             };
 
-            const response = await axios.post(
+            // Thêm loading state nếu cần
+            setIsLoading(true);
+
+            // Gọi API một lần duy nhất
+            await axios.post(
                 `${API_URL}/add-budget-allocation`,
-                formattedData
+                formattedData,
             );
 
+            // Đóng dialog và reset form trước
             setIsDialogOpen(false);
-            fetchAllocations();
+            setNewAllocation({
+                club: "",
+                amount: 0,
+                purpose: "",
+                allocationDate: new Date().toISOString().split('T')[0],
+            });
+            setClubSearchTerm("");
+
+            // Gọi API cập nhật dữ liệu một lần
+            await fetchAllocations();
+
         } catch (error) {
-            // Xử lý lỗi validation
             if (error.message) {
-                alert(error.message);
+                // alert(error.message);
+                message.error({ content: error.message });
                 return;
             }
-            // Xử lý lỗi API
             console.error("Error adding budget allocation:", error);
             if (error.response?.data) {
-                alert(
-                    `Lỗi khi thêm phân bổ ngân sách: ${
-                        error.response.data.message || "Không xác định"
-                    }`
-                );
+                // alert(
+                //     `Lỗi khi thêm phân bổ ngân sách: ${
+                //         error.response.data.message || "Không xác định"
+                //     }`
+                // );
+                notification.error({
+                    message: "Lỗi khi thêm phân bổ ngân sách",
+                    description: error.response.data.message ||
+                        "Không xác định",
+                });
             } else {
-                alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+                // alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+                message.error({
+                    content:
+                        "Không thể kết nối đến server. Vui lòng thử lại sau.",
+                });
             }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -159,29 +224,50 @@ const BudgetAllocation = () => {
         try {
             validateAllocationData(newAllocation);
 
+            // Đảm bảo dữ liệu đúng định dạng
+            const updateData = {
+                club: newAllocation.club, // Gửi MongoDB ObjectId
+                amount: Number(newAllocation.amount),
+                purpose: newAllocation.purpose,
+                allocationDate: newAllocation.allocationDate
+            };
+
+            console.log('Update data:', updateData); // Log để kiểm tra
+
             const response = await axios.put(
                 `${API_URL}/update-budget-allocation/${editingAllocationId}`,
-                newAllocation
+                updateData
             );
+
             setIsDialogOpen(false);
             setEditingAllocationId(null);
-            fetchAllocations();
+            await fetchAllocations();
         } catch (error) {
-            // Xử lý lỗi validation
+            console.error("Error details:", error.response?.data);
             if (error.message) {
-                alert(error.message);
+                // alert(error.message);
+                message.error({ content: error.message });
                 return;
             }
             // Xử lý lỗi API
             console.error("Error updating budget allocation:", error);
             if (error.response?.data) {
-                alert(
-                    `Lỗi khi cập nhật phân bổ ngân sách: ${
-                        error.response.data.message || "Không xác định"
-                    }`
-                );
+                // alert(
+                //     `Lỗi khi cập nhật phân bổ ngân sách: ${
+                //         error.response.data.message || "Không xác định"
+                //     }`
+                // );
+                notification.error({
+                    message: "Lỗi khi cập nhật phân bổ ngân sách",
+                    description: error.response.data.message ||
+                        "Không xác định",
+                });
             } else {
-                alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+                // alert("Không thể kết nối đến server. Vui lòng thử lại sau.");
+                message.error({
+                    content:
+                        "Không thể kết nối đến server. Vui lòng thử lại sau.",
+                });
             }
         }
     };
@@ -194,14 +280,22 @@ const BudgetAllocation = () => {
                 const response = await axios.delete(
                     `${API_URL}/delete-budget-allocation/${id}`,
                 );
-                fetchAllocations();
+                // Gọi lại API để cập nhật dữ liệu
+                await fetchAllocations();
+                // Thông báo thành công
+                alert("Xóa phân bổ ngân sách thành công!");
             } catch (error) {
                 console.error("Error deleting budget allocation:", error);
-                alert(
-                    `Lỗi khi xóa phân bổ ngân sách: ${
-                        error.response?.data?.message || "Không xác định"
-                    }`,
-                );
+                // alert(
+                //     `Lỗi khi xóa phân bổ ngân sách: ${
+                //         error.response?.data?.message || "Không xác định"
+                //     }`,
+                // );
+                notification.error({
+                    message: "Lỗi khi xóa phân bổ ngân sách",
+                    description: error.response?.data?.message ||
+                        "Không xác định",
+                });
             }
         }
     };
@@ -214,20 +308,27 @@ const BudgetAllocation = () => {
             purpose: "",
             allocationDate: today,
         });
+        setClubSearchTerm("");
         setEditingAllocationId(null);
         setIsDialogOpen(true);
     };
 
     const openEditDialog = (id) => {
         const allocationToEdit = allocations.find(
-            (allocation) => allocation._id === id,
+            (allocation) => allocation._id === id
         );
         if (allocationToEdit) {
+            console.log('Editing allocation:', allocationToEdit); // Log để kiểm tra
             setNewAllocation({
-                ...allocationToEdit,
-                allocationDate: allocationToEdit.allocationDate.split("T")[0],
+                club: allocationToEdit.club._id, // Sử dụng MongoDB ObjectId
+                amount: Number(allocationToEdit.amount),
+                purpose: allocationToEdit.purpose,
+                allocationDate: new Date(allocationToEdit.allocationDate)
+                    .toISOString()
+                    .split('T')[0]
             });
             setEditingAllocationId(id);
+            setClubSearchTerm(allocationToEdit.club.ten); // Thêm dòng này
             setIsDialogOpen(true);
         }
     };
@@ -240,30 +341,42 @@ const BudgetAllocation = () => {
     const filteredAllocations = useMemo(() => {
         return allocations
             .filter((allocation) => {
-                const matchClub = !filters.club || allocation.club._id === filters.club;
+                const matchClub = !filters.club ||
+                    allocation.club._id === filters.club;
                 const matchDate = (!filters.startDate ||
-                    new Date(allocation.allocationDate) >= new Date(filters.startDate)) &&
+                    new Date(allocation.allocationDate) >=
+                        new Date(filters.startDate)) &&
                     (!filters.endDate ||
-                        new Date(allocation.allocationDate) <= new Date(filters.endDate));
+                        new Date(allocation.allocationDate) <=
+                            new Date(filters.endDate));
                 const matchAmount = (!filters.minAmount ||
                     allocation.amount >= Number(filters.minAmount)) &&
                     (!filters.maxAmount ||
                         allocation.amount <= Number(filters.maxAmount));
-                
+
                 const matchSearch = !searchTerm || (
-                    allocation.club?.ten.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    allocation.purpose.toLowerCase().includes(searchTerm.toLowerCase())
+                    allocation.club?.ten.toLowerCase().includes(
+                        searchTerm.toLowerCase(),
+                    ) ||
+                    allocation.purpose.toLowerCase().includes(
+                        searchTerm.toLowerCase(),
+                    )
                 );
 
                 return matchClub && matchDate && matchAmount && matchSearch;
             })
-            .sort((a, b) => new Date(b.allocationDate) - new Date(a.allocationDate));
+            .sort((a, b) =>
+                new Date(b.allocationDate) - new Date(a.allocationDate)
+            );
     }, [allocations, filters, searchTerm]);
 
     // Tính toán allocations cho trang hiện tại
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentAllocations = filteredAllocations.slice(indexOfFirstItem, indexOfLastItem);
+    const currentAllocations = filteredAllocations.slice(
+        indexOfFirstItem,
+        indexOfLastItem,
+    );
     const totalPages = Math.ceil(filteredAllocations.length / itemsPerPage);
 
     // Reset trang khi thay đổi bộ lọc
@@ -274,10 +387,10 @@ const BudgetAllocation = () => {
     // Thêm hàm format date kiểu VN
     const formatDateToVN = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
+        return date.toLocaleDateString("vi-VN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
         });
     };
 
@@ -286,7 +399,7 @@ const BudgetAllocation = () => {
             <Card>
                 <CardHeader
                     variant="gradient"
-                    color="purple"
+                    color={sidenavColor}
                     className="p-6 mb-8"
                 >
                     <Typography variant="h6" color="white">
@@ -305,7 +418,7 @@ const BudgetAllocation = () => {
                         >
                             <Button
                                 className="flex items-center gap-3"
-                                color="purple"
+                                color={sidenavColor}
                                 size="sm"
                                 onClick={openAddDialog}
                             >
@@ -321,7 +434,9 @@ const BudgetAllocation = () => {
                         <div className="w-full">
                             <Input
                                 label="Tìm kiếm theo tên câu lạc bộ hoặc mục đích"
-                                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                                icon={
+                                    <MagnifyingGlassIcon className="h-5 w-5" />
+                                }
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -399,249 +514,303 @@ const BudgetAllocation = () => {
                         </div>
                     </div>
 
-                    {/* Bảng hiển thị */}
-                    <table className="w-full min-w-[640px] table-auto 2xl:mt-0 xl:mt-0 lg:mt-0 md:mt-0 sm:mt-0">
-                        <thead>
-                            <tr>
-                                {[
-                                    "STT",
-                                    "Câu lạc bộ",
-                                    "Số tiền",
-                                    "Mục đích",
-                                    "Ngày phân bổ",
-                                    "Thao tác",
-                                ].map((el) => (
-                                    <th
-                                        key={el}
-                                        className="px-5 py-3 text-left border-b border-blue-gray-50"
-                                    >
-                                        <Typography
-                                            variant="small"
-                                            className="text-[11px] font-bold uppercase text-blue-gray-400"
+                    {isLoading ? (
+                        <div className="flex items-center justify-center h-64">
+                            <Spinner className="w-12 h-12" color={sidenavColor} />
+                        </div>
+                    ) : filteredAllocations.length === 0 ? (
+                        <div className="flex items-center justify-center h-64">
+                            <Typography variant="h6" color="blue-gray" className="font-normal">
+                                Hiện tại chưa có câu lạc bộ nào được phân bổ ngân sách
+                            </Typography>
+                        </div>
+                    ) : (
+                        <table className="w-full min-w-[640px] table-auto 2xl:mt-0 xl:mt-0 lg:mt-0 md:mt-0 sm:mt-0">
+                            <thead>
+                                <tr>
+                                    {[
+                                        "STT",
+                                        "Câu lạc bộ",
+                                        "Số tiền",
+                                        "Mục đích",
+                                        "Ngày phân bổ",
+                                        "Thao tác",
+                                    ].map((el) => (
+                                        <th
+                                            key={el}
+                                            className="px-5 py-3 text-left border-b border-blue-gray-50"
                                         >
-                                            {el}
-                                        </Typography>
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {currentAllocations.map(
-                                ({ _id, club, amount, purpose, allocationDate }, key) => {
-                                    const className = `py-3 px-5 ${
-                                        key === currentAllocations.length - 1
-                                            ? ""
-                                            : "border-b border-blue-gray-50"
-                                    }`;
+                                            <Typography
+                                                variant="small"
+                                                className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                            >
+                                                {el}
+                                            </Typography>
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {currentAllocations.map(
+                                    (
+                                    {
+                                        _id,
+                                        club,
+                                        amount,
+                                        purpose,
+                                        allocationDate,
+                                    },
+                                    key,
+                                ) => {
+                                        const className = `py-3 px-5 ${
+                                            key === currentAllocations.length - 1
+                                                ? ""
+                                                : "border-b border-blue-gray-50"
+                                        }`;
 
-                                    return (
-                                        <tr key={_id}>
-                                            <td className={className}>
-                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                    {indexOfFirstItem + key + 1}
-                                                </Typography>
-                                            </td>
-                                            <td className={className}>
-                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                    {club?.ten || "N/A"}
-                                                </Typography>
-                                            </td>
-                                            <td className={className}>
-                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                    {amount
-                                                        .toLocaleString()} VND
-                                                </Typography>
-                                            </td>
-                                            <td className={className}>
-                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                    {purpose}
-                                                </Typography>
-                                            </td>
-                                            <td className={className}>
-                                                <Typography className="text-xs font-semibold text-blue-gray-600">
-                                                    {formatDateToVN(allocationDate)}
-                                                </Typography>
-                                            </td>
-                                            <td className={className}>
-                                                <div className="flex items-center gap-2">
-                                                    <Tooltip
-                                                        content="Xem"
-                                                        animate={{
-                                                            mount: {
-                                                                scale: 1,
-                                                                y: 0,
-                                                            },
-                                                            unmount: {
-                                                                scale: 0,
-                                                                y: 25,
-                                                            },
-                                                        }}
-                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                    >
-                                                        <Button
-                                                            size="sm"
-                                                            color="blue"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() =>
-                                                                openDetailDialog(
-                                                                    {
+                                        return (
+                                            <tr key={_id}>
+                                                <td className={className}>
+                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                        {indexOfFirstItem + key + 1}
+                                                    </Typography>
+                                                </td>
+                                                <td className={className}>
+                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                        {club?.ten || "N/A"}
+                                                    </Typography>
+                                                </td>
+                                                <td className={className}>
+                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                        {amount
+                                                            .toLocaleString()} VND
+                                                    </Typography>
+                                                </td>
+                                                <td className={className}>
+                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                        {purpose}
+                                                    </Typography>
+                                                </td>
+                                                <td className={className}>
+                                                    <Typography className="text-xs font-semibold text-blue-gray-600">
+                                                        {formatDateToVN(allocationDate)}
+                                                    </Typography>
+                                                </td>
+                                                <td className={className}>
+                                                    <div className="flex items-center gap-2">
+                                                        <Tooltip
+                                                            content="Xem"
+                                                            animate={{
+                                                                mount: {
+                                                                    scale: 1,
+                                                                    y: 0,
+                                                                },
+                                                                unmount: {
+                                                                    scale: 0,
+                                                                    y: 25,
+                                                                },
+                                                            }}
+                                                            className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                        >
+                                                            <Button
+                                                                size="sm"
+                                                                color="blue"
+                                                                className="flex items-center gap-2"
+                                                                onClick={() =>
+                                                                    openDetailDialog(
+                                                                        {
+                                                                            _id,
+                                                                            club,
+                                                                            amount,
+                                                                            purpose,
+                                                                            allocationDate,
+                                                                        },
+                                                                    )}
+                                                            >
+                                                                <EyeIcon className="w-4 h-4" />
+                                                            </Button>
+                                                        </Tooltip>
+                                                        <Tooltip
+                                                            content="Sửa"
+                                                            animate={{
+                                                                mount: {
+                                                                    scale: 1,
+                                                                    y: 0,
+                                                                },
+                                                                unmount: {
+                                                                    scale: 0,
+                                                                    y: 25,
+                                                                },
+                                                            }}
+                                                            className="bg-gradient-to-r from-black to-transparent opacity-70"
+                                                        >
+                                                            <Button
+                                                                size="sm"
+                                                                color="green"
+                                                                className="flex items-center gap-2"
+                                                                onClick={() =>
+                                                                    openEditDialog(
                                                                         _id,
-                                                                        club,
-                                                                        amount,
-                                                                        purpose,
-                                                                        allocationDate,
-                                                                    },
-                                                                )}
+                                                                    )}
+                                                            >
+                                                                <PencilIcon
+                                                                    strokeWidth={2}
+                                                                    className="w-4 h-4"
+                                                                />
+                                                                {" "}
+                                                            </Button>
+                                                        </Tooltip>
+                                                        <Tooltip
+                                                            content="Xóa"
+                                                            animate={{
+                                                                mount: {
+                                                                    scale: 1,
+                                                                    y: 0,
+                                                                },
+                                                                unmount: {
+                                                                    scale: 0,
+                                                                    y: 25,
+                                                                },
+                                                            }}
+                                                            className="bg-gradient-to-r from-black to-transparent opacity-70"
                                                         >
-                                                            <EyeIcon className="w-4 h-4" />
-                                                        </Button>
-                                                    </Tooltip>
-                                                    <Tooltip
-                                                        content="Sửa"
-                                                        animate={{
-                                                            mount: {
-                                                                scale: 1,
-                                                                y: 0,
-                                                            },
-                                                            unmount: {
-                                                                scale: 0,
-                                                                y: 25,
-                                                            },
-                                                        }}
-                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                    >
-                                                        <Button
-                                                            size="sm"
-                                                            color="green"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() =>
-                                                                openEditDialog(
-                                                                    _id,
-                                                                )}
-                                                        >
-                                                            <PencilIcon
-                                                                strokeWidth={2}
-                                                                className="w-4 h-4"
-                                                            />
-                                                            {" "}
-                                                        </Button>
-                                                    </Tooltip>
-                                                    <Tooltip
-                                                        content="Xóa"
-                                                        animate={{
-                                                            mount: {
-                                                                scale: 1,
-                                                                y: 0,
-                                                            },
-                                                            unmount: {
-                                                                scale: 0,
-                                                                y: 25,
-                                                            },
-                                                        }}
-                                                        className="bg-gradient-to-r from-black to-transparent opacity-70"
-                                                    >
-                                                        <Button
-                                                            size="sm"
-                                                            color="red"
-                                                            className="flex items-center gap-2"
-                                                            onClick={() =>
-                                                                handleDeleteAllocation(
-                                                                    _id,
-                                                                )}
-                                                        >
-                                                            <TrashIcon
-                                                                strokeWidth={2}
-                                                                className="w-4 h-4"
-                                                            />
-                                                            {" "}
-                                                        </Button>
-                                                    </Tooltip>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                },
-                            )}
-                        </tbody>
-                    </table>
+                                                            <Button
+                                                                size="sm"
+                                                                color="red"
+                                                                className="flex items-center gap-2"
+                                                                onClick={() =>
+                                                                    handleDeleteAllocation(
+                                                                        _id,
+                                                                    )}
+                                                            >
+                                                                <TrashIcon
+                                                                    strokeWidth={2}
+                                                                    className="w-4 h-4"
+                                                                />
+                                                                {" "}
+                                                            </Button>
+                                                        </Tooltip>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    },
+                                )}
+                            </tbody>
+                        </table>
+                    )}
 
                     {/* Thêm phân trang */}
                     <div className="flex items-center gap-4 justify-center mt-6 mb-4">
                         <Button
                             variant="text"
                             className="flex items-center gap-2"
-                            onClick={() => setCurrentPage(prev => prev - 1)}
+                            onClick={() => setCurrentPage((prev) => prev - 1)}
                             disabled={currentPage === 1}
                         >
-                            <ChevronLeftIcon strokeWidth={2} className="h-4 w-4" /> Trước
+                            <ChevronLeftIcon
+                                strokeWidth={2}
+                                className="h-4 w-4"
+                            />{" "}
+                            Trước
                         </Button>
 
                         <div className="flex items-center gap-2">
-                            {totalPages <= 5 ? (
-                                [...Array(totalPages)].map((_, index) => (
-                                    <Button
-                                        key={index + 1}
-                                        variant={currentPage === index + 1 ? "gradient" : "text"}
-                                        color="purple"
-                                        onClick={() => setCurrentPage(index + 1)}
-                                        className="w-10 h-10"
-                                    >
-                                        {index + 1}
-                                    </Button>
-                                ))
-                            ) : (
-                                <>
-                                    <Button
-                                        variant={currentPage === 1 ? "gradient" : "text"}
-                                        color="purple"
-                                        onClick={() => setCurrentPage(1)}
-                                        className="w-10 h-10"
-                                    >
-                                        1
-                                    </Button>
+                            {totalPages <= 5
+                                ? (
+                                    [...Array(totalPages)].map((_, index) => (
+                                        <Button
+                                            key={index + 1}
+                                            variant={currentPage === index + 1
+                                                ? "gradient"
+                                                : "text"}
+                                            color={sidenavColor}
+                                            onClick={() =>
+                                                setCurrentPage(index + 1)}
+                                            className="w-10 h-10"
+                                        >
+                                            {index + 1}
+                                        </Button>
+                                    ))
+                                )
+                                : (
+                                    <>
+                                        <Button
+                                            variant={currentPage === 1
+                                                ? "gradient"
+                                                : "text"}
+                                            color={sidenavColor}
+                                            onClick={() => setCurrentPage(1)}
+                                            className="w-10 h-10"
+                                        >
+                                            1
+                                        </Button>
 
-                                    {currentPage > 3 && <span className="mx-2">...</span>}
+                                        {currentPage > 3 && (
+                                            <span className="mx-2">...</span>
+                                        )}
 
-                                    {[...Array(3)].map((_, index) => {
-                                        const pageNumber = Math.min(
-                                            Math.max(currentPage - 1 + index, 2),
-                                            totalPages - 1
-                                        );
-                                        if (pageNumber <= 1 || pageNumber >= totalPages) return null;
-                                        return (
-                                            <Button
-                                                key={pageNumber}
-                                                variant={currentPage === pageNumber ? "gradient" : "text"}
-                                                color="purple"
-                                                onClick={() => setCurrentPage(pageNumber)}
-                                                className="w-10 h-10"
-                                            >
-                                                {pageNumber}
-                                            </Button>
-                                        );
-                                    })}
+                                        {[...Array(3)].map((_, index) => {
+                                            const pageNumber = Math.min(
+                                                Math.max(
+                                                    currentPage - 1 + index,
+                                                    2,
+                                                ),
+                                                totalPages - 1,
+                                            );
+                                            if (
+                                                pageNumber <= 1 ||
+                                                pageNumber >= totalPages
+                                            ) return null;
+                                            return (
+                                                <Button
+                                                    key={pageNumber}
+                                                    variant={currentPage ===
+                                                            pageNumber
+                                                        ? "gradient"
+                                                        : "text"}
+                                                    color={sidenavColor}
+                                                    onClick={() =>
+                                                        setCurrentPage(
+                                                            pageNumber,
+                                                        )}
+                                                    className="w-10 h-10"
+                                                >
+                                                    {pageNumber}
+                                                </Button>
+                                            );
+                                        })}
 
-                                    {currentPage < totalPages - 2 && <span className="mx-2">...</span>}
+                                        {currentPage < totalPages - 2 && (
+                                            <span className="mx-2">...</span>
+                                        )}
 
-                                    <Button
-                                        variant={currentPage === totalPages ? "gradient" : "text"}
-                                        color="purple"
-                                        onClick={() => setCurrentPage(totalPages)}
-                                        className="w-10 h-10"
-                                    >
-                                        {totalPages}
-                                    </Button>
-                                </>
-                            )}
+                                        <Button
+                                            variant={currentPage === totalPages
+                                                ? "gradient"
+                                                : "text"}
+                                            color={sidenavColor}
+                                            onClick={() =>
+                                                setCurrentPage(totalPages)}
+                                            className="w-10 h-10"
+                                        >
+                                            {totalPages}
+                                        </Button>
+                                    </>
+                                )}
                         </div>
 
                         <Button
                             variant="text"
                             className="flex items-center gap-2"
-                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            onClick={() => setCurrentPage((prev) => prev + 1)}
                             disabled={currentPage === totalPages}
                         >
-                            Sau <ChevronRightIcon strokeWidth={2} className="h-4 w-4" />
+                            Sau{" "}
+                            <ChevronRightIcon
+                                strokeWidth={2}
+                                className="h-4 w-4"
+                            />
                         </Button>
                     </div>
                 </CardBody>
@@ -661,30 +830,48 @@ const BudgetAllocation = () => {
                         <table className="w-full border-collapse">
                             <thead>
                                 <tr>
-                                    <th colSpan="2" className="bg-purple-50 p-3 text-left text-lg font-bold text-purple-900">
+                                    <th
+                                        colSpan="2"
+                                        className="bg-purple-50 p-3 text-left text-lg font-bold text-purple-900"
+                                    >
                                         Thông tin phân bổ
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <th className="border p-3 bg-gray-50 w-1/3">Câu lạc bộ</th>
-                                    <td className="border p-3">{detailAllocation.club?.ten || "N/A"}</td>
-                                </tr>
-                                <tr>
-                                    <th className="border p-3 bg-gray-50">Số tiền</th>
-                                    <td className="border p-3 font-semibold text-purple-600">
-                                        {detailAllocation.amount.toLocaleString()} VND
+                                    <th className="border p-3 bg-gray-50 w-1/3">
+                                        Câu lạc bộ
+                                    </th>
+                                    <td className="border p-3">
+                                        {detailAllocation.club?.ten || "N/A"}
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th className="border p-3 bg-gray-50">Mục đích</th>
-                                    <td className="border p-3">{detailAllocation.purpose}</td>
+                                    <th className="border p-3 bg-gray-50">
+                                        Số tiền
+                                    </th>
+                                    <td className="border p-3 font-semibold text-purple-600">
+                                        {detailAllocation.amount
+                                            .toLocaleString()} VND
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <th className="border p-3 bg-gray-50">Ngày phân bổ</th>
+                                    <th className="border p-3 bg-gray-50">
+                                        Mục đích
+                                    </th>
                                     <td className="border p-3">
-                                        {formatDateToVN(detailAllocation.allocationDate)}
+                                        {detailAllocation.purpose}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th className="border p-3 bg-gray-50">
+                                        Ngày phân bổ
+                                    </th>
+                                    <td className="border p-3">
+                                        {formatDateToVN(
+                                            detailAllocation.allocationDate,
+                                        )}
                                     </td>
                                 </tr>
                             </tbody>
@@ -694,7 +881,7 @@ const BudgetAllocation = () => {
                 <DialogFooter>
                     <Button
                         variant="gradient"
-                        color="purple"
+                        color={sidenavColor}
                         onClick={() => setIsDetailDialogOpen(false)}
                     >
                         Đóng
@@ -717,21 +904,36 @@ const BudgetAllocation = () => {
                     divider
                     className="grid grid-cols-2 gap-4 lg:max-h-[60vh] sm:max-h-[45vh]"
                 >
-                    <Select
-                        label="Câu lạc bộ"
-                        value={newAllocation.club}
-                        onChange={(value) => {
-                            console.log("Selected club:", value);
-                            setNewAllocation({ ...newAllocation, club: value });
-                        }}
-                        menuProps={{ className: "absolute z-[70]", id: "club-select-dropdown" }}
-                    >
-                        {clubs.map((club) => (
-                            <Option key={club._id} value={club._id}>
-                                {club.ten}
-                            </Option>
-                        ))}
-                    </Select>
+                    <div className="relative">
+                        <Input
+                            label="Câu lạc bộ"
+                            value={clubSearchTerm}
+                            onChange={(e) => {
+                                setClubSearchTerm(e.target.value);
+                                setShowClubSuggestions(true);
+                            }}
+                            onBlur={() => {
+                                // Đợi một chút để cho phép click chọn club hoạt động
+                                setTimeout(() => {
+                                    setShowClubSuggestions(false);
+                                }, 200);
+                            }}
+                            disabled={editingAllocationId !== null}
+                        />
+                        {showClubSuggestions && filteredClubs.length > 0 && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                {filteredClubs.map((club) => (
+                                    <div
+                                        key={club._id}
+                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                        onClick={() => handleSelectClub(club)}
+                                    >
+                                        {club.ten}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                     <Input
                         type="number"
                         label="Số tiền"
@@ -744,24 +946,20 @@ const BudgetAllocation = () => {
                     <Input
                         label="Mục đích"
                         value={newAllocation.purpose}
-                        onChange={(e) =>
-                            setNewAllocation({
-                                ...newAllocation,
-                                purpose: e.target.value,
-                            })}
+                        onChange={(e) => setNewAllocation({
+                            ...newAllocation,
+                            purpose: e.target.value,
+                        })}
                     />
                     <Input
                         type="date"
                         label="Ngày phân bổ"
                         value={newAllocation.allocationDate}
-                        onChange={(e) =>
-                            setNewAllocation({
-                                ...newAllocation,
-                                allocationDate: e.target.value,
-                            })}
+                        disabled={true}
+                        className="cursor-not-allowed"
                     />
                 </DialogBody>
-                
+
                 <DialogFooter>
                     <Button
                         variant="text"

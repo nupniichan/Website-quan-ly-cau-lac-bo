@@ -7,7 +7,7 @@ const NewsDetail = () => {
       title: "Học sinh hào hứng trải nghiệm sự 'thay da đổi thịt' của trường",
       image: "../public/imgs/news1.jpg",
       date: "3/10/2024",
-      description: "Chiều ngày 3/10/2024 tại Đà Nẵng, Trung tâm ngoại ngữ Đại học RMIT tại Đà Nẵng đã tổ chức lễ ra mắt chương trình Luyện thi IELTS mới,...",
+      description: "Chiều ngày 3/10/2024 tại Thành Phố Hồ Chí Minh, Trường THPT TPHCM đã tổ chức lễ ra mắt chương trình Luyện thi IELTS mới,...",
       content: `Với sự tham gia đông đảo của học sinh và phụ huynh, buổi lễ ra mắt chương trình Luyện thi IELTS mới tại Đà Nẵng đã thành công rực rỡ. Các em học sinh có cơ hội trải nghiệm các hoạt động ngoại khóa và rèn luyện kỹ năng giao tiếp bằng tiếng Anh với những tình huống thực tế, được hướng dẫn bởi các giảng viên giàu kinh nghiệm.
   
       Nguyễn Thanh Tùng, một học sinh tham dự buổi lễ, chia sẻ: "Em rất thích cách thầy cô tạo ra những tình huống thật để chúng em luyện tập. Trước đây, em chỉ học qua sách vở, nhưng giờ em có thể tự tin hơn khi nói chuyện."
@@ -119,7 +119,11 @@ const NewsDetail = () => {
   return (
     <div className="max-w-7xl mx-auto p-4">
       <h1 className="text-2xl font-bold text-[#004D86] mb-4 text-center">{news.title}</h1>
-      <img src={news.image} alt={news.title} className="w-full h-auto object-cover mb-4" />
+      <img 
+        src={news.image} 
+        alt={news.title} 
+        className="w-full max-w-2xl h-auto max-h-[400px] object-cover mb-4 mx-auto" 
+      />
       <p className="text-gray-600 text-sm mb-2">{news.date}</p>
       <p className="text-gray-800 mb-4">{news.description}</p>
       <p className="text-gray-800">{news.content}</p> 
