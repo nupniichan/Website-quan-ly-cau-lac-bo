@@ -455,7 +455,7 @@ const ManageBudget = () => {
                                     </div>
                                 </CardBody>
                                 {monthlyStats && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mx-3">
                                         <div>
                                             <Typography color="white" className="text-sm">
                                                 Tổng thu
@@ -478,25 +478,36 @@ const ManageBudget = () => {
                         </Card>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-4">
-                            {/* Thanh tìm kiếm */}
-                            <div className="w-72">
-                            <div className="w-full md:w-72">
+                    <div className="flex flex-col gap-4 px-4 md:px-6 mb-4">
+                        {/* Row 1: Search and Add button */}
+                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                            <div className="w-full sm:w-72">
                                 <Input
-                                    label={
-                                        <span className="whitespace-nowrap overflow-hidden text-ellipsis">
-                                            Tìm kiếm tên ngân sách
-                                        </span>
-                                    }
+                                    label="Tìm kiếm tên ngân sách"
                                     icon={<i className="fas fa-search" />}
                                     value={searchTerm}
-                                    onChange={(e) =>
-                                        setSearchTerm(e.target.value)}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
 
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                                <div className="w-full sm:w-auto">
+                            <div className="w-full sm:w-auto">
+                                <Tooltip content="Thêm">
+                                    <Button
+                                        className="flex items-center gap-3 w-full sm:w-auto justify-center"
+                                        color={sidenavColor}
+                                        size="sm"
+                                        onClick={openAddDialog}
+                                    >
+                                        <FaPlus className="w-4 h-4" strokeWidth={"2rem"} />
+                                    </Button>
+                                </Tooltip>
+                            </div>
+                        </div>
+
+                        {/* Row 2: Date filters */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full sm:w-auto">
+                                <div className="w-full">
                                     <Input
                                         type="date"
                                         label="Từ ngày"
@@ -505,10 +516,17 @@ const ManageBudget = () => {
                                             setDateFilter((prev) => ({
                                                 ...prev,
                                                 startDate: e.target.value,
-                                            }))}
+                                            }))
+                                        }
+                                        labelProps={{
+                                            className: "!text-sm"
+                                        }}
+                                        containerProps={{
+                                            className: "min-w-[200px]"
+                                        }}
                                     />
                                 </div>
-                                <div className="w-full sm:w-auto">
+                                <div className="w-full">
                                     <Input
                                         type="date"
                                         label="Đến ngày"
@@ -517,43 +535,35 @@ const ManageBudget = () => {
                                             setDateFilter((prev) => ({
                                                 ...prev,
                                                 endDate: e.target.value,
-                                            }))}
+                                            }))
+                                        }
+                                        labelProps={{
+                                            className: "!text-sm"
+                                        }}
+                                        containerProps={{
+                                            className: "min-w-[200px]"
+                                        }}
                                     />
                                 </div>
-
-                                {(dateFilter.startDate || dateFilter.endDate || searchTerm) && (
-                                    <Button
-                                        variant="text"
-                                        color="red"
-                                        className="p-2"
-                                        onClick={() => {
-                                            setDateFilter({
-                                                startDate: "",
-                                                endDate: "",
-                                            });
-                                            setSearchTerm("");
-                                        }}
-                                    >
-                                        <XMarkIcon className="h-4 w-4" />
-                                    </Button>
-                                )}
                             </div>
-                        </div>
 
-                        <div className="w-full md:w-auto">
-                            <Tooltip content="Thêm">
+                            {/* Clear filters button */}
+                            {(dateFilter.startDate || dateFilter.endDate || searchTerm) && (
                                 <Button
-                                    className="flex items-center gap-3"
-                                    color={sidenavColor}
-                                    size="sm"
-                                    onClick={openAddDialog}
+                                    variant="text"
+                                    color="red"
+                                    className="p-2 mt-2 sm:mt-0"
+                                    onClick={() => {
+                                        setDateFilter({
+                                            startDate: "",
+                                            endDate: "",
+                                        });
+                                        setSearchTerm("");
+                                    }}
                                 >
-                                    <FaPlus
-                                        className="w-4 h-4"
-                                        strokeWidth={"2rem"}
-                                    />
+                                    <XMarkIcon className="h-4 w-4" />
                                 </Button>
-                            </Tooltip>
+                            )}
                         </div>
                     </div>
 
