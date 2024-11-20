@@ -28,10 +28,10 @@ const Navbar = () => {
           <li className="text-black no-underline hover:bg-gray-100">Về trường</li>
         </Link>
         <Link to="/clubs" className="text-black no-underline">
-          <li className="text-black no-underline hover:bg-gray-100">Chương trình học</li>
+          <li className="text-black no-underline hover:bg-gray-100">Câu lạc bộ</li>
         </Link>
         <Link to="/curriculum" className="text-black no-underline">
-          <li className="text-black no-underline hover:bg-gray-100">Khoa học - Công nghệ</li>
+          <li className="text-black no-underline hover:bg-gray-100">Chương trình học</li>
         </Link>
         <Link to="/international-cooperation" className="text-black no-underline">
           <li className="text-black no-underline hover:bg-gray-100">Hợp tác</li>
