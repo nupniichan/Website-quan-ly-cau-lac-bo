@@ -21,7 +21,7 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { message, notification } from "antd";
 import { useMaterialTailwindController } from "@/context/useMaterialTailwindController";
 
-const API_URL = "http://localhost:5500/api";
+const API_URL = "http://4.242.20.80:5500/api";
 
 const BudgetAllocation = () => {
     const [allocations, setAllocations] = useState([]);
