@@ -53,9 +53,10 @@ const ManageClubAccountsPR = () => {
     const { sidenavColor } = controller;
 
     const isValidEmail = (email) => {
-        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const emailRegex = /^[a-zA-Z0-9._-]+@thpt\.edu\.vn$/;
         return emailRegex.test(email);
     };
+    
 
     useEffect(() => {
         fetchAccounts();
