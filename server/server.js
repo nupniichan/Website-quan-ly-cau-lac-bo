@@ -33,7 +33,7 @@ const storage = multer.diskStorage({
   const upload = multer({ storage });
 
   app.use(cors({
-    origin: ['http://localhost:5100','http://localhost:5200', 'http://4.242.20.80:5100','http://4.242.20.80:5200']
+    origin: ['http://localhost:5100','http://localhost:5200']
   }));
   app.use(express.json());
   app.use('/uploads', express.static('uploads')); // Để truy cập hình ảnh qua đường dẫn
@@ -41,7 +41,7 @@ const storage = multer.diskStorage({
 // Kết nối MongoDB
 const connectDB = async () => {
     try{
-        const conn = await mongoose.connect('mongodb+srv://nupniichan01:H1nixHkL97y4F7Sx@clustercnpm.wzxo0.mongodb.net/QuanLyCLB?retryWrites=true&w=majority&appName=ClusterCNPM');
+        const conn = await mongoose.connect('YOUR_MONGO_CONNECTION_STRONG');
         console.log(`MongoDB connected: ${conn.connection.host}`);
     }
     catch (error){
