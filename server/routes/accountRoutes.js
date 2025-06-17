@@ -37,8 +37,7 @@ router.post('/login', async (req, res) => {
 // Get all accounts
 router.get('/get-accounts', async (req, res) => {
     try {
-        // Fetch all accounts where the role is not 'manager'
-        const accounts = await Account.find({ role: { $ne: 'manager' } });
+        const accounts = await Account.find();
         res.json(accounts);
     } catch (error) {
         res.status(500).json({ error: "Error fetching accounts" });
