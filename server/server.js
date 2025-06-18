@@ -33,8 +33,13 @@ const storage = multer.diskStorage({
   const upload = multer({ storage });
 
   app.use(cors({
-    origin: ['http://localhost:5100','http://localhost:5200']
+    origin: '*', // Tạm thời tui cho mọi origin để Swagger hoạt động ( thật ra là phải set cụ thể nhưng mà nah )
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: false,
+    optionsSuccessStatus: 200
   }));
+
   app.use(express.json());
   app.use('/uploads', express.static('uploads')); // Để truy cập hình ảnh qua đường dẫn
 
@@ -68,7 +73,12 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'http://4.242.20.80:5500',
+                url: 'https://club-management-application.onrender.com',
+                description: 'Deployed server'
+            },
+            {
+                url: 'http://localhost:5500',
+                description: 'Localhost server'
             }
         ]
     },
