@@ -73,7 +73,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'https://club-management-application.onrender.com',
+                url: process.env.SERVER_URL,
                 description: 'Deployed server'
             },
             {
