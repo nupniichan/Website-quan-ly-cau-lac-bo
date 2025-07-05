@@ -95,7 +95,7 @@ Follow these steps to run the project locally:
 1. **Clone the repository**  
    ```bash
    git clone https://github.com/nupniichan/Website-quan-ly-cau-lac-bo.git
-   cd Website-quan-ly-cau-lac-b
+   cd Website-quan-ly-cau-lac-bo
    ```
 
 2. **Install dependencies**  
